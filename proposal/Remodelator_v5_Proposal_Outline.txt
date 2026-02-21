@@ -1,0 +1,476 @@
+REMODELATOR v5.0 - CLIENT PROPOSAL OUTLINE
+============================================
+
+1. EXECUTIVE SUMMARY
+
+   Remodelator v5.0 is a complete rebuild of the contractor estimating platform using 
+   modern cloud-native architecture. This proposal outlines the development of a SaaS 
+   application that enables remodeling contractors to create detailed project estimates, 
+   manage item catalogs, generate customer proposals, and process payments.
+
+   KEY IMPROVEMENTS FROM LEGACY SYSTEM:
+   - Modern tech stack 
+   - LLM-powered real-time pricing
+   - Subscription billing with Stripe
+   - Responsive design
+   - Cloud hosting with minimal operational costs
+   - Enhanced UX with improved workflows
+
+   THIS PROPOSAL INCLUDES:
+   - Complete feature inventory (core + new + admin)
+   - Technical architecture and technology stack
+   - Scope of work breakdown
+   - Development cost estimates ($10,000 labor + $600-1,000 AI tools)
+   - Ongoing hosting costs ($35-125/month)
+   - 4 completion-based payment milestones
+   - Sales & marketing considerations
+   - Stretch features for future expansion
+   - Recommendations on sales and marketing
+
+   TOTAL INVESTMENT: $10,000-11,000 (development) + monthly hosting
+
+2. FEATURES
+
+   2.1 CORE FEATURES
+       - User authentication
+       - User registration and profiles
+       - Password reset
+       - Dashboard
+       - Create, edit, view, and delete estimates
+       - Duplicate/copy existing estimates
+       - Estimate statuses (draft, in progress, completed)
+       - Estimate versioning/history
+       - Customer information management (name, email, phone, address)
+       - Job address management
+       - Add items to estimates
+       - Edit item quantities and pricing
+       - Remove items from estimates
+       - Reorder items in estimates
+       - Browse catalog (tree navigation)
+       - Catalog categories (Bathroom, Kitchen, Basement, Attic, Exterior, Doors/Windows, Landscaping)
+       - Search catalog items
+       - View vendor/supplier information for items with item image
+       - Item pricing with unit price, quantity, labor hours, material cost
+       - Item-level markups
+       - Estimate-level markups
+       - Discounts
+       - Automatic pricing calculations (subtotal, tax, total)
+       - Labor estimation (labor hours per item)
+       - Save and load templates
+       - Share customer proposals (link)
+       - Generate PDF proposals
+       - Terms and by-state terms compliance
+       - Landing page
+
+   2.2 NEW FEATURES (v5.0)
+       - Real-time pricing with LLM
+       - Subscription management
+       - Payment processing (Stripe)
+       - Per-estimate billing
+       - LLM usage tracking and billing
+
+   2.3 ADMIN FEATURES
+       - Catalog management for items
+       - Tree hierarchy management
+       - User activity tracking
+
+3. SCOPE OF WORK
+
+   3.1 TECHNOLOGY AND ARCHITECTURE SELECTION
+       - Frontend: Vite + React 18 + TypeScript
+       - Backend: Python 3.11 + FastAPI
+       - Database: Google Cloud Firestore
+       - Hosting: Cloud Run (backend), Firebase Hosting (frontend)
+       - Third-party: Stripe, LLM provider, SendGrid
+       - GitHub for version control
+       - Security architecture
+
+   3.2 FRONTEND SPECIFICATION
+       - Page inventory and wireframes
+       - Navigation flow and information architecture
+       - Improved wizard/workflow design
+       - Menu structure and hierarchy
+       
+       PAGES TO SPEC:
+       - Login/Registration
+       - Dashboard
+       - Estimate List
+       - Estimate Editor/Builder
+       - Catalog Browser (tree navigation)
+       - Item Search
+       - Customer Proposal View (shareable)
+       - Profile/Settings
+       - Admin Portal (catalog management)
+       - Admin Portal (user activity tracking)
+       - Billing/Subscription Management
+       - Real-time Pricing Interface
+
+   3.3 API SPECIFICATION
+       - REST API design
+       - Endpoint inventory (CRUD for all resources)
+       - Request/response schemas (Pydantic models)
+       - Authentication and authorization design
+       - Rate limiting strategy
+       - Error response standardization
+       - API versioning strategy
+       - WebSocket requirements (if any)
+       
+       CORE API MODULES:
+       - /api/v1/auth/*
+       - /api/v1/users/*
+       - /api/v1/estimates/*
+       - /api/v1/estimates/{id}/line-items/*
+       - /api/v1/catalog/*
+       - /api/v1/tree/*
+       - /api/v1/templates/*
+       - /api/v1/pricing/* (LLM)
+       - /api/v1/payments/*
+       - /api/v1/subscriptions/*
+       - /api/v1/admin/*
+
+   3.4 DATABASE SPECIFICATION
+       - Firestore collection design
+       - Document schemas
+       - Index design and query optimization
+       - Security rules design
+       - Data migration strategy from SQL Server
+       - Backup and restore procedures
+       - Data retention policies
+       
+       COLLECTIONS:
+       - users
+       - estimates (with lineItems subcollection)
+       - catalog (tree structure)
+       - templates
+       - subscriptions
+       - payments
+       - llm_pricing_cache
+       - audit_logs
+       - user_activity
+
+   3.5 AUTHENTICATION & AUTHORIZATION
+       - JWT authentication
+       - User registration flow
+       - Login flow (email/password)
+       - Password reset flow
+       - Email verification
+       - Session management
+       - Token refresh strategy
+       - Role-based access control (RBAC)
+       - Permission system design
+       
+       ROLES:
+       - Contractor (standard user)
+       - Admin (catalog management, user monitoring)
+
+   3.6 ADMIN PORTAL
+       - Catalog management interface
+         * Add/edit/delete catalog items
+         * Manage tree hierarchy
+         * Bulk import/export
+         * Item pricing management
+         * Item search and filtering
+       
+       - User activity tracking
+         * User login history
+         * Estimate creation metrics
+         * Feature usage analytics
+         * System health monitoring
+         * Audit log viewer
+       
+       - Analytics dashboard
+         * Active users
+         * Estimates created per month
+         * Revenue metrics
+         * LLM API usage and costs
+
+   3.7 REAL-TIME PRICING WITH LLM
+       - LLM provider selection (OpenAI, Anthropic, Google)
+       - Prompt engineering for pricing accuracy
+       - Context window management
+       - Caching strategy to reduce API calls
+       - Fallback pricing if LLM unavailable
+       - Price validation and bounds checking
+       - Price explanation/justification display
+       - Market data integration (if applicable)
+       - Regional pricing adjustments
+       - LLM API integration
+       - Prompt template system
+       - Response parsing and validation
+       - Cost tracking per LLM call
+       - User opt-in/opt-out
+
+   3.8 PAYMENTS & BILLING
+        - Payment processor: Stripe
+        - Subscription tiers design (Free, Basic, Pro, Enterprise)
+        - Per-estimate charge system
+        - LLM usage billing
+        - Payment flows:
+          * Subscription signup
+          * Subscription upgrade/downgrade
+          * Subscription cancellation
+          * One-time estimate charges
+          * Payment method management
+          * Invoice generation
+          * Failed payment handling
+          * Refund processing
+        - Stripe integration
+        - Webhook handling
+        - Tax calculation (if required)
+
+   3.9 DEPLOYMENT
+        - Cloud Run deployment (512MB, 1 vCPU, min instances: 1)
+        - Environment variable management
+        - Secret management (API keys, etc.)
+        - Frontend hosting (Firebase Hosting)
+        - Build pipeline
+        - CDN configuration
+        - Custom domain setup
+        - Firestore setup
+        - Production database provisioning
+        - Security rules deployment
+        - Index creation
+        - Backup configuration
+        - GitHub Actions (CI/CD)
+        - Staging environment
+        - Production deployment process
+        - Monitoring and logging (Cloud Logging, Sentry)
+        - Performance monitoring
+        - Uptime monitoring
+        - Alert configuration
+
+   3.10 URL FORWARDING
+        - Domain registration (if needed)
+        - DNS configuration
+        - Custom domain for frontend (e.g., app.remodelator.com)
+        - Custom domain for API (e.g., api.remodelator.com)
+        - SSL/TLS certificate setup
+        - Redirect legacy URLs to new system
+        - Email forwarding setup (if needed)
+
+   3.11 DATA MIGRATION
+        - SQL Server data export
+        - Data transformation scripts
+        - User migration
+        - Catalog/tree migration
+        - Estimate and line item migration
+        - Migration validation
+        - Data integrity testing
+
+4. COST ESTIMATION
+
+   4.1 DEVELOPMENT COSTS (ONE-TIME)
+       
+       Labor:
+       - Total development: $10,000
+       - Estimated hours: 90-130 hours
+       - Rate: ~$75-110/hour effective rate
+       - Breakdown by milestone:
+         * Milestone 1 (Foundation & Auth): $2,500
+         * Milestone 2 (Core Estimates): $2,500
+         * Milestone 3 (Catalog & Sharing): $2,500
+         * Milestone 4 (Payments, Admin & Launch): $2,500
+       
+       LLM Development Expense:
+       - AI coding tools (Cursor/Claude Sonnet): $600-1,000 for project duration
+       - Based on 90-130 hours of estimated development time
+
+   4.2 ONGOING HOSTING COSTS (MONTHLY)
+       
+       Infrastructure:
+       - Cloud Run (backend API): $42/month (always-on) OR $1-3/month (with cold starts)
+       - Firestore (database): $0-5/month (low usage) to $20-50/month (high usage)
+       - Firebase Hosting (frontend): $0/month (free tier)
+       - Cloud Storage (files/PDFs): $0-2/month
+       - Domain: $1/month ($12/year)
+       
+       Variable Costs:
+       - LLM API (real-time pricing): $0.10-0.50 per pricing request (depends on usage)
+       - Stripe fees: 2.9% + $0.30 per transaction
+       
+       Total Monthly Hosting (Low Usage):
+       - Always-on: $75-125/month
+       
+       Total Monthly Hosting (High Usage - 50+ active users):
+       - $150-250/month
+       
+       Cost Per User Economics:
+       - At 10 users: $7.50-12.50 per user/month
+       - At 50 users: $3.00-5.00 per user/month
+       - At 100 users: $1.50-2.50 per user/month
+
+5. SALES & MARKETING (SEPARATE FROM DEVELOPMENT)
+
+   5.1 TRADE SHOWS
+       - Target: NAHB, regional contractor expos
+       - Vendor fee
+       - Booth setup and materials
+       - Demo laptops/tablets
+       - Collateral (flyers, business cards, swag)
+       - Lead capture system
+       - Cost per show: $3.5K-15K
+       - 2-4 shows per year
+       - Total: $15K-20K/year
+
+   5.2 ADS
+       - Google Ads (search: "contractor estimating software")
+       - Facebook/Instagram (target contractors)
+       - LinkedIn Ads (construction professionals)
+       - YouTube pre-roll
+       - Retargeting campaigns
+       - Testing phase: $1K-2K/month
+       - Scale phase: $5K-10K/month
+       - Target CPA: $50-150 per signup
+       - Landing pages (A/B testing)
+       - Ad copy variations
+       - Video demos (30-60 sec)
+
+   5.3 OUTBOUND
+       - Cold email campaigns to contractor lists
+       - LinkedIn outreach
+       - Cold calling (if budget allows)
+       - Potential to partner with trade organizations
+       - Tools: Email finder (Apollo, Hunter), Email automation (Instantly, Lemlist), CRM (HubSpot, Pipedrive)
+       - Volume: 500-1000 emails per week
+       - Target: 5-10% reply rate, 1-2% conversion to demo
+
+   5.4 REPLY MANAGEMENT
+       - Respond to inbound inquiries within 1 hour
+       - Qualify leads (budget, timeline, fit)
+       - Book demos
+       - Follow-up sequences
+       - Nurture cold leads
+       - Channels: Email, website chat, phone, social media DMs
+
+   5.5 DEMOS
+       - Live product demos (Zoom/Google Meet)
+       - Pre-recorded demo videos (add to landing page)
+       - Self-serve trial period
+       - Onboarding walkthrough
+
+   5.6 FUNNEL MATH
+       - Cost to Acquire a Customer (CAC): $300-500 per customer
+       - Customer Lifetime Value (LTV): $1,200-$1,500 per year
+
+6. STRETCH FEATURES (POST-MVP)
+
+   6.1 EXTERNAL DATA SCRAPING & CATALOG BUILD
+       - Scrape Home Depot, Lowe's, Menards for items and associated PDFs/product info (not pricing)
+       - Match scraped products to catalog items
+       - Flag discrepancies
+       - Tech: Python scrapers, proxy rotation, scheduled Cloud Run jobs
+       - Legal review (ToS compliance)
+       - Ongoing proxy costs: $20-50/month
+
+   6.2 FORUM FOR JOKES
+       - Contractor community forum
+       - Post jokes, memes, stories
+       - Upvote/downvote
+       - Comments/threads
+       - Moderation tools
+       - Tech: Firestore collections, real-time updates, Cloud Storage, spam filtering
+       - Moderation labor (ongoing)
+
+   6.3 DIRECT ORDER PLACEMENT VIA PLATFORM
+       - Integrate with supplier APIs (Home Depot Pro, Ferguson, etc.)
+       - Place orders directly from estimates
+       - Track order status
+       - Delivery scheduling
+       - Order history
+       - Tech: Supplier API integrations, OAuth, webhooks, split payments
+       - Supplier partnership negotiations
+       - Payment processing complexity
+       - Liability/return policy handling
+
+   6.4 INTEGRATED WARM LEAD GENERATION
+       - Contractors bid on leads
+       - Pay-per-lead or subscription model
+       - Lead quality scoring
+       - Tech: Public landing page, lead intake form, geocoding, email/SMS, CRM-lite
+       - Marketing to acquire homeowner leads
+       - Revenue stream potential
+
+7. PROJECT PHASES
+
+   Phase 1: Foundation
+   - Vite + React + TypeScript setup
+   - Tailwind + Shadcn/ui
+   - FastAPI backend structure
+   - Firestore + security rules
+   - Authentication (JWT + Firebase Auth)
+
+   Phase 2: Core Features
+   - User registration and profiles
+   - Estimate CRUD operations
+   - Item catalog and tree navigation
+   - Line item management
+   - Basic PDF generation
+
+   Phase 3: Advanced Features
+   - Templates system
+   - Search and filtering
+   - Real-time updates
+   - Email notifications
+   - Audit logging
+
+   Phase 4: Polish & Launch
+   - UI/UX refinements
+   - Performance optimization
+   - Testing (E2E, integration)
+   - Documentation
+   - Deployment automation
+
+8. TECHNOLOGY STACK
+
+   Frontend:
+   - Vite
+   - React 18 + TypeScript
+   - React Router v6
+   - TanStack Query (server state)
+   - Zustand (client state)
+   - TailwindCSS
+   - Shadcn/ui
+   - React Hook Form + Zod
+
+   Backend:
+   - Python 3.11+
+   - FastAPI
+   - Pydantic v2
+   - Firebase Admin SDK
+   - Python-Jose (JWT)
+   - Passlib (password hashing)
+   - Uvicorn (ASGI server)
+
+   Database & Cloud:
+   - Google Cloud Firestore
+   - Cloud Storage
+   - Cloud Run (backend, 512MB, 1 vCPU, min instances: 1)
+   - Firebase Hosting (frontend)
+
+   DevOps:
+   - Docker
+   - GitHub Actions (CI/CD)
+   - Poetry (Python deps)
+   - ESLint + Prettier
+   - Vitest (frontend tests)
+   - Pytest (backend tests)
+
+9. TESTING REQUIREMENTS
+   - Unit tests (backend services)
+   - Integration tests (API endpoints)
+   - E2E tests (critical user flows)
+   - Load testing (performance at scale)
+   - Security testing (penetration testing)
+   - User acceptance testing
+
+10. DOCUMENTATION DELIVERABLES
+    - Developer documentation
+    - API documentation (OpenAPI/Swagger)
+    - User documentation/help center
+    - Admin documentation
+    - Deployment runbook
+    - Disaster recovery procedures
+
+---
+
+END OF PROPOSAL OUTLINE

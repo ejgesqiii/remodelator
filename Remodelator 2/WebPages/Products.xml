@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Products>
+  <Product>
+    <ProductId>CasioS100</ProductId>
+    <Title>Casio Exilim EX-S100</Title>
+    <TagLine>3.2MP Digital Camera with 2.8x Optical Zoom</TagLine>
+    <ListPrice>$349.99</ListPrice>
+    <OurPrice>$299.95</OurPrice>
+    <Savings>$50.04 (14%)</Savings>
+    <Availability>Ships in 24 hours</Availability>
+    <Image>exilim.gif</Image>
+    <ProductInfo>
+      9.7 MB internal memory; compatible with
+      Secure Digital (SD) and MultiMedia (MMC) memory cards.
+      Powered by rechargeable lithium-ion battery; connects
+      to PCs and Macs via USB 1.1.
+    </ProductInfo>
+  </Product>
+  <Product>
+    <ProductId>CanonS1</ProductId>
+    <Title>Canon PowerShot S1</Title>
+    <TagLine>
+      3.2 MP Digital Camera with 10x Image
+      Stabilized Optical Zoom
+    </TagLine>
+    <ListPrice>$349.99</ListPrice>
+    <OurPrice>$254.95</OurPrice>
+    <Savings>$95.04 (27%)</Savings>
+    <Availability>Ships in 24 hours</Availability>
+    <Image>canon.gif</Image>
+    <ProductInfo>
+      Store images on Compact Flash Type I
+      or II memory cards (32 MB card included).
+      Powered by 4 AA-size batteries (alkaline included,
+      rechargeable NiMH recommended).
+    </ProductInfo>
+  </Product>
+  <Product>
+    <ProductId>OlympusD535</ProductId>
+    <Title>Olympus Camedia D535</Title>
+    <TagLine>3.2MP Digital Camera with 3x Optical Zoom</TagLine>
+    <ListPrice>$199.99</ListPrice>
+    <OurPrice>$139.94</OurPrice>
+    <Savings>$60.05 (30%)</Savings>
+    <Availability>Ships in 24 hours</Availability>
+    <Image>olympus.gif</Image>
+    <ProductInfo>
+      Save images and videos with 12 MB of
+      internal memory or using a compatible xD-Picture Card.
+      Easy USB connectivity and PictBridge technology for
+      convenient printing on the spot.
+    </ProductInfo>
+  </Product>
+  <Product>
+    <ProductId>KodakDX7630</ProductId>
+    <Title>Kodak EasyShare DX7630</Title>
+    <TagLine>6MP Digital Camera with 3x Optical Zoom</TagLine>
+    <ListPrice>$329.99</ListPrice>
+    <OurPrice>$269.94</OurPrice>
+    <Savings>$60.05 (18%)</Savings>
+    <Availability>Ships in 24 hours</Availability>
+    <Image>kodak.gif</Image>
+    <ProductInfo>
+      Store images in 32MB of internal
+      memory or on optional Secure Digital memory cards
+      (memory card not included). Powered by rechargeable
+      EasyShare lithium-ion battery (included with charger).
+    </ProductInfo>
+  </Product>
+  <Product>
+    <ProductId>KonicaZ10</ProductId>
+    <Title>Konica Minolta Dimage Z10</Title>
+    <TagLine>3MP Digital Camera with 8x Optical Zoom</TagLine>
+    <ListPrice>$299.99</ListPrice>
+    <OurPrice>$159.88</OurPrice>
+    <Savings>$140.11 (47%)</Savings>
+    <Availability>Ships in 24 hours</Availability>
+    <Image>konica.gif</Image>
+    <ProductInfo>
+      Powered by 4 AA-size batteries
+      (alkaline included; rechargeable NiMH recommended).
+      3-megapixel sensor captures enough detail to create
+      photo-quality 10-by-13-inch enlargements.
+    </ProductInfo>
+  </Product>
+</Products>

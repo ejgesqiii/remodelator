@@ -1,0 +1,39 @@
+Imports System.Diagnostics
+Imports System.Collections.Generic
+Imports RemodelatorBLL
+Imports RemodelatorDAL.EntityClasses
+Imports RemodelatorDAL.HelperClasses
+
+Imports SD.LLBLGen.Pro.ORMSupportClasses
+
+Imports ComponentArt.Web.UI
+
+Namespace Remodelator
+
+    Partial Class Test2
+        Inherits System.Web.UI.Page
+
+        Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+
+            If Not Page.IsPostBack Then
+                btnShow1.Attributes("onclick") = ucVendorCreate.DialogId & ".Show();"
+                btnTest2.Attributes("href") = "javascript:" & ucVendorCreate.DialogId & ".Show();"
+                'btnShow2.Attributes("onclick") = ucVendorCreate2.DialogId & ".Show();"
+            End If
+        End Sub
+
+        Protected Sub Page_PreRender(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.PreRender
+            'Dim Ctrl As Dialog = CType(Page.FindControl("Dialog1"), Dialog)
+            'If Not IsNothing(Ctrl) Then
+            '    Response.Write("Found Dialog1 control!")
+            'End If
+
+            'Ctrl = CType(Page.FindControl("Dialog2"), Dialog)
+            'If Not IsNothing(Ctrl) Then
+            '    Response.Write("Found Dialog2 control!")
+            'End If
+        End Sub
+    End Class
+
+
+End Namespace

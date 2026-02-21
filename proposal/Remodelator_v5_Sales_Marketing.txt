@@ -1,0 +1,157 @@
+REMODELATOR v5.0 - SALES & MARKETING
+=====================================
+
+Go-to-market strategy and customer acquisition.
+
+---
+
+1. TRADE SHOWS
+   - Target shows: NAHB (National Association of Home Builders), regional contractor expos
+   - Booth setup and materials
+   - Demo laptops/tablets
+   - Collateral (flyers, business cards, swag)
+   - Lead capture system (scan badges, QR codes)
+   
+   COSTS PER SHOW:
+   - Booth space: $2K-10K
+   - Travel/lodging: $1K-3K
+   - Materials: $500-2K
+   - Staff time: 3-5 days
+   
+   ESTIMATE:
+   - 2-4 shows per year
+   - Total: $15K-50K/year
+
+---
+
+2. ADS
+   - Google Ads (search: "contractor estimating software")
+   - Facebook/Instagram (target contractors, remodelers)
+   - LinkedIn Ads (target construction professionals)
+   - YouTube pre-roll (how-to contractor content)
+   - Retargeting campaigns
+   
+   BUDGET:
+   - Testing phase: $1K-2K/month
+   - Scale phase: $5K-10K/month
+   - Target CPA: $50-150 per signup
+   
+   CREATIVE NEEDS:
+   - Landing pages (A/B testing)
+   - Ad copy variations
+   - Video demos (30-60 sec)
+
+---
+
+3. OUTBOUND
+   - Cold email campaigns to contractor lists
+   - LinkedIn outreach
+   - Cold calling (if budget allows)
+   - Partner with trade organizations
+   
+   TOOLS:
+   - Email finder (Apollo, Hunter)
+   - Email automation (Instantly, Lemlist)
+   - CRM (HubSpot, Pipedrive)
+   
+   VOLUME:
+   - 500-1000 emails per week
+   - 5-10% reply rate target
+   - 1-2% conversion to demo
+   
+   LABOR:
+   - SDR (Sales Dev Rep): $50K-70K/year
+   - Or outsource: $2K-5K/month
+
+---
+
+4. REPLY MANAGEMENT
+   - Respond to inbound inquiries within 1 hour
+   - Qualify leads (budget, timeline, fit)
+   - Book demos
+   - Follow-up sequences
+   - Nurture cold leads
+   
+   CHANNELS:
+   - Email
+   - Website chat (Intercom, Drift)
+   - Phone
+   - Social media DMs
+   
+   LABOR:
+   - Part-time SDR: $3K-5K/month
+   - Full-time SDR: $50K-70K/year
+   - Or founder handles initially
+
+---
+
+5. DEMOS
+   - Live product demos (Zoom/Google Meet)
+   - Pre-recorded demo videos
+   - Self-serve trial period
+   - Onboarding walkthrough
+   
+   DEMO PROCESS:
+   - Discovery call (15 min) - understand needs
+   - Live demo (30 min) - show relevant features
+   - Q&A (15 min)
+   - Follow-up email with trial link
+   
+   CONVERSION:
+   - Demo-to-trial: 50-70%
+   - Trial-to-paid: 20-40%
+   - Total demo-to-paid: 10-28%
+   
+   LABOR:
+   - Founder/sales rep conducts demos
+   - 5-10 demos per week at scale
+
+---
+
+FUNNEL MATH
+
+Assumptions (monthly):
+- Website visitors: 1,000
+- Visitor-to-signup: 5% = 50 signups
+- Signups-to-demo request: 30% = 15 demos
+- Demo-to-trial: 60% = 9 trials
+- Trial-to-paid: 30% = 3 customers
+
+Cost per customer: $300-500 (blended CAC)
+
+---
+
+SALES TEAM HIRING PLAN
+
+Phase 1 (Months 1-6): Founder-led sales
+- Founder does everything
+- Learn what messaging works
+- Refine demo script
+
+Phase 2 (Months 6-12): Add part-time SDR
+- SDR handles replies and books demos
+- Founder closes deals
+- Cost: $3K-5K/month
+
+Phase 3 (Year 2+): Full sales team
+- Full-time SDR: $50K-70K
+- Account Executive (closer): $70K-100K + commission
+- Marketing Manager: $60K-90K
+
+---
+
+KEY METRICS TO TRACK
+
+- Website traffic
+- Signup conversion rate
+- Demo request rate
+- Demo show rate
+- Demo-to-trial rate
+- Trial-to-paid rate
+- CAC (Customer Acquisition Cost)
+- LTV (Lifetime Value)
+- LTV:CAC ratio (target 3:1)
+
+---
+
+END
