@@ -1,0 +1,12 @@
+Proposal: Kitchen Refresh
+Estimate ID: c4688377-c3ff-4c4a-a2ce-0a67330b4911
+Customer: Alice
+Status: draft
+
+Line Items:
+- Shower Tile | qty=8.0000 | unit=$14.5000 | total=$242.4600
+- Countertop Install | qty=2.0000 | unit=$89.2500 | total=$426.1500
+
+Subtotal: $617.6500
+Tax: $50.9600
+Total: $668.6100

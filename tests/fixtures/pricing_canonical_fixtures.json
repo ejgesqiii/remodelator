@@ -1,0 +1,146 @@
+[
+  {
+    "name": "kitchen_percent_discount",
+    "input": {
+      "quantity": "2",
+      "unit_price": "100",
+      "item_markup_pct": "10",
+      "estimate_markup_pct": "5",
+      "discount_value": "5",
+      "discount_is_percent": true,
+      "tax_rate_pct": "8.25",
+      "labor_hours": "1.5",
+      "labor_rate": "75"
+    },
+    "expected": {
+      "base_amount": "200.00",
+      "with_item_markup": "220.00",
+      "with_estimate_markup": "231.00",
+      "discount_amount": "11.55",
+      "labor_amount": "112.50",
+      "taxable_subtotal": "331.95",
+      "tax_amount": "27.39",
+      "line_total": "359.34"
+    }
+  },
+  {
+    "name": "bath_fixed_discount",
+    "input": {
+      "quantity": "3",
+      "unit_price": "42.5",
+      "item_markup_pct": "7.5",
+      "estimate_markup_pct": "2.5",
+      "discount_value": "15",
+      "discount_is_percent": false,
+      "tax_rate_pct": "8.25",
+      "labor_hours": "2.25",
+      "labor_rate": "82.5"
+    },
+    "expected": {
+      "base_amount": "127.50",
+      "with_item_markup": "137.06",
+      "with_estimate_markup": "140.49",
+      "discount_amount": "15.00",
+      "labor_amount": "185.63",
+      "taxable_subtotal": "311.11",
+      "tax_amount": "25.67",
+      "line_total": "336.78"
+    }
+  },
+  {
+    "name": "zero_tax_no_discount",
+    "input": {
+      "quantity": "1",
+      "unit_price": "250",
+      "item_markup_pct": "0",
+      "estimate_markup_pct": "0",
+      "discount_value": "0",
+      "discount_is_percent": false,
+      "tax_rate_pct": "0",
+      "labor_hours": "0.5",
+      "labor_rate": "60"
+    },
+    "expected": {
+      "base_amount": "250.00",
+      "with_item_markup": "250.00",
+      "with_estimate_markup": "250.00",
+      "discount_amount": "0.00",
+      "labor_amount": "30.00",
+      "taxable_subtotal": "280.00",
+      "tax_amount": "0.00",
+      "line_total": "280.00"
+    }
+  },
+  {
+    "name": "high_markup_percent_discount",
+    "input": {
+      "quantity": "5",
+      "unit_price": "19.99",
+      "item_markup_pct": "18",
+      "estimate_markup_pct": "12",
+      "discount_value": "12.5",
+      "discount_is_percent": true,
+      "tax_rate_pct": "7.75",
+      "labor_hours": "3.5",
+      "labor_rate": "95"
+    },
+    "expected": {
+      "base_amount": "99.95",
+      "with_item_markup": "117.94",
+      "with_estimate_markup": "132.09",
+      "discount_amount": "16.51",
+      "labor_amount": "332.50",
+      "taxable_subtotal": "448.08",
+      "tax_amount": "34.73",
+      "line_total": "482.81"
+    }
+  },
+  {
+    "name": "fixed_discount_clamped_to_subtotal",
+    "input": {
+      "quantity": "1",
+      "unit_price": "80",
+      "item_markup_pct": "0",
+      "estimate_markup_pct": "0",
+      "discount_value": "500",
+      "discount_is_percent": false,
+      "tax_rate_pct": "10",
+      "labor_hours": "1",
+      "labor_rate": "40"
+    },
+    "expected": {
+      "base_amount": "80.00",
+      "with_item_markup": "80.00",
+      "with_estimate_markup": "80.00",
+      "discount_amount": "80.00",
+      "labor_amount": "40.00",
+      "taxable_subtotal": "40.00",
+      "tax_amount": "4.00",
+      "line_total": "44.00"
+    }
+  },
+  {
+    "name": "fractional_inputs_rounding",
+    "input": {
+      "quantity": "2.75",
+      "unit_price": "33.333",
+      "item_markup_pct": "4.125",
+      "estimate_markup_pct": "1.875",
+      "discount_value": "2.333",
+      "discount_is_percent": false,
+      "tax_rate_pct": "8.875",
+      "labor_hours": "1.2",
+      "labor_rate": "77.77"
+    },
+    "expected": {
+      "base_amount": "91.67",
+      "with_item_markup": "95.45",
+      "with_estimate_markup": "97.24",
+      "discount_amount": "2.33",
+      "labor_amount": "93.32",
+      "taxable_subtotal": "188.23",
+      "tax_amount": "16.71",
+      "line_total": "204.93"
+    }
+  }
+]

@@ -1,0 +1,77 @@
+.TopGroup2
+{
+  background-color:#3F3F3F; 
+  background-image: url(../images/tab/top_group_bg.gif);
+}
+
+.TopGroup
+{
+  background-color:#3F3F3F; 
+  background-image: url(../images/tab/top_group_bg.gif);
+  border: 1px solid black;
+  border-bottom-color: #CCCCCC;
+}
+
+.Level2Group
+{
+  background-color:silver; 
+  background-image: url(../images/tab/level2_group_bg.gif);
+}
+
+.TopLevelTab 
+{
+  color:white; 
+  font-family: Verdana; 
+  font-size:11px; 
+  cursor:pointer;
+   border: 1px solid #CCCCCC;
+}
+
+.TopLevelTabHover 
+{
+  color:gray; 
+  font-family: Verdana; 
+  font-size:11px; 
+  cursor:pointer;
+  border-right-color: white;  
+}
+
+.SelectedTopLevelTab
+{
+  background-color: silver; 
+  background-image: url(../images/tab/top_item_selected_bg.gif);
+  font-family: Verdana; 
+  font-size:11px; 
+  cursor:default;
+  border: 1px solid #CCCCCC;
+  border-right-color: white;  
+  position:relative;
+  top:1px;
+}
+
+.Level2Tab 
+{
+  font-family: Verdana; 
+  font-size:11px; 
+  cursor:pointer;
+}
+
+.Level2TabHover 
+{
+  font-family: Verdana; 
+  font-size:11px; 
+  text-decoration:underline;
+  cursor:pointer;
+}
+
+.SelectedLevel2Tab 
+{
+  background-color:#F6F6F6;
+  font-family: Verdana; 
+  font-size:11px; 
+  border: 1px solid #AAAAAA;
+  border-right-color: #F6F6F6;
+  border-bottom-color: #F6F6F6;  
+}
+
+

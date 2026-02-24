@@ -1,0 +1,14 @@
+{
+  "generated_at_utc": "20260224T170841Z",
+  "non_blocker_gate_status": "passed",
+  "checks": {
+    "quality_gate": "passed",
+    "docs_sync": "passed",
+    "sqlite_integrity": "passed",
+    "sqlite_maintenance": "passed",
+    "sqlite_envelope": "passed"
+  },
+  "passed_checks": 5,
+  "total_checks": 5,
+  "completion_pct": 100.0
+}

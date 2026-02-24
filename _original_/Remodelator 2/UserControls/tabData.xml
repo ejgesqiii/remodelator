@@ -1,0 +1,21 @@
+<items>
+	<item Text="Bath" NavigateUrl="Baths.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook" SubGroupTabSpacing="1">
+	</item>
+
+	<item Text="Kitchen" NavigateUrl="Kitchens.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook">
+	</item>
+
+	<item Text="Attic" NavigateUrl="Attics.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook">
+	</item>
+
+	<item Text="Basement" NavigateUrl="Basements.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook">
+	</item>
+
+	<item Text="Doors &amp; Windows" NavigateUrl="DoorsWindows.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook">
+	</item>
+
+	<item Text="Ext. Structures" NavigateUrl="Exteriors.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook">
+	</item>
+	<item Text="Admin" NavigateUrl="Admin.aspx" SubGroupCssClass="Level2Group" DefaultSubItemLookId="Level2TabLook" DefaultSubItemSelectedLookId="SelectedLevel2TabLook">
+	</item>
+</items>

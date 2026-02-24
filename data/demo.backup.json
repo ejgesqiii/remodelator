@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "user_id": "d43f04af-e227-4c2f-b7d8-dcee2bfb117b",
+  "generated_at": "2026-02-23T23:57:08.150018+00:00",
+  "estimates": [
+    {
+      "id": "780837ef-096c-4970-98cb-c9478fba0a4c",
+      "title": "Kitchen Refresh",
+      "status": "draft",
+      "version": 1,
+      "customer_name": "Alice",
+      "customer_email": "",
+      "customer_phone": "",
+      "job_address": "",
+      "estimate_markup_pct": "5.0000",
+      "tax_rate_pct": "8.2500",
+      "subtotal": "393.6700",
+      "tax": "32.4800",
+      "total": "426.1500",
+      "updated_at": "2026-02-23T23:56:13.936739",
+      "line_items": [
+        {
+          "id": "aeadc89a-9b2c-4277-905a-a721d1250a58",
+          "estimate_id": "780837ef-096c-4970-98cb-c9478fba0a4c",
+          "sort_order": 0,
+          "group_name": "General",
+          "item_name": "Countertop Install",
+          "quantity": "2.0000",
+          "unit_price": "89.2500",
+          "item_markup_pct": "10.0000",
+          "discount_value": "0.0000",
+          "discount_is_percent": false,
+          "labor_hours": "2.5000",
+          "labor_rate": "75.0000",
+          "total_price": "426.1500"
+        }
+      ]
+    }
+  ]
+}

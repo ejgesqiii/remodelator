@@ -1,0 +1,15 @@
+{
+  "id": "ee543b86-209c-4f83-83a7-097839738f34",
+  "estimate_id": "c4688377-c3ff-4c4a-a2ce-0a67330b4911",
+  "sort_order": 1,
+  "group_name": "Bathroom",
+  "item_name": "Shower Tile",
+  "quantity": "8.0",
+  "unit_price": "14.5",
+  "item_markup_pct": "10.0000",
+  "discount_value": "0",
+  "discount_is_percent": false,
+  "labor_hours": "1.2",
+  "labor_rate": "75.0000",
+  "total_price": "0"
+}

@@ -1,0 +1,14 @@
+{
+  "backend": "sqlite",
+  "seconds": 2,
+  "writers": 2,
+  "readers": 4,
+  "busy_timeout_ms": 5000,
+  "reads": 112371,
+  "writes": 13675,
+  "total_ops": 126046,
+  "ops_per_second": 62904.56,
+  "errors": 0,
+  "locked_errors": 0,
+  "lock_error_rate_pct": 0.0
+}

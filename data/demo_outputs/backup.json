@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "user_id": "ac821c13-737a-4c40-bb1e-53e6a67bc54b",
+  "generated_at": "2026-02-24T00:17:04.737219+00:00",
+  "estimates": [
+    {
+      "id": "c4688377-c3ff-4c4a-a2ce-0a67330b4911",
+      "title": "Kitchen Refresh",
+      "status": "draft",
+      "version": 2,
+      "customer_name": "Alice",
+      "customer_email": "",
+      "customer_phone": "",
+      "job_address": "123 Maple Ave",
+      "estimate_markup_pct": "5.0000",
+      "tax_rate_pct": "8.2500",
+      "subtotal": "617.6500",
+      "tax": "50.9600",
+      "total": "668.6100",
+      "updated_at": "2026-02-24T00:17:02.610224",
+      "line_items": [
+        {
+          "id": "ee543b86-209c-4f83-83a7-097839738f34",
+          "estimate_id": "c4688377-c3ff-4c4a-a2ce-0a67330b4911",
+          "sort_order": 0,
+          "group_name": "Phase-1",
+          "item_name": "Shower Tile",
+          "quantity": "8.0000",
+          "unit_price": "14.5000",
+          "item_markup_pct": "10.0000",
+          "discount_value": "0.0000",
+          "discount_is_percent": false,
+          "labor_hours": "1.2000",
+          "labor_rate": "75.0000",
+          "total_price": "242.4600"
+        },
+        {
+          "id": "075634f7-53e9-491b-8aca-5033e6ecbc84",
+          "estimate_id": "c4688377-c3ff-4c4a-a2ce-0a67330b4911",
+          "sort_order": 1,
+          "group_name": "Phase-1",
+          "item_name": "Countertop Install",
+          "quantity": "2.0000",
+          "unit_price": "89.2500",
+          "item_markup_pct": "10.0000",
+          "discount_value": "0.0000",
+          "discount_is_percent": false,
+          "labor_hours": "2.5000",
+          "labor_rate": "75.0000",
+          "total_price": "426.1500"
+        }
+      ]
+    },
+    {
+      "id": "6d5eb587-00bb-4a7f-8443-cb52a9228f20",
+      "title": "Kitchen Refresh v2",
+      "status": "draft",
+      "version": 1,
+      "customer_name": "Alice",
+      "customer_email": "",
+      "customer_phone": "",
+      "job_address": "123 Maple Ave",
+      "estimate_markup_pct": "5.0000",
+      "tax_rate_pct": "8.2500",
+      "subtotal": "0.0000",
+      "tax": "0.0000",
+      "total": "0.0000",
+      "updated_at": "2026-02-24T00:17:02.610118",
+      "line_items": [
+        {
+          "id": "d768e350-519a-48e1-9e32-db735fd6f986",
+          "estimate_id": "6d5eb587-00bb-4a7f-8443-cb52a9228f20",
+          "sort_order": 0,
+          "group_name": "Phase-1",
+          "item_name": "Shower Tile",
+          "quantity": "8.0000",
+          "unit_price": "14.5000",
+          "item_markup_pct": "10.0000",
+          "discount_value": "0.0000",
+          "discount_is_percent": false,
+          "labor_hours": "1.2000",
+          "labor_rate": "75.0000",
+          "total_price": "0.0000"
+        },
+        {
+          "id": "1f933205-e034-475f-bf8a-072b6eb0b5ba",
+          "estimate_id": "6d5eb587-00bb-4a7f-8443-cb52a9228f20",
+          "sort_order": 1,
+          "group_name": "Phase-1",
+          "item_name": "Countertop Install",
+          "quantity": "2.0000",
+          "unit_price": "89.2500",
+          "item_markup_pct": "10.0000",
+          "discount_value": "0.0000",
+          "discount_is_percent": false,
+          "labor_hours": "2.5000",
+          "labor_rate": "75.0000",
+          "total_price": "0.0000"
+        }
+      ]
+    }
+  ]
+}

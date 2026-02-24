@@ -1,0 +1,49 @@
+CONSULTING AGREEMENT OUTLINE
+Essential Components for One-Page Agreement Between Companies
+
+• HEADER & PARTIES
+  - Agreement title
+  - Company names and legal entities (e.g., "Delaware corporation")
+  - Effective date
+
+• CONSULTING RELATIONSHIP & SERVICES
+  - Independent contractor status (not employee)
+  - Description of services to be provided
+  - Consultant responsible for method/means of performing services
+
+• TERM & TERMINATION
+  - Start date and end conditions
+  - Termination for convenience clause (notice period)
+  - Survival clause (which sections remain valid after termination)
+
+• COMPENSATION & EXPENSES
+  - Payment structure (hourly, commission, fixed fee, etc.)
+  - Payment timing and limitations
+  - Expense responsibility and approval process
+
+• CONFIDENTIALITY & INTELLECTUAL PROPERTY
+  - Scope of confidential information (if limited or not applicable)
+  - IP ownership/assignment (if applicable to services)
+  - Return of company property at termination
+
+• INDEPENDENT CONTRACTOR STATUS & TAXES
+  - Tax responsibility (consultant handles own taxes)
+  - Indemnification for tax/employment issues
+
+• NON-SOLICITATION
+  - Protection against soliciting employees/consultants
+  - Duration (e.g., 12 months after termination)
+
+• INDEMNIFICATION & LIABILITY
+  - Mutual indemnification for negligence/breach
+  - Limitation of liability caps
+  - Exclusion of consequential damages
+
+• GOVERNING LAW & ENTIRE AGREEMENT
+  - Choice of law (state/jurisdiction)
+  - Entire agreement clause (supersedes prior discussions)
+
+• SIGNATURE BLOCKS
+  - Company name, authorized signatory, title
+  - Consultant name, authorized signatory, title
+  - Addresses for notices

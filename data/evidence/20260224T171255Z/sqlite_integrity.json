@@ -1,0 +1,10 @@
+{
+  "backend": "sqlite",
+  "status": "ok",
+  "integrity_check": "ok",
+  "quick_check": "ok",
+  "foreign_keys": 1,
+  "journal_mode": "wal",
+  "synchronous": 1,
+  "busy_timeout_ms": 5000
+}

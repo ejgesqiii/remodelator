@@ -1,0 +1,108 @@
+<%@ Master Language="VB" CodeFile="Site.master.vb" Inherits="Remodelator.site" %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/tr/html4/loose.dtd">
+<%@ Register Src="../UserControls/Tabs.ascx" TagName="Tabs" TagPrefix="uc1" %>
+<%@ Register Src="../UserControls/RightPane.ascx" TagName="RightPane" TagPrefix="uc2" %>
+<html>
+<head id="Head1" runat="server">
+    <title>Remodelator!</title>
+    <base target="_self" />
+
+    <script type="text/javascript" src="../Includes/multifile.js"> </script>
+    <script type="text/javascript" src="../Includes/prototype.js"> </script>
+    <script type="text/javascript" src="../Includes/cookiejar2.js"> </script>
+    <script type="text/javascript" src="../Includes/Cloz2007.js"> </script>
+    <script type="text/javascript" src="../Includes/niftycube.js"> </script>
+    <script type="text/javascript">
+<!--
+var began_loading = (new Date()).getTime();
+
+function done_loading() {
+ $('Time').innerHTML = self.location + '&t=' + (((new Date()).getTime() - began_loading) / 1000);
+}
+// -->
+    </script>
+
+    <link href="~/includes/site.css" rel="stylesheet" type="text/css" />
+    <link href="~/includes/submodal.css" rel="stylesheet" type="text/css" />
+    <link href="~/styles/treestyle.css" rel="stylesheet" type="text/css" />
+    <link href="~/styles/basestyle.css" rel="stylesheet" type="text/css" />
+    <link href="~/styles/tabstyle.css" rel="stylesheet" type="text/css" />
+    <link href="~/styles/splitterStyle.css" rel="stylesheet" type="text/css" />
+    <link href="~/Styles/dialog.css" type="text/css" rel="stylesheet" />
+    <link href="~/Styles/combobox.css" type="text/css" rel="stylesheet" />
+    <link href="~/Styles/print.css" type="text/css" rel="stylesheet" media="print" />
+</head>
+<body id="Body" runat="server">
+    <form id="form1" runat="server">
+        <div id="Time" style="display: none">
+        </div>
+        <table width="100%" cellspacing="0" cellpadding="0" border="0">
+            <!-- Banner -->
+            <tr id="header">
+                <td colspan="2">
+                    <asp:ContentPlaceHolder ID="TB" runat="server">
+                        <table width="100%">
+                            <tr>
+                                <td style="font-weight: bold; font-size: 20px; width: 300px">
+                                    Remodelator
+                                </td>
+                                <td nowrap align="right">
+                                    <asp:LoginView ID="LoginView1" runat="server">
+                                        <LoggedInTemplate>
+                                            <span style="font-family: Verdana; font-size: 10pt">
+                                                <asp:LoginName ID="LoginName1" runat="server" Font-Italic="true" Font-Bold="true" />
+                                            </span>
+                                        </LoggedInTemplate>
+                                    </asp:LoginView>
+                                    &nbsp;
+                                    <asp:LoginView ID="LoginView2" runat="server">
+                                        <LoggedInTemplate>
+                                            <span style="font-family: Verdana; font-size: 10pt">
+                                                <asp:LoginStatus ID="LoginStatus1" runat="server" LogoutAction="RedirectToLoginPage"
+                                                    OnLoggingOut="LoginStatus1_LoggingOut" ForeColor="white" />
+                                            </span>
+                                        </LoggedInTemplate>
+                                    </asp:LoginView>
+                                    <asp:LinkButton ID="btnLogout" runat="server" Text="Logout"></asp:LinkButton>
+                                </td>
+                                <td width="10px">
+                                    &nbsp;</td>
+                            </tr>
+                        </table>
+                        <div>
+                            <uc1:Tabs ID="ucTabs" runat="server" />
+                        </div>
+                    </asp:ContentPlaceHolder>
+                </td>
+            </tr>
+            <!-- Main -->
+            <tr valign="top">
+                <td id="ContentArea" runat="server" class="TwoColumnContent" width="100%">
+                    <div>
+                        <asp:ContentPlaceHolder ID="CP" runat="server" />
+                    </div>
+                </td>
+                <td id="RightArea" runat="server" class="NavPane" align="right">
+                    <asp:ContentPlaceHolder ID="RA" runat="server">
+                        <uc2:RightPane ID="RightPane" runat="server" />
+                    </asp:ContentPlaceHolder>
+                </td>
+            </tr>
+        </table>
+
+        <script type="text/javascript">
+LoadNiftyFunc=function(){Nifty("div.AreaHeader","top medium");}
+AddOnload(LoadNiftyFunc);
+AddOnload(done_loading);
+
+function timeoutSession()
+{
+	// Display Message.
+	alert("Your session has timed out due to inactivity.")
+	self.location="<%= ConvertToAbsoluteUrl("Home.aspx") %>";
+}
+        </script>
+
+    </form>
+</body>
+</html>

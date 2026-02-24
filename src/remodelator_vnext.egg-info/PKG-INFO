@@ -1,0 +1,150 @@
+Metadata-Version: 2.4
+Name: remodelator-vnext
+Version: 0.1.0
+Summary: Remodelator vNext local simulation product
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: typer<1.0,>=0.12
+Requires-Dist: fastapi<1.0,>=0.115
+Requires-Dist: uvicorn<1.0,>=0.30
+Requires-Dist: jinja2<4.0,>=3.1
+Requires-Dist: sqlalchemy<3.0,>=2.0
+Requires-Dist: pydantic<3.0,>=2.7
+Requires-Dist: httpx<1.0,>=0.27
+Requires-Dist: reportlab<5.0,>=4.2
+Provides-Extra: dev
+Requires-Dist: pytest<9.0,>=8.0; extra == "dev"
+
+# Remodelator vNext
+
+Local-first rebuild of Remodelator with a finished simulation product goal.
+
+## Repository Layout
+
+- `src/remodelator/`: active vNext implementation
+- `tests/`: automated tests
+- `data/`: local runtime files (SQLite DB, session, exports)
+- `notes/Remodelator 2/`: legacy ASP.NET reference source
+- `notes/proposal/`: historical proposal and architecture notes
+- `notes/agreement/`: agreement drafts/reference text
+- `ACTION_PLAN.md`: execution roadmap and scope
+- `CLIENT_UNBLOCKER_LETTER.md`: client unblocker request template
+
+## Current Build Status
+
+Implemented now:
+- Python project scaffold with installable CLI (`remodelator`)
+- Local SQLite schema and seed flow
+- Auth + profile commands
+- Estimate and line-item commands
+- Estimate versioning/export and line-item reorder/group commands
+- Deterministic Decimal pricing engine
+- Catalog commands (seed/search/upsert/import)
+- Template save/apply
+- Proposal render + PDF generation
+- Billing simulation ledger commands
+- LLM pricing simulation + live OpenRouter path
+- Migration/reconciliation stubs
+- Audit and activity reporting
+- DB backup/restore commands
+- Thin FastAPI HTTP layer reusing the same service core
+
+## Quickstart
+
+1. Install dependencies:
+```bash
+python3 -m pip install -e '.[dev]'
+```
+
+2. Initialize and seed:
+```bash
+remodelator db migrate
+remodelator db seed
+```
+
+3. Register and log in:
+```bash
+remodelator auth register --email demo@example.com --password demo123 --name "Demo User"
+```
+
+4. Create an estimate and add a line item:
+```bash
+remodelator estimate create --title "Kitchen Refresh" --customer-name "Alice"
+remodelator line-item add <estimate_id> --item-name "Countertop Install" --quantity 2 --unit-price 85 --labor-hours 2.5
+```
+
+5. Recalculate and generate proposal outputs:
+```bash
+remodelator pricing recalc <estimate_id>
+remodelator proposal render <estimate_id>
+remodelator proposal pdf <estimate_id>
+```
+
+6. View audits and activity:
+```bash
+remodelator audit list --limit 20
+remodelator activity report
+```
+
+7. Run full local demo scenario:
+```bash
+./scripts/demo_local.sh
+```
+
+8. Start local API server:
+```bash
+./scripts/run_api.sh
+```
+
+Then open:
+- `GET http://127.0.0.1:8000/health`
+- `GET http://127.0.0.1:8000/docs`
+- `GET http://127.0.0.1:8000/app` (web review shell)
+
+API auth model (current local mode):
+- Register/login via `/auth/*` to obtain `user_id`.
+- Pass that value in header `x-user-id` for protected endpoints.
+
+Example:
+```bash
+USER_ID=$(curl -s -X POST http://127.0.0.1:8000/auth/register \
+  -H 'content-type: application/json' \
+  -d '{"email":"api-demo@example.com","password":"pw123","full_name":"API Demo"}' | python3 -c 'import json,sys; print(json.load(sys.stdin)["user_id"])')
+
+curl -s -X POST http://127.0.0.1:8000/estimates \
+  -H "x-user-id: $USER_ID" \
+  -H 'content-type: application/json' \
+  -d '{"title":"API Estimate","customer_name":"Alice"}'
+```
+
+## OpenRouter Live LLM Mode
+
+Default model configured in code:
+- `google/gemini-2.5-flash`
+
+Set environment variables before calling live pricing:
+```bash
+export OPENROUTER_API_KEY='<your_key>'
+export OPENROUTER_MODEL='google/gemini-2.5-flash'
+```
+
+Run:
+```bash
+remodelator pricing llm-live --item-name "Countertop Install" --current-unit-price 85 --context "Mid-range residential remodel in US market"
+```
+
+Security:
+- Never commit API keys.
+- If a key was shared in chat or logs, rotate it immediately.
+
+## Test
+
+```bash
+pytest -q
+```
+
+## Notes
+
+- Money math is Decimal-only.
+- Simulation-first mode is intentional for customer logic approval.
+- Live Stripe/UI hardening remains a post-approval phase per `ACTION_PLAN.md`.

@@ -1,0 +1,124 @@
+REMODELATOR v5.0 - PAYMENT MILESTONES
+======================================
+
+Total Project Investment: $10,000
+Payment Structure: 4 Milestones @ 25% each
+
+---
+
+MILESTONE 1: FOUNDATION & AUTH - $2,500 (25%)
+
+DELIVERABLES:
+- Project setup (GitHub, local dev environment, staging)
+- Tech stack: Vite + React + TypeScript, FastAPI, Firestore
+- Authentication: Registration, login, password reset
+- Basic frontend: Login/registration pages, protected routes, layout
+- Deployment: Staging environment on Cloud Run + Firebase Hosting
+
+DONE WHEN:
+- User can register, login, logout
+- Code deployed to staging
+- Developer environment documented
+
+---
+
+MILESTONE 2: CORE ESTIMATES - $2,500 (25%)
+
+DELIVERABLES:
+- Dashboard
+- Estimate CRUD (create, edit, view, delete, duplicate)
+- Line items (add, edit, remove, reorder)
+- Customer info management
+- Pricing calculations (unit price, quantity, markups, discounts, tax, totals)
+- Labor estimation
+- Estimate statuses and versioning
+
+DONE WHEN:
+- User can create and manage complete estimates
+- All pricing calculations accurate
+- Data persists to Firestore
+
+---
+
+MILESTONE 3: CATALOG & SHARING - $2,500 (25%)
+
+DELIVERABLES:
+- Catalog browsing (tree navigation)
+- 7 catalog categories (Bathroom, Kitchen, Basement, Attic, Exterior, Doors/Windows, Landscaping)
+- Item search
+- Add catalog items to estimates
+- Templates (save, load)
+- Customer proposals (shareable link, public view)
+- PDF generation
+- Terms and compliance
+
+DONE WHEN:
+- User can browse catalog and add items to estimates
+- Templates work
+- Shareable proposal links generate
+- PDFs download
+
+---
+
+MILESTONE 4: PAYMENTS, ADMIN & LAUNCH - $2,500 (25%)
+
+DELIVERABLES:
+- Stripe integration (subscriptions, per-estimate billing)
+- LLM real-time pricing (OpenAI/Anthropic integration, caching)
+- Admin portal (catalog management, user activity tracking)
+- Data migration from SQL Server
+- Production deployment (custom domain, SSL, monitoring)
+- Documentation (API docs, user guide, deployment runbook)
+- 30 days post-launch support
+
+DONE WHEN:
+- Stripe payments process successfully
+- LLM pricing requests work
+- Admin can manage catalog
+- Legacy data migrated
+- Production live at custom domain
+- Documentation complete
+
+---
+
+PAYMENT TERMS
+
+- 25% ($2,500) due upon completion and acceptance of each milestone
+- Client has 3 business days to review and accept
+- Payment due within 7 days of acceptance
+- Late payments: 1.5% monthly interest
+
+---
+
+NOT INCLUDED
+
+- Stretch features (scraping, forum, order placement, lead generation)
+- Mobile apps
+- Marketing/sales activities
+- Ongoing maintenance after 30-day post-launch period
+- Additional integrations
+- Multi-language support
+
+---
+
+ONGOING MAINTENANCE (OPTIONAL)
+
+After 30-day post-launch period:
+- $500/month: Bug fixes, security updates, monitoring (5 hours)
+- $1,000/month: Above + feature enhancements (12 hours)
+- Ad-hoc: $100/hour
+
+---
+
+ASSUMPTIONS
+
+- Client provides timely feedback (within 3 business days)
+- Client provides legacy database access
+- Client sets up own GCP, Stripe, LLM provider accounts
+- No major scope changes
+- Single developer
+- English only, US only
+
+---
+
+END

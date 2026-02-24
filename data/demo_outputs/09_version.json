@@ -1,0 +1,17 @@
+{
+  "id": "6d5eb587-00bb-4a7f-8443-cb52a9228f20",
+  "title": "Kitchen Refresh v2",
+  "status": "draft",
+  "version": 1,
+  "customer_name": "Alice",
+  "customer_email": "",
+  "customer_phone": "",
+  "job_address": "123 Maple Ave",
+  "estimate_markup_pct": "5.0000",
+  "tax_rate_pct": "8.2500",
+  "subtotal": "0",
+  "tax": "0",
+  "total": "0",
+  "updated_at": "2026-02-24T00:17:02.606645+00:00",
+  "line_items": []
+}

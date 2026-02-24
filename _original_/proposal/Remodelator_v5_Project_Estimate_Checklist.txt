@@ -1,0 +1,431 @@
+REMODELATOR v5.0 - PROJECT ESTIMATE CHECKLIST
+==============================================
+
+This document outlines all items that must be considered when producing a 
+comprehensive estimate for building Remodelator v5.0 from scratch using modern 
+architecture (Vite + React + TypeScript + FastAPI + Firestore + Cloud Run).
+
+---
+
+1. LEGACY CODE ANALYSIS
+   - Review existing Remodelator codebase (ASP.NET/SQL Server)
+   - Document current features and functionality
+   - Identify business logic that must be preserved
+   - Map data schemas from SQL Server to Firestore structure
+   - Identify technical debt and issues to NOT carry forward
+   - Document edge cases and corner cases in current system
+   - Interview current users about pain points
+   - Catalog what can be deprecated vs. what must be migrated
+   
+   ESTIMATE CONSIDERATIONS:
+   - Hours to audit legacy codebase
+   - Stakeholder interview time
+   - Documentation effort
+
+---
+
+2. SPEC DEVELOPMENT
+   - Product requirements document (PRD)
+   - User stories and acceptance criteria
+   - Functional requirements specification
+   - Non-functional requirements (performance, security, scalability)
+   - Business rules documentation
+   - Integration requirements
+   - Compliance requirements (if any)
+   
+   ESTIMATE CONSIDERATIONS:
+   - Requirements gathering sessions
+   - Spec writing and review cycles
+   - Stakeholder sign-off time
+
+---
+
+3. TECHNOLOGY AND ARCHITECTURE SELECTION
+   - Frontend stack selection and justification
+   - Backend stack selection and justification
+   - Database selection and justification
+   - Hosting/infrastructure selection
+   - Third-party services evaluation (auth, payments, LLM providers)
+   - Development tooling selection
+   - CI/CD pipeline design
+   - Security architecture design
+   - Disaster recovery and backup strategy
+   
+   ESTIMATE CONSIDERATIONS:
+   - Research and POC time
+   - Architecture documentation effort
+   - Stakeholder presentation and buy-in
+
+---
+
+4. FRONTEND SPECIFICATION
+   - Complete page inventory and wireframes
+   - Navigation flow and information architecture
+   - Improved wizard/workflow design
+   - Menu structure and hierarchy
+   - Component library selection/design
+   - Responsive design requirements
+   - Accessibility (WCAG) requirements
+   - User onboarding flow
+   - Error handling and user feedback
+   
+   PAGES TO SPEC:
+   - Login/Registration
+   - Dashboard (contractor home)
+   - Estimate List
+   - Estimate Editor/Builder
+   - Catalog Browser (tree navigation)
+   - Item Search
+   - Customer Proposal View (shareable)
+   - Profile/Settings
+   - Admin Portal (catalog management)
+   - Admin Portal (user activity tracking)
+   - Billing/Subscription Management
+   - Real-time Pricing Interface
+   
+   ESTIMATE CONSIDERATIONS:
+   - UX design hours
+   - UI mockup creation
+   - Prototyping effort
+   - User testing and iteration
+
+---
+
+5. API SPECIFICATION
+   - Complete REST API design
+   - Endpoint inventory (CRUD for all resources)
+   - Request/response schemas (Pydantic models)
+   - Authentication and authorization design
+   - Rate limiting strategy
+   - Error response standardization
+   - API versioning strategy
+   - WebSocket requirements (if any)
+   
+   CORE API MODULES:
+   - Authentication endpoints (/auth/*)
+   - User management (/users/*)
+   - Estimate CRUD (/estimates/*)
+   - Line item operations (/estimates/{id}/line-items/*)
+   - Catalog/tree navigation (/catalog/*, /tree/*)
+   - Template management (/templates/*)
+   - Real-time pricing (/pricing/*)
+   - Payment operations (/payments/*)
+   - Subscription management (/subscriptions/*)
+   - Admin operations (/admin/*)
+   
+   ESTIMATE CONSIDERATIONS:
+   - API design time
+   - OpenAPI/Swagger documentation
+   - Contract testing strategy
+
+---
+
+6. DATABASE SPECIFICATION
+   - Complete Firestore collection design
+   - Document schemas for each collection
+   - Index design and query optimization
+   - Security rules design
+   - Data migration strategy from SQL Server
+   - Backup and restore procedures
+   - Data retention policies
+   
+   COLLECTIONS TO DESIGN:
+   - users
+   - estimates (with lineItems subcollection)
+   - catalog (tree structure)
+   - templates
+   - subscriptions
+   - payments
+   - llm_pricing_cache
+   - audit_logs
+   - user_activity
+   
+   ESTIMATE CONSIDERATIONS:
+   - Schema design time
+   - Migration script development
+   - Testing data integrity
+   - Performance testing
+
+---
+
+7. AUTHENTICATION & AUTHORIZATION
+   - Authentication method (JWT, Firebase Auth, etc.)
+   - User registration flow
+   - Login flow (email/password, social, etc.)
+   - Password reset flow
+   - Email verification
+   - Multi-factor authentication (if required)
+   - Session management
+   - Token refresh strategy
+   - Role-based access control (RBAC)
+   - Permission system design
+   
+   ROLES TO DEFINE:
+   - Contractor (standard user)
+   - Admin (catalog management, user monitoring)
+   - Super Admin (if needed)
+   
+   ESTIMATE CONSIDERATIONS:
+   - Auth implementation time
+   - Security testing
+   - Penetration testing budget
+
+---
+
+8. ADMIN PORTAL
+   - Catalog management interface
+     - Add/edit/delete catalog items
+     - Manage tree hierarchy
+     - Bulk import/export
+     - Item pricing management
+     - Item search and filtering
+   
+   - User activity tracking
+     - User login history
+     - Estimate creation metrics
+     - Feature usage analytics
+     - System health monitoring
+     - Audit log viewer
+   
+   - Analytics dashboard
+     - Active users
+     - Estimates created per month
+     - Revenue metrics
+     - LLM API usage and costs
+   
+   ESTIMATE CONSIDERATIONS:
+   - Admin UI development time
+   - Reporting/analytics implementation
+   - Real-time monitoring setup
+
+---
+
+9. REAL-TIME PRICING WITH LLM
+   - LLM provider selection (OpenAI, Anthropic, Google, etc.)
+   - Prompt engineering for pricing accuracy
+   - Context window management
+   - Caching strategy to reduce API calls
+   - Fallback pricing if LLM unavailable
+   - Price validation and bounds checking
+   - Price explanation/justification display
+   - Market data integration (if applicable)
+   - Regional pricing adjustments
+   
+   TECHNICAL REQUIREMENTS:
+   - LLM API integration
+   - Prompt template system
+   - Response parsing and validation
+   - Cost tracking per LLM call
+   - User opt-in/opt-out
+   
+   ESTIMATE CONSIDERATIONS:
+   - LLM integration development
+   - Prompt testing and optimization
+   - Accuracy validation
+   - User acceptance testing
+
+---
+
+10. PAYMENTS & BILLING
+    - Payment processor selection (Stripe recommended)
+    - Subscription tiers design
+      - Free tier (if any)
+      - Basic tier
+      - Pro tier
+      - Enterprise tier
+    
+    - Per-estimate charge system
+      - Charge per estimate created
+      - Or charge per estimate sent to customer
+      - Payment flow integration
+    
+    - LLM usage billing
+      - Track LLM API calls per user
+      - Bill per call or bundled in subscription
+      - Usage limits and overage charges
+    
+    - Payment flows to implement:
+      - Subscription signup
+      - Subscription upgrade/downgrade
+      - Subscription cancellation
+      - One-time estimate charges
+      - Payment method management
+      - Invoice generation
+      - Failed payment handling
+      - Refund processing
+    
+    ESTIMATE CONSIDERATIONS:
+    - Stripe integration time
+    - Webhook handling
+    - Billing logic complexity
+    - PCI compliance considerations
+    - Tax calculation (if required)
+
+---
+
+11. DEPLOYMENT
+    - Cloud Run deployment setup
+      - Container configuration (512MB, 1 vCPU, min instances: 1)
+      - Environment variable management
+      - Secret management (API keys, etc.)
+    
+    - Frontend hosting (Firebase Hosting)
+      - Build pipeline
+      - CDN configuration
+      - Custom domain setup
+    
+    - Firestore setup
+      - Production database provisioning
+      - Security rules deployment
+      - Index creation
+      - Backup configuration
+    
+    - CI/CD pipeline
+      - GitHub Actions workflows
+      - Automated testing
+      - Staging environment
+      - Production deployment process
+    
+    - Monitoring and logging
+      - Cloud Logging setup
+      - Error tracking (Sentry)
+      - Performance monitoring
+      - Uptime monitoring
+      - Alert configuration
+    
+    ESTIMATE CONSIDERATIONS:
+    - DevOps setup time
+    - Infrastructure as Code (Terraform)
+    - Deployment automation
+    - Monitoring dashboard setup
+
+---
+
+12. URL FORWARDING
+    - Domain registration (if needed)
+    - DNS configuration
+    - Custom domain for frontend (e.g., app.remodelator.com)
+    - Custom domain for API (e.g., api.remodelator.com)
+    - SSL/TLS certificate setup (automated with Cloud Run/Firebase)
+    - Redirect legacy URLs to new system
+    - Email forwarding setup (if needed)
+    
+    ESTIMATE CONSIDERATIONS:
+    - Domain registration cost
+    - DNS configuration time
+    - Redirect mapping for legacy URLs
+
+---
+
+13. COST OF REVENUE ESTIMATE
+    - Firestore costs
+      - Storage: $X per GB/month
+      - Read operations: $X per 100K reads
+      - Write operations: $X per 100K writes
+      - Delete operations: $X per 100K deletes
+      - ESTIMATE USAGE:
+        - Storage per user
+        - Reads per active user per day
+        - Writes per active user per day
+    
+    - Cloud Run costs
+      - Always-on instance: $42/month (512MB, 1 vCPU, min instances: 1)
+      - Additional request costs (if traffic exceeds free tier)
+      - ESTIMATE SCALING:
+        - Cost at 10 users
+        - Cost at 50 users
+        - Cost at 100 users
+        - Cost at 500 users
+    
+    - LLM real-time pricing costs
+      - OpenAI GPT-4 pricing: $X per 1K tokens
+      - Average tokens per pricing request: ~X tokens
+      - Cache hit rate estimation
+      - ESTIMATE USAGE:
+        - LLM calls per user per day
+        - Monthly cost per active user
+        - Total monthly cost at scale
+    
+    - Firebase Hosting costs
+      - Storage: $X per GB (likely FREE tier)
+      - Bandwidth: $X per GB (likely FREE tier)
+    
+    - Other variable costs
+      - SendGrid/email service (if needed)
+      - SMS/Twilio (if needed)
+      - Third-party APIs
+    
+    DELIVERABLE:
+    - Spreadsheet with cost model at different user scales
+    - Break-even analysis
+    - Unit economics (cost per user per month)
+
+---
+
+14. OPERATING EXPENSE ESTIMATE
+    - LLM API costs (variable with usage)
+      - Monthly cost projections at different scales
+      - Cost allocation per user/subscription tier
+    
+    - Labor costs
+      - Initial development (one-time)
+        - Hours estimate by role (developer, designer, PM)
+        - Hourly rates
+      - Ongoing maintenance (recurring)
+        - Bug fixes
+        - Feature enhancements
+        - Customer support
+        - Infrastructure monitoring
+      - Annual maintenance estimate (% of development cost)
+    
+    - Other operating expenses
+      - Domain renewal
+      - Third-party service subscriptions
+      - Development tool licenses
+      - Error tracking (Sentry)
+      - Analytics tools
+    
+    DELIVERABLE:
+    - One-time development cost estimate
+    - Monthly recurring expense forecast
+    - Annual operating budget
+    - Breakeven user count analysis
+
+---
+
+ADDITIONAL CONSIDERATIONS
+==========================
+
+RISK FACTORS:
+- LLM pricing accuracy and user acceptance
+- Data migration complexity and data integrity
+- Payment processing edge cases
+- Scaling costs if user base grows rapidly
+- LLM API reliability and rate limits
+
+TESTING REQUIREMENTS:
+- Unit tests (backend services)
+- Integration tests (API endpoints)
+- E2E tests (critical user flows)
+- Load testing (performance at scale)
+- Security testing (penetration testing)
+- User acceptance testing
+
+DOCUMENTATION REQUIREMENTS:
+- Developer documentation
+- API documentation (OpenAPI/Swagger)
+- User documentation/help center
+- Admin documentation
+- Deployment runbook
+- Disaster recovery procedures
+
+TIMELINE DEPENDENCIES:
+- Design must complete before frontend dev
+- API spec must complete before frontend integration
+- Database schema must complete before migration
+- Payment integration requires legal/compliance review
+- LLM integration requires prompt engineering and testing
+
+---
+
+END OF CHECKLIST

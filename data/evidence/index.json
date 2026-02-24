@@ -1,0 +1,192 @@
+{
+  "generated_at_utc": "20260224T182430Z",
+  "count": 21,
+  "latest_bundle": "20260224T182352Z",
+  "latest_non_blocker_gate_status": "passed",
+  "latest_completion_pct": 100.0,
+  "bundles": [
+    {
+      "bundle": "20260224T164504Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T164504Z",
+      "summary_exists": true,
+      "status_exists": false
+    },
+    {
+      "bundle": "20260224T164518Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T164518Z",
+      "summary_exists": true,
+      "status_exists": false
+    },
+    {
+      "bundle": "20260224T165207Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T165207Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "partial",
+      "completion_pct": 80.0,
+      "generated_at_utc": "20260224T165207Z"
+    },
+    {
+      "bundle": "20260224T165223Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T165223Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T165223Z"
+    },
+    {
+      "bundle": "20260224T165630Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T165630Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "partial",
+      "completion_pct": 80.0,
+      "generated_at_utc": "20260224T165630Z"
+    },
+    {
+      "bundle": "20260224T165720Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T165720Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T165720Z"
+    },
+    {
+      "bundle": "20260224T170249Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T170249Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T170249Z"
+    },
+    {
+      "bundle": "20260224T170459Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T170459Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T170459Z"
+    },
+    {
+      "bundle": "20260224T170841Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T170841Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T170841Z"
+    },
+    {
+      "bundle": "20260224T171255Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T171255Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T171255Z"
+    },
+    {
+      "bundle": "20260224T171604Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T171604Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T171604Z"
+    },
+    {
+      "bundle": "20260224T171828Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T171828Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T171828Z"
+    },
+    {
+      "bundle": "20260224T172051Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T172051Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T172051Z"
+    },
+    {
+      "bundle": "20260224T174723Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T174723Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T174723Z"
+    },
+    {
+      "bundle": "20260224T174912Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T174912Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T174912Z"
+    },
+    {
+      "bundle": "20260224T175115Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T175115Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T175115Z"
+    },
+    {
+      "bundle": "20260224T175334Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T175334Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T175334Z"
+    },
+    {
+      "bundle": "20260224T181431Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T181431Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T181431Z"
+    },
+    {
+      "bundle": "20260224T181657Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T181657Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T181657Z"
+    },
+    {
+      "bundle": "20260224T181947Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T181947Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T181947Z"
+    },
+    {
+      "bundle": "20260224T182352Z",
+      "path": "/Users/dylan/Documents/remodelator-main/data/evidence/20260224T182352Z",
+      "summary_exists": true,
+      "status_exists": true,
+      "non_blocker_gate_status": "passed",
+      "completion_pct": 100.0,
+      "generated_at_utc": "20260224T182352Z"
+    }
+  ]
+}

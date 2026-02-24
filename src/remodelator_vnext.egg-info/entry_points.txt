@@ -1,0 +1,3 @@
+[console_scripts]
+remodelator = remodelator.interfaces.cli.main:run
+remodelator-api = remodelator.interfaces.api.run:run

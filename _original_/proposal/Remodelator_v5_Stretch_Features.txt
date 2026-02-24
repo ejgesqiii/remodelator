@@ -1,0 +1,98 @@
+REMODELATOR v5.0 - STRETCH FEATURES
+====================================
+
+Features to build after MVP is shipped and validated.
+
+---
+
+1. EXTERNAL DATA SCRAPING & CATALOG BUILD
+   - Scrape Home Depot, Lowe's, Menards for pricing
+   - Auto-update catalog item prices daily/weekly
+   - Match scraped products to catalog items
+   - Flag price discrepancies
+   - Historical pricing trends
+   
+   TECH:
+   - Python scrapers (BeautifulSoup/Scrapy)
+   - Proxy rotation to avoid IP bans
+   - Scheduled Cloud Run jobs
+   - Price matching ML model
+   
+   ESTIMATE:
+   - 2-3 weeks scraper development
+   - Legal review (ToS compliance)
+   - Ongoing proxy costs (~$20-50/month)
+
+---
+
+2. FORUM FOR JOKES
+   - Contractor community forum
+   - Post jokes, memes, stories
+   - Upvote/downvote
+   - Comments/threads
+   - Moderation tools
+   
+   TECH:
+   - Firestore collections (posts, comments, votes)
+   - Real-time updates
+   - Image upload to Cloud Storage
+   - Spam filtering
+   
+   ESTIMATE:
+   - 1-2 weeks development
+   - Moderation labor (ongoing)
+
+---
+
+3. DIRECT ORDER PLACEMENT VIA PLATFORM
+   - Integrate with supplier APIs (Home Depot Pro, Ferguson, etc.)
+   - Place orders directly from estimates
+   - Track order status
+   - Delivery scheduling
+   - Order history
+   
+   TECH:
+   - Supplier API integrations
+   - OAuth for supplier accounts
+   - Webhook handlers for order updates
+   - Split payments (if platform takes cut)
+   
+   ESTIMATE:
+   - 3-4 weeks per supplier integration
+   - Supplier partnership negotiations
+   - Payment processing complexity
+   - Liability/return policy handling
+
+---
+
+4. WARM LEAD GENERATION
+   - Homeowners submit project requests
+   - Match requests to contractors by location/specialty
+   - Contractors bid on leads
+   - Pay-per-lead or subscription model
+   - Lead quality scoring
+   
+   TECH:
+   - Public-facing landing page
+   - Lead intake form
+   - Geocoding and contractor matching
+   - Email/SMS notifications
+   - CRM-lite for lead tracking
+   
+   ESTIMATE:
+   - 2-3 weeks development
+   - Marketing to acquire homeowner leads
+   - Lead verification to prevent spam
+   - Potential revenue stream
+
+---
+
+PRIORITIZATION
+- #4 (Leads) = Revenue generator, do first
+- #1 (Scraping) = High value, moderate effort
+- #3 (Orders) = Complex, needs partnerships
+- #2 (Forum) = Low priority, nice-to-have
+
+---
+
+END

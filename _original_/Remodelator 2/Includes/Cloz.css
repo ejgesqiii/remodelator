@@ -1,0 +1,639 @@
+﻿/* ****************Start Markert Prototype Styles ****************** */
+
+.Link1 {
+  color : blue;
+  cursor:pointer;
+}
+
+.DivHeader
+{
+	background-color: Gray; 
+	color: white;
+	height:20px;
+	font-size:12px;
+}
+
+.JobHeader
+{
+	width: 99%; 
+	border: solid 1px red; 
+	padding: 5px 5px 5px 5px; 
+	margin-bottom: 10px;
+	font-size:12px;
+}
+ 
+div#links a span {display: none;}
+
+div#links a:hover span {display: block;
+   position: relative; top: 0px; left: 5px; width:200px;
+   padding: 0px; margin: 0px; z-index: 100;
+   color: black; background: gray;
+   font: 10px Verdana, sans-serif; }
+
+div#links a:hover {text-decoration:none;color:Black}
+   
+.NavPane
+{
+	width:100%;
+	height: 100%; 
+	padding: 10px 2px 0px 5px;
+}
+    
+.TwoColumnContent
+{
+     padding: 10px 0px 0px 0px;
+}
+
+.OneColumnContent
+{
+     padding: 10px 0px 0px 0px;
+}
+    
+body
+{
+	margin:0px 0px 10px 0px;
+}
+
+.AreaTitle
+{
+	font-weight:bold;
+	font-size:8pt;
+	color:Navy;
+}
+
+div.AreaHeader
+{
+	background-color: #d4dfeb;
+	padding-left:10px;
+	padding-right:10px;
+}
+
+.LegendTitle
+{
+	font-weight:bold;
+	font-size:8pt;
+	color:Navy;
+}
+
+.StepHeader
+{
+	font-size: 14pt;
+	padding: 10px 10px 10px 10px;
+}
+
+.FieldLabel
+{
+	vertical-align:middle;
+	text-align:right;
+	white-space:nowrap;
+}
+
+.FieldLabelBold
+{
+	font-weight:bold;
+	vertical-align:middle;
+	text-align:right;
+	white-space:nowrap;
+}
+
+.FieldLabelItalic
+{
+	color:Navy;
+	font-weight:bold;
+	font-style:italic;
+	vertical-align:middle;
+	text-align:right;
+	white-space:nowrap;
+}
+
+.FieldText
+{
+	font-family: Verdana;
+	font-size: 8pt;
+}
+
+.FieldTextRed
+{
+	font-family: Verdana;
+	font-size: 8pt;
+	color:Red;
+}
+
+.FieldText2
+{
+	padding:2px 0px 0px 0px
+}
+
+/* *********** Button Styles - Start ********* */
+
+.ButtonStyle
+{
+	background-color:#CCCCCC;
+	border:solid 1px #CCCCCC;
+	height:20px;
+	width:100px;
+	/*color:#284775;*/
+	color:Navy;
+}
+
+.LinkButtonStyle
+{
+	color:#194779;
+	padding-right:10px;
+}
+
+.button a {
+   padding : 1px 5px 1px 5px;
+   text-align : center;
+   text-decoration : none;
+   display : block;
+   width : 100px;
+   color : white;
+   font-size:10pt;
+   background-color : #194779;
+   border-top : 2px solid #eaedf4;
+   border-left : 2px solid #eaedf4;
+   border-bottom : 2px solid #224059;
+   border-right : 2px solid #224059;
+   cursor:pointer;
+}
+
+.button a:visited {
+  color : white;
+  cursor:pointer;
+}
+
+.button a:link {
+  color : white;
+  text-decoration : none;
+  cursor:pointer;
+}
+
+.button a:hover {
+   color : white;
+   background-color : #6699CC;
+   border-top : 2px #31557f solid;
+   border-left : 2px #31557f solid;
+   border-bottom : 2px #f8f9fb solid;
+   border-right : 2px #f8f9fb solid;
+   text-decoration : none;
+   cursor:pointer;
+} 
+
+
+/* Data Grid styles - Start */
+
+/* show scrollbar if area exceeds max height */
+.OrderViewArea {
+width:804px;
+max-height: 200px; /* Moz, Opera.. */
+height: expression(this.scrollHeight > 200 ? "200px" : "auto"); /* IE ONLY */
+overflow-y:auto;
+overflow-x:hidden;	/* Cannot do overflow:auto because Moz adds horizontal scrollbar */
+}
+
+.CustomerMaxArea
+{
+max-height: 200px; /* Moz, Opera.. */
+height: expression(this.scrollHeight > 200 ? "200px" : "auto"); /* IE ONLY */
+overflow-y:auto;
+overflow-x:hidden;	/* Cannot do overflow:auto because Moz adds horizontal scrollbar */
+}
+
+/* show scrollbar if area exceeds max height */
+.ItemsMaxArea {					
+max-height: 500px; /* Moz, Opera.. */
+width:815px;
+height: expression(this.scrollHeight > 500 ? "500px" : "auto"); /* IE ONLY */
+overflow-y:auto;
+overflow-x:hidden;	/* Cannot do overflow:auto because Moz adds horizontal scrollbar */
+}
+
+.OrdersMaxArea {
+width:995px;
+max-height: 500px; /* Moz, Opera.. */
+height: expression(this.scrollHeight > 500 ? "500px" : "auto"); /* IE ONLY */
+overflow-y:auto;
+overflow-x:hidden;	/* Cannot do overflow:auto because Moz adds horizontal scrollbar */
+}
+
+.ItemViewArea {
+width:975px;
+max-height: 200px; /* Moz, Opera.. */
+height: expression(this.scrollHeight > 200 ? "200px" : "auto"); /* IE ONLY */
+overflow-y:auto;
+overflow-x:hidden;	/* Cannot do overflow:auto because Moz adds horizontal scrollbar */
+}
+
+.ItemMasterViewArea {
+width:576px;
+max-height: 375px; /* Moz, Opera.. */
+height: expression(this.scrollHeight > 375 ? "375px" : "auto"); /* IE ONLY */
+overflow-y:auto;
+overflow-x:hidden;	/* Cannot do overflow:auto because Moz adds horizontal scrollbar */
+}
+
+.LA		/* Left Align */
+{
+	text-align:left;
+}
+.GridSelect
+{
+	background-color:lightgray;
+}
+
+.GridHeader
+{
+    color:White;
+    background-color:Teal;
+    font-family:Verdana;
+    font-size:8pt;
+    font-weight:bold;
+}
+.EmptyGridRow
+{
+    color:Red;
+    font-family:Verdana;
+    font-size:8pt;
+    font-style:italic;
+}
+.GPC			/* Grid Price Column */
+{
+    width:50px;
+    text-align:right;
+}
+.AltRow
+{
+    background-color:#EEEEEE;
+}
+
+/* Welcome Page - Start */
+    
+.NavTitle
+{
+    font-family: verdana, tahoma, sans-serif;
+    font-size:12pt;
+    margin-top: 10px; 
+    margin-bottom: 6px; 
+    color: #0a6cce; 
+    font-weight: bold; 
+    line-height: 2em;
+}
+
+.NavLink
+{
+    font-family: verdana, tahoma, sans-serif; 	
+    font-size:12pt;
+    margin-bottom: 5px; 
+    margin-left: 10px; 
+    line-height: 1.5em;
+    width:200px;
+    height:60px;
+}   
+ 
+/* ****************End Markert Prototype Styles ****************** */
+
+/* vvvvvv Body CSS vvvvvv */
+BODY
+{
+	background-color: white;
+	font-family: Verdana;
+	font-size: 8pt;
+	font-weight: normal;
+	letter-spacing: normal;
+	text-transform: none;
+	word-spacing: normal;
+}
+
+.noBorder
+{
+	border-width: 0px;
+	padding: 0px 0px 0px 0px;
+}
+/* ^^^^^^^ Body CSS ^^^^^^^ */
+
+
+
+/* vvvvvv Body Fonts CSS vvvvvv */
+h1, h2, h3, h4, h5, h6
+{
+	font-family: Verdana;
+}
+
+.WelcomeText
+{
+	font-family: Verdana;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 14pt;
+}
+
+.HomeText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 13pt;
+}
+
+.StoreText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 12pt;
+}
+
+.HeadingText
+{
+	font-family: Verdana;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 14pt;
+}
+
+.SubHeadingText
+{
+	font-family: Tahoma;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 14pt;
+}
+
+.FamilyText
+{
+	font-family: Tahoma;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 16pt;
+	text-align: center;
+}
+
+.FamilyTextSmall
+{
+	font-family: Tahoma;
+	font-style: italic;
+	font-weight: bold;
+	font-size: 14pt;
+	text-align: center;
+}
+
+.LargeTextBold
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 12pt;
+}
+
+.MediumTextBold
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 10pt;
+}
+
+.SmallTextBold
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 8pt;
+}
+
+.TinyTextBold
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 7pt;
+}
+
+.LargeText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 12pt;
+}
+
+.MediumText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 10pt;
+}
+
+.StoreText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 9pt;
+}
+
+.SmallText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: normal;
+	font-size: 8pt;
+}
+
+.TinyText
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-size: 7pt;
+}
+
+/* ^^^^^^^ Body Fonts CSS ^^^^^^^ */
+
+
+/* vvvvvv Table CSS vvvvvv */
+.FormWhite
+{
+	background: #FFFFFF;
+	font-family: Verdana;
+	font-size: 8pt;
+}
+
+.FormTan
+{
+	background: #FFFFCC;
+	font-family: Verdana;
+	font-size: 8pt;
+}
+
+.FormBrown
+{
+	background: #CDCD9B;
+	font-family: Verdana;
+	font-size: 8pt;
+}
+
+.TabStyle6
+{
+	vertical-align: top;
+	width: 98px;
+	height: 24px;
+}
+
+.TabStyleLast6
+{
+	vertical-align: top;
+	width: 94px;
+	height: 24px;
+}
+
+.TabStyle5
+{
+	vertical-align: top;
+	width: 117px;
+	height: 24px;
+}
+
+.TabStyleLast5
+{
+	vertical-align: top;
+	width: 113px;
+	height: 24px;
+}
+
+.TabStyle4
+{
+	vertical-align: top;
+	width: 147px;
+	height: 24px;
+}
+
+.TabStyleLast4
+{
+	vertical-align: top;
+	width: 143px;
+	height: 24px;
+}
+
+.TabStyleSchool
+{
+	vertical-align: top;
+	width: 198px;
+	height: 24px;
+}
+
+.LinkStyleTop3
+{
+	vertical-align: top;
+	width: 98px;
+	height: 24px;
+}
+
+.LinkStyle3
+{
+	vertical-align: top;
+	width: 98px;
+	height: 19px;
+}
+
+.LinkStyleTop2
+{
+	vertical-align: top;
+	width: 147px;
+	height: 24px;
+}
+
+.LinkStyle2
+{
+	vertical-align: top;
+	width: 147px;
+	height: 19px;
+}
+
+.NavPadding
+{
+	padding-right: 4px;
+}
+
+.MarqueeText
+{
+	font-weight: bold;
+	font-size: 8pt;
+	color: #ffffff;
+	font-family: verdana;
+}
+
+.SearchBoxText
+{
+	font-size: 12px;
+	width: 120px;
+	font-family: arial;
+	height: 14px;
+}
+
+.DaysFont
+{
+	font-weight: bold;
+	font-size: 14pt;
+	left: 660px;
+	font-family: arial;
+	position: absolute;
+	top: 575px;
+}
+
+/* vvvvvv Miscellaneous vvvvvv */
+
+.MTBPara
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 10pt;
+	padding:10px 5px 5px 0px
+}
+
+.STBPara
+{
+	font-family: Verdana;
+	font-style: normal;
+	font-weight: bold;
+	font-size: 8pt;
+	padding:10px 5px 5px 0px
+}
+
+.ButtonLink
+{
+	text-align:center;
+	padding:20px 5px 10px 0px
+}
+
+DIV.para
+{
+	padding-top: 10px;
+}
+
+DIV.para2
+{
+	padding-left:10px;
+}
+
+SPAN.steps
+{
+	padding-left: 20px;
+}
+SPAN.rsteps
+{
+	padding-left: 5px;
+}
+LI.Normal
+{
+	padding-bottom: 5px;
+}
+
+.Content
+{
+	background-color:#F5F5EB
+}
+
+/* ^^^^^^^ Miscellaneous ^^^^^^^ */
