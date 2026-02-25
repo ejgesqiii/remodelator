@@ -86,3 +86,5 @@ data/*.db-wal
 data/test_*/
 data/test_*.db
 data/proposal_*.pdf
+
+REALENV
