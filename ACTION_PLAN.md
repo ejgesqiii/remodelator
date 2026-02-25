@@ -344,10 +344,15 @@ Batch B (complete):
    Artifact baseline: `docs/LAUNCH_EVIDENCE_CHECKLIST.md`, `docs/SQLITE_OPERATIONS_RUNBOOK.md`, `docs/DEPLOYMENT_HARDENING_CHECKLIST.md`.
 4. Active execution board: `docs/BATCH_B_TASKBOARD.md`.
 
-Batch C (active):
+Batch C (complete):
 1. Product/UX: launch-operability UX cleanup and hybrid billing transparency in admin/reporting.
 2. Domain/API: live billing provider adapter and policy-driven retention/export controls.
 3. Quality/Ops: deployment hardening artifacts and restore drills.
+
+Batch D (Handover / Verification):
+1. Hardening: Resolving test suite regressions (decimal precision, SQLite unique constraints).
+2. Verification: Final sandbox E2E walkthroughs.
+3. Documentation: Root-level audit and final sync (complete).
 
 ## 17) Definition of "Objectively Better"
 
@@ -390,11 +395,29 @@ Production release is complete only when all are true:
 6. deployment runbook, backup/restore, and rollback checklist are documented and tested,
 7. all quality gates pass on production profile settings (no dev bypass assumptions).
 
-## 20) Lean Engineering Guardrails (Anti-Debt Rules)
+## 21) Appendix A: Current Known Regressions (Handover Notes)
 
-1. single implementation per behavior: no duplicate business logic in UI and API.
-2. strict contracts by default: unknown request fields rejected; list/query bounds validated.
-3. every defect fix adds or updates a test that reproduces prior failure mode.
-4. every batch includes dead-code removal for any superseded helper/module.
-5. all runtime behavior changes are config-driven and documented in one source.
-6. orchestration modules stay thin; complex transformations live in dedicated service/helper modules.
+Implementation of Phase E (Live Stripe Integration) is complete, but the final automated hardening pass revealed several regressions that require Senior Engineer attention:
+
+### A.1) Decimal Precision Mismatches
+- **Issue**: API assertions expect `10.00` (string) but receive `10.0000`.
+- **Location**: `tests/test_api_flow.py`, `tests/test_cli_flow.py`.
+- **Cause**: Recent hardening of `billing_policy.py` to correctly surface live state changed assertion expectations.
+
+### A.2) SQLite Unique Constraint Violations
+- **Issue**: `sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: idempotency_records.id`.
+- **Location**: `test_billing_runtime.py::test_execute_billing_command_stripe_usage_success`.
+- **Cause**: Potential conflict in mock setup or test db re-initialization timing.
+
+### A.3) Webhook Synchronization Gaps
+- **Issue**: `test_stripe_webhook_flow` fails on subscription ID assertions.
+- **Error**: `AssertionError: assert None == 'sub_test_123'`.
+- **Context**: The partially mocked Stripe event handlers are not correctly updating the DB state in the test environment.
+
+### A.4) Configuration Reconciliations
+- **Action**: Verify `cors_allowed_origins` usage vs `cors_origins`.
+- **Status**: Patch applied to `billing_adapters.py`, but cross-suite verification is needed to ensure settings attribute names are consistent.
+
+---
+**Handover Date**: 2026-02-25
+**Status**: Implementation Complete / Hardening Blocked by Regressions.

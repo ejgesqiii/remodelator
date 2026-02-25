@@ -90,6 +90,8 @@ flowchart LR
   - `src/remodelator/application/billing_policy.py`
   - `src/remodelator/application/billing_adapters.py`
   - `src/remodelator/application/billing_runtime.py`
+  - `src/remodelator/application/stripe_service.py` (Stripe SDK encapsulation)
+- Billing webhook listener: `src/remodelator/interfaces/api/routes/billing.py::billing_webhook`
 - Demo reset rebuild logic is centralized in `src/remodelator/application/service.py::rebuild_demo_database` and reused by both API and CLI admin flows.
 - Data session handling: `src/remodelator/infra/db.py`
 - Contract enforcement: strict request models (`extra=forbid`) and explicit response models on health/auth/profile/admin routes.

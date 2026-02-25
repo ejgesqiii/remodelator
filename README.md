@@ -48,6 +48,7 @@ Project support:
 - `tests`: backend tests
 - `data`: local SQLite DB, exports, generated demo artifacts
 - `scripts`: helper scripts to run API/web demo
+- `stripe`: python SDK for live billing integration
 - `scripts/bootstrap_local.sh`: one-command local dependency bootstrap
 - `scripts/README.md`: canonical script index and quickstart command map
 - `ARCHITECTURE.md`: exhaustive technical architecture and API/UI reference
@@ -80,7 +81,9 @@ Backend/CLI/API currently supports:
 - billing idempotency replay via key
 - Stripe-like billing lifecycle simulation (`payment_method_attached`, `checkout_completed`, `usage_charge`, `invoice_*`, `subscription_canceled`)
 - billing lifecycle transition validation to prevent invalid event ordering
-- provider-driven billing runtime (simulation provider active; stripe provider fail-loud until live adapter enablement)
+- live Stripe integration via `StripeBillingAdapter` and `StripeService`
+- production billing webhook listener with signature verification
+- provider-driven billing runtime (simulation or stripe provider active)
 - OpenRouter-backed LLM pricing suggestions (no local fallback path)
 - LLM provider status endpoint (`/pricing/llm/status`)
 - audit/activity reporting
