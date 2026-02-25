@@ -9,3 +9,4 @@ reportlab<5.0,>=4.2
 
 [dev]
 pytest<9.0,>=8.0
+ruff<1.0,>=0.12
