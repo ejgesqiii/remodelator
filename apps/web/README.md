@@ -54,8 +54,8 @@ Vite dev proxy can still route `/api/*` to a backend target (`VITE_API_PROXY_TAR
 - Estimate create/select/update actions
 - Line item add
 - Line item edit/remove/reorder/group
-- Catalog search and add-to-estimate
-- Catalog upsert/import (JSON)
+- Estimate add-item panel with inline catalog picker (category tree + search + one-click add)
+- Catalog upsert/import (JSON) for admin-role sessions
 - Template save/apply/list
 - Proposal render
 - Proposal PDF output trigger

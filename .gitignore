@@ -47,3 +47,42 @@ obj/
 
 # Local secrets
 .env
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Web artifacts
+apps/web/node_modules/
+apps/web/dist/
+apps/web/playwright-report/
+apps/web/test-results/
+apps/web/.vite/
+
+# Runtime data outputs
+data/.ci_outputs/
+data/.ci_sqlite/
+data/.e2e/
+data/evidence/
+data/demo_outputs/
+data/stripe_probe/
+data/stripe_release_gate/
+data/stripe_webhook_golden_path/
+data/.lock.*
+data/.node_localstorage*
+data/session.json
+data/demo.backup.json
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/test_*/
+data/test_*.db
+data/proposal_*.pdf

@@ -1,7 +1,0 @@
-{
-  "billing_event_id": "a7b55f3c-d179-4333-8146-905460162b77",
-  "event_type": "estimate_charge",
-  "amount": "668.6100",
-  "idempotency_status": "created",
-  "idempotency_key": "demo-charge-1"
-}
