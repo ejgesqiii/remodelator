@@ -1,0 +1,255 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+@theme {
+  --font-heading: "Sora", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-background: hsl(224 20% 8%);
+  --color-surface: hsl(224 18% 12%);
+  --color-surface-hover: hsl(224 18% 16%);
+  --color-surface-active: hsl(224 18% 20%);
+  --color-border: hsl(224 15% 20%);
+  --color-border-strong: hsl(224 15% 28%);
+  --color-ring: hsl(213 94% 55%);
+
+  --color-foreground: hsl(210 40% 98%);
+  --color-muted: hsl(215 16% 47%);
+  --color-muted-foreground: hsl(215 20% 65%);
+
+  --color-primary: hsl(213 94% 55%);
+  --color-primary-hover: hsl(213 94% 48%);
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  --color-accent: hsl(262 83% 65%);
+  --color-accent-foreground: hsl(0 0% 100%);
+
+  --color-success: hsl(152 60% 40%);
+  --color-success-foreground: hsl(0 0% 100%);
+  --color-success-muted: hsl(152 40% 15%);
+
+  --color-warning: hsl(38 92% 50%);
+  --color-warning-foreground: hsl(38 80% 10%);
+  --color-warning-muted: hsl(38 40% 15%);
+
+  --color-destructive: hsl(0 72% 55%);
+  --color-destructive-hover: hsl(0 72% 48%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-destructive-muted: hsl(0 40% 15%);
+
+  --color-card: hsl(224 18% 11%);
+  --color-card-foreground: hsl(210 40% 98%);
+
+  --color-popover: hsl(224 18% 13%);
+  --color-popover-foreground: hsl(210 40% 98%);
+
+  --color-input: hsl(224 15% 18%);
+  --color-input-border: hsl(224 15% 25%);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+  --shadow-glow: 0 0 20px rgb(59 130 246 / 0.15);
+}
+
+/* ─── Base ─── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-foreground);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: hsl(213 94% 55% / 0.3);
+  color: white;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(224 15% 25%);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(224 15% 35%);
+}
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Skeleton pulse ─── */
+@keyframes skeleton-pulse {
+
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-skeleton {
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+/* ─── Smooth page transitions ─── */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 200ms ease-out;
+}
+
+/* ─── Shimmer effect for cards ─── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg,
+      transparent 0%,
+      hsl(213 94% 55% / 0.04) 50%,
+      transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* ─── Glassmorphism utility ─── */
+.glass {
+  background: hsl(224 18% 12% / 0.6);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid hsl(224 15% 20% / 0.5);
+}
+
+/* ─── Skip to content (accessibility) ─── */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  z-index: 9999;
+  transition: top 150ms ease;
+}
+
+.skip-to-content:focus {
+  top: 12px;
+}
+
+/* ─── Prose for proposal rendering ─── */
+.prose {
+  line-height: 1.75;
+}
+
+.prose h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.prose th,
+.prose td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.prose th {
+  font-weight: 600;
+  background: var(--color-surface);
+}
+
+/* ─── Transitions utility ─── */
+.transition-default {
+  transition: all 150ms ease;
+}
