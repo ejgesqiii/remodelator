@@ -107,6 +107,8 @@ def admin_users(session: Session, limit: int = 200, search: str | None = None) -
                 "audit_events_count": int(audit_events_count or 0),
                 "last_login_at": last_login_at.isoformat() if last_login_at else None,
                 "last_activity_at": last_activity_at.isoformat() if last_activity_at else None,
+                "stripe_customer_id": user.stripe_customer_id,
+                "stripe_subscription_id": user.stripe_subscription_id,
             }
         )
     return payload

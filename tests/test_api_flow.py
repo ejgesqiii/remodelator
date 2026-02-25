@@ -559,7 +559,7 @@ def test_billing_provider_status_blocks_when_stripe_selected_without_key(monkeyp
     )
     assert blocked_subscription.status_code == 503
     assert blocked_subscription.json()["error"]["code"] == "dependency_unavailable"
-    assert "Billing provider 'stripe' is unavailable" in blocked_subscription.json()["detail"]
+    assert "Stripe API key is not configured." in blocked_subscription.json()["detail"]
 
 
 def test_relative_export_paths_resolve_under_configured_data_dir() -> None:
@@ -608,3 +608,121 @@ def test_relative_export_paths_resolve_under_configured_data_dir() -> None:
     )
     assert proposal_pdf.status_code == 200
     assert (TEST_DATA_DIR / "exports" / "relative_proposal.pdf").exists()
+
+
+def test_stripe_webhook_flow(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+
+    register = client.post(
+        "/auth/register",
+        json={"email": "webhook-flow@example.com", "password": "pw123456", "full_name": "Webhook Flow"},
+    )
+    if register.status_code == 200:
+        session_token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": "webhook-flow@example.com", "password": "pw123456"})
+        assert login.status_code == 200
+        session_token = login.json()["session_token"]
+
+    # In a real scenario, the customer_id is set before checkout
+    # Let's seed the db to simulate an existing customer link
+    from remodelator.infra.db import session_scope
+    from remodelator.application import service
+    with session_scope() as session:
+        user = session.query(service.User).filter_by(email="webhook-flow@example.com").first()
+        user.stripe_customer_id = "cus_webhook_test_123"
+        user_id = user.id
+        session.commit()
+
+    # Reject without signature
+    no_sig = client.post("/billing/webhook", json={"type": "checkout.session.completed"})
+    assert no_sig.status_code == 400
+
+    # Mock the verify_webhook_signature so we don't need real crypto
+    import stripe
+    def mock_verify(*args, **kwargs) -> stripe.Event:
+        event = args[0] if isinstance(args[0], dict) else {}
+        return stripe.Event.construct_from(event, "sk_test_123")
+    
+    monkeypatch.setattr("remodelator.application.stripe_service.StripeService.verify_webhook_signature", mock_verify)
+
+    # 1. Checkout completed (annual subscription)
+    checkout_event = {
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "customer": "cus_webhook_test_123",
+                "subscription": "sub_test_123",
+                "amount_total": 120000
+            }
+        },
+        "id": "evt_chk_123"
+    }
+    
+    ch_resp = client.post(
+        "/billing/webhook", 
+        json=checkout_event,
+        headers={"stripe-signature": "t=123,v1=fake"}
+    )
+    assert ch_resp.status_code == 200
+    assert ch_resp.json()["status"] == "success"
+
+    # Verify state via API
+    headers = {"x-session-token": session_token}
+    state = client.get("/billing/subscription-state", headers=headers)
+    assert state.status_code == 200
+    assert state.json()["subscription_id"] == "sub_test_123"
+    assert state.json()["status"] == "active"
+    assert state.json()["active"] is True
+
+    # 2. Charge refunded
+    refund_event = {
+        "type": "charge.refunded",
+        "data": {
+            "object": {
+                "customer": "cus_webhook_test_123",
+                "amount_refunded": 1000
+            }
+        },
+        "id": "evt_ref_123"
+    }
+    ref_resp = client.post(
+        "/billing/webhook", 
+        json=refund_event,
+        headers={"stripe-signature": "t=123,v1=fake"}
+    )
+    assert ref_resp.status_code == 200
+
+    # 3. Cancel subscription
+    cancel_event = {
+        "type": "customer.subscription.deleted",
+        "data": {
+            "object": {
+                "customer": "cus_webhook_test_123",
+                "subscription": "sub_test_123"
+            }
+        },
+        "id": "evt_del_123"
+    }
+    can_resp = client.post(
+        "/billing/webhook", 
+        json=cancel_event,
+        headers={"stripe-signature": "t=123,v1=fake"}
+    )
+    assert can_resp.status_code == 200
+
+    state2 = client.get("/billing/subscription-state", headers=headers)
+    assert state2.status_code == 200
+    assert state2.json()["subscription_id"] is None
+    assert state2.json()["status"] == "canceled"
+    assert state2.json()["canceled"] is True
+
+    # Confirm ledger events were recorded
+    ledger = client.get("/billing/ledger?limit=10", headers=headers)
+    assert ledger.status_code == 200
+    events = ledger.json()
+    assert any(e["event_type"] == "subscription" and e["amount"] == "1200.00" for e in events)
+    assert any(e["event_type"] == "refund" and e["amount"] == "-10.00" for e in events)
+    assert any(e["event_type"] == "subscription_canceled" for e in events)

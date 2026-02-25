@@ -24,6 +24,8 @@ class User(Base):
     default_item_markup_pct: Mapped[Decimal] = mapped_column(Numeric(8, 4), default=Decimal("0"))
     default_estimate_markup_pct: Mapped[Decimal] = mapped_column(Numeric(8, 4), default=Decimal("0"))
     tax_rate_pct: Mapped[Decimal] = mapped_column(Numeric(8, 4), default=Decimal("0"))
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String(255), unique=True, index=True, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     estimates: Mapped[list[Estimate]] = relationship(back_populates="user", cascade="all, delete-orphan")

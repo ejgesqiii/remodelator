@@ -40,6 +40,8 @@ def test_login_upgrades_legacy_sha256_hash() -> None:
                 default_item_markup_pct=Decimal("10.00"),
                 default_estimate_markup_pct=Decimal("5.00"),
                 tax_rate_pct=Decimal("8.25"),
+                stripe_customer_id=None,
+                stripe_subscription_id=None,
             )
         )
 

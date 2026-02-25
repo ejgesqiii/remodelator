@@ -59,6 +59,23 @@ During Phase 4, the completely obsolete monolithic `apps/web/src_legacy` and all
 
 ---
 
+## 3. Admin Authentication & Setup
+
+The system provides dual-auth mechanisms for accessing the Admin Dashboard and protected endpoints.
+
+**Method 1: Email Whitelist (Recommended for UI)**
+If a user registers or logs in with an email address that matches the backend `REMODELATOR_ADMIN_USER_EMAILS` environment variable, they are automatically granted the `admin` role in their session.
+- By default, `owner@example.com` and `ops@example.com` are valid admin emails. 
+- You can change this list in your backend environment (or `.env` when deployed).
+- *To test:* Open the UI, register a new account as `owner@example.com`, and navigate to the Admin panel.
+
+**Method 2: Admin API Key**
+For programmatic access or high-risk destructive actions (like `Demo Reset`), the system requires a direct Admin API Key.
+- **Local Dev Default:** In local mode, the key defaults to `local-admin-key`. The UI will automatically use this default to allow you to test `Demo Reset` locally without friction.
+- **Production Mode:** If `REMODELATOR_ENV=production` is set on the backend, the `local-admin-key` is strictly rejected. You must explicitly configure `REMODELATOR_ADMIN_API_KEY` and deploy that key alongside the frontend.
+
+---
+
 ## 3. Future Pruning & Potential Backend Work
 
 The current state is incredibly cohesive, but there are a few architectural gaps intentionally deferred for "Phase E: Productionization":

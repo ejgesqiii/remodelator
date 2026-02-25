@@ -180,6 +180,7 @@ def test_cli_billing_blocks_when_stripe_provider_selected_without_key(tmp_path: 
     env["REMODELATOR_DATA_DIR"] = str(tmp_path / "data")
     env["REMODELATOR_BILLING_PROVIDER"] = "stripe"
     env.pop("STRIPE_SECRET_KEY", None)
+    env.pop("STRIPE_WEBHOOK_SECRET", None)
 
     run_cli(["db", "migrate"], env)
     run_cli(["db", "seed"], env)
@@ -190,7 +191,7 @@ def test_cli_billing_blocks_when_stripe_provider_selected_without_key(tmp_path: 
 
     blocked = run_cli_fail(["billing", "simulate-subscription"], env)
     assert blocked.returncode != 0
-    assert "Billing provider 'stripe' is unavailable" in blocked.stdout
+    assert "STRIPE_SECRET_KEY is not configured" in blocked.stdout
 
 
 def test_cli_db_integrity_check_reports_sqlite_health(tmp_path: Path) -> None:

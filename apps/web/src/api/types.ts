@@ -259,6 +259,8 @@ export type AdminUserRow = {
     audit_events_count: number;
     last_login_at?: string | null;
     last_activity_at?: string | null;
+    stripe_customer_id?: string | null;
+    stripe_subscription_id?: string | null;
 };
 
 export type AdminActivityRow = {

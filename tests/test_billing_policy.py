@@ -73,11 +73,11 @@ def test_billing_provider_status_payload_blocks_stripe_without_secret_key() -> N
 def test_billing_provider_status_payload_ready_for_stripe_with_secret_key() -> None:
     status = billing_provider_status_payload(_settings(provider="stripe", stripe_key="sk_test_123", stripe_webhook="whsec_456"))
     assert status["provider"] == "stripe"
-    assert status["adapter_ready"] is False
-    assert status["ready_for_live"] is False
+    assert status["adapter_ready"] is True
+    assert status["ready_for_live"] is True
     assert status["stripe_key_configured"] is True
     assert status["stripe_webhook_secret_configured"] is True
-    assert status["blocker_reason"] == "Stripe live adapter is not enabled in this demo build."
+    assert status["blocker_reason"] is None
 
 
 def test_billing_provider_status_payload_blocks_stripe_without_webhook_secret() -> None:

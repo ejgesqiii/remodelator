@@ -39,11 +39,12 @@ def billing_provider_status_payload(settings: Settings) -> dict[str, object]:
     provider = settings.billing_provider
     stripe_key_configured = bool(settings.stripe_secret_key)
     stripe_webhook_secret_configured = bool(settings.stripe_webhook_secret)
+
     if provider == "stripe":
         if not stripe_key_configured:
             return {
                 "provider": "stripe",
-                "live_mode": "required",
+                "live_mode": "live",
                 "adapter_ready": False,
                 "ready_for_live": False,
                 "stripe_key_configured": False,
@@ -53,7 +54,7 @@ def billing_provider_status_payload(settings: Settings) -> dict[str, object]:
         if not stripe_webhook_secret_configured:
             return {
                 "provider": "stripe",
-                "live_mode": "required",
+                "live_mode": "live",
                 "adapter_ready": False,
                 "ready_for_live": False,
                 "stripe_key_configured": True,
@@ -62,22 +63,22 @@ def billing_provider_status_payload(settings: Settings) -> dict[str, object]:
             }
         return {
             "provider": "stripe",
-            "live_mode": "required",
-            "adapter_ready": False,
-            "ready_for_live": False,
+            "live_mode": "live",
+            "adapter_ready": True,
+            "ready_for_live": True,
             "stripe_key_configured": True,
             "stripe_webhook_secret_configured": True,
-            "blocker_reason": "Stripe live adapter is not enabled in this demo build.",
+            "blocker_reason": None,
         }
 
     return {
         "provider": "simulation",
         "live_mode": "simulation",
         "adapter_ready": True,
-        "ready_for_live": True,
+        "ready_for_live": False,
         "stripe_key_configured": stripe_key_configured,
         "stripe_webhook_secret_configured": stripe_webhook_secret_configured,
-        "blocker_reason": None,
+        "blocker_reason": "Stripe live adapter is not enabled in this demo build.",
     }
 
 

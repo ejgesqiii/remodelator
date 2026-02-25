@@ -154,3 +154,98 @@ def billing_ledger(
             return service.list_billing_ledger(session, user_id, limit)
 
     return handle(action)
+
+
+from fastapi import Request
+from remodelator.application.stripe_service import StripeService
+
+
+@router.post("/billing/webhook")
+async def billing_webhook(request: Request) -> dict[str, str]:
+    """
+    Public webhook receiver for Stripe.
+    Signature verification ensures authenticity.
+    """
+    settings = get_settings()
+    stripe_service = StripeService(settings)
+
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+
+    if not sig_header:
+        # Invalid request, but we must return a generic 400 to prevent probing
+        return handle(lambda: (_ for _ in ()).throw(ValueError("Missing stripe-signature header")))
+
+    try:
+        event = stripe_service.verify_webhook_signature(payload, sig_header)
+    except ValueError as e:
+        return handle(lambda: (_ for _ in ()).throw(ValueError(f"Webhook signature verification failed: {str(e)}")))
+
+    # Extract the payload object
+    evt_type = event.get("type")
+    data_object = event.get("data", {}).get("object", {})
+    
+    # Process supported events idiosyncratically
+    with session_scope() as session:
+        if evt_type == "checkout.session.completed":
+            # Annual subscription purchased
+            customer_id = data_object.get("customer")
+            amount_cents = data_object.get("amount_total", 0)
+            idempotency_key = event.get("request", {}).get("idempotency_key") or event.get("id")
+
+            # Route 1: Find user by customer ID
+            user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
+            if user:
+                # Update subscription tracked ID if present in payload
+                sub_id = data_object.get("subscription")
+                if sub_id:
+                    user.stripe_subscription_id = sub_id
+                    
+                service.record_billing_event(
+                    session,
+                    user.id,
+                    "subscription",
+                    Decimal(amount_cents) / 100,
+                    details=f"Annual subscription via Stripe Checkout (Sub: {sub_id})",
+                    idempotency_key=idempotency_key
+                )
+                session.commit()
+
+        elif evt_type == "customer.subscription.deleted":
+            # Subscription canceled
+            customer_id = data_object.get("customer")
+            idempotency_key = event.get("id")
+            
+            user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
+            if user:
+                user.stripe_subscription_id = None
+                service.record_billing_event(
+                    session,
+                    user.id,
+                    "subscription_canceled",
+                    Decimal("0"),
+                    details="Subscription was canceled in Stripe.",
+                    idempotency_key=idempotency_key
+                )
+                session.commit()
+                
+        elif evt_type == "charge.refunded":
+            # Usage charge or subscription refunded
+            customer_id = data_object.get("customer")
+            amount_cents = data_object.get("amount_refunded", 0)
+            idempotency_key = event.get("id")
+            
+            user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
+            if user:
+                service.record_billing_event(
+                    session,
+                    user.id,
+                    "refund",
+                    (Decimal(amount_cents) / 100) * -1,
+                    details="Refund issued via Stripe.",
+                    idempotency_key=idempotency_key
+                )
+                session.commit()
+
+    # Always return a 200 OK so Stripe knows we received the event
+    return {"status": "success"}

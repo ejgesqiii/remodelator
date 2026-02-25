@@ -83,10 +83,20 @@ export function AdminDashboardPage() {
                             {users.map((u) => (
                                 <div key={u.id} className="flex items-center justify-between rounded-xl border border-border bg-background/50 px-4 py-3 transition-colors hover:bg-surface-hover">
                                     <div className="min-w-0">
-                                        <p className="truncate text-sm font-medium">{u.full_name || u.email}</p>
-                                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                                            <span className="truncate">{u.email}</span>
-                                            <StatusBadge status={u.role === 'admin' ? 'active' : 'draft'} className="text-[10px]" />
+                                        <div className="flex items-center gap-2">
+                                            <p className="truncate text-sm font-medium">{u.full_name || u.email}</p>
+                                            {u.stripe_subscription_id && (
+                                                <span className="rounded bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-500 ring-1 ring-sky-500/20 ring-inset">Stripe Sub</span>
+                                            )}
+                                        </div>
+                                        <div className="mt-0.5 flex flex-col gap-1 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-2">
+                                                <span className="truncate">{u.email}</span>
+                                                <StatusBadge status={u.role === 'admin' ? 'active' : 'draft'} className="text-[10px]" />
+                                            </div>
+                                            {u.stripe_customer_id && (
+                                                <p className="font-mono text-[9px] text-muted-foreground/50">{u.stripe_customer_id}</p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="shrink-0 text-right">

@@ -41,7 +41,15 @@ export function BillingPage() {
 
     const simSubMutation = useMutation({
         mutationFn: () => billingApi.simulateSubscription(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
-        onSuccess: (r) => { invalidate(); toast.success(`Subscription: ${r.event_type}${r.idempotency_status !== 'new' ? ` (${r.idempotency_status})` : ''}`); },
+        onSuccess: (r: any) => {
+            // If the backend returned a Stripe checkout URL, redirect immediately
+            if (r.checkout_url) {
+                window.location.href = r.checkout_url;
+                return;
+            }
+            invalidate();
+            toast.success(`Subscription: ${r.event_type}${r.idempotency_status !== 'new' ? ` (${r.idempotency_status})` : ''}`);
+        },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Simulation failed'),
     });
 
@@ -124,13 +132,22 @@ export function BillingPage() {
                             )}
                             <div className="space-y-2">
                                 <p className="text-xs font-medium uppercase tracking-wider text-muted">Lifecycle Actions</p>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button onClick={() => simEventMutation.mutate('card_attached')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Attach Card</button>
-                                    <button onClick={() => simSubMutation.mutate()} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Complete Checkout</button>
-                                    <button onClick={() => simEventMutation.mutate('invoice_paid')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Invoice Paid</button>
-                                    <button onClick={() => simEventMutation.mutate('payment_failed')} className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning shadow-none hover:bg-warning/20">Payment Failed</button>
-                                    <button onClick={() => simEventMutation.mutate('subscription_canceled')} className="col-span-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive shadow-none hover:bg-destructive/20">Cancel Subscription</button>
-                                </div>
+                                {provider?.provider === 'stripe' ? (
+                                    <div className="flex flex-col gap-2">
+                                        <button onClick={() => simSubMutation.mutate()} className="flex justify-center items-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-md hover:bg-primary-hover">
+                                            <CreditCard size={14} /> Subscribe via Stripe
+                                        </button>
+                                        <p className="text-[10px] text-muted-foreground text-center">Managed securely via Stripe Checkout.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button onClick={() => simEventMutation.mutate('card_attached')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Attach Card</button>
+                                        <button onClick={() => simSubMutation.mutate()} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Complete Checkout</button>
+                                        <button onClick={() => simEventMutation.mutate('invoice_paid')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Invoice Paid</button>
+                                        <button onClick={() => simEventMutation.mutate('payment_failed')} className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning shadow-none hover:bg-warning/20">Payment Failed</button>
+                                        <button onClick={() => simEventMutation.mutate('subscription_canceled')} className="col-span-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive shadow-none hover:bg-destructive/20">Cancel Subscription</button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ) : (
@@ -154,14 +171,22 @@ export function BillingPage() {
                                 </div>
                             </div>
                         )}
-                        <div className="grid grid-cols-2 gap-2">
-                            <button onClick={() => simChargeMutation.mutate()} disabled={simChargeMutation.isPending} className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary shadow-none hover:bg-primary/20 disabled:opacity-50">
-                                <Zap size={14} /> Run Charge
-                            </button>
-                            <button onClick={() => simRefundMutation.mutate()} disabled={simRefundMutation.isPending} className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-hover px-3 py-2.5 text-xs font-medium text-foreground shadow-none hover:bg-surface-active disabled:opacity-50">
-                                <RefreshCw size={14} /> Refund
-                            </button>
-                        </div>
+                        {provider?.provider === 'stripe' ? (
+                            <div className="grid grid-cols-1 gap-2">
+                                <button onClick={() => simChargeMutation.mutate()} disabled={simChargeMutation.isPending} className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary shadow-none hover:bg-primary/20 disabled:opacity-50">
+                                    <Zap size={14} /> Capture Live Usage Charge
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => simChargeMutation.mutate()} disabled={simChargeMutation.isPending} className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary shadow-none hover:bg-primary/20 disabled:opacity-50">
+                                    <Zap size={14} /> Run Charge
+                                </button>
+                                <button onClick={() => simRefundMutation.mutate()} disabled={simRefundMutation.isPending} className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-hover px-3 py-2.5 text-xs font-medium text-foreground shadow-none hover:bg-surface-active disabled:opacity-50">
+                                    <RefreshCw size={14} /> Refund
+                                </button>
+                            </div>
+                        )}
 
                         {/* Idempotency key */}
                         <div className="space-y-2">

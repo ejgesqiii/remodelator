@@ -35,7 +35,7 @@ def test_api_routes_registered_and_visible() -> None:
     assert ("POST", "/billing/simulate-event") in pairs
 
     # Keep endpoint surface stable as routers are split/refactored.
-    assert len(pairs) == 54
+    assert len(pairs) == 55
 
 
 def test_llm_alias_route_is_deprecated() -> None:
