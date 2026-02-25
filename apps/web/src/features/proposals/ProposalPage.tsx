@@ -16,7 +16,7 @@ export function ProposalPage() {
 
     const handleExportPdf = async () => {
         try {
-            const result = await proposalsApi.generateProposalPdf(id!);
+            const result = await proposalsApi.generateProposalPdf(id!, `exports/proposal_${id}.pdf`);
             toast.success(`PDF generated: ${result.path}`);
         } catch (err) {
             toast.error(err instanceof Error ? err.message : 'PDF generation failed');

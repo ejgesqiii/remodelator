@@ -602,6 +602,24 @@ def reorder_line_item(
     return estimate_to_dict(est)
 
 
+def reorder_line_item_by_direction(
+    session: Session,
+    user_id: str,
+    estimate_id: str,
+    line_item_id: str,
+    direction: int,
+) -> dict[str, object]:
+    if direction not in {-1, 1}:
+        raise ValueError("direction must be -1 or 1.")
+
+    lines = session.execute(_line_select(estimate_id)).scalars().all()
+    current_idx = next((idx for idx, line in enumerate(lines) if line.id == line_item_id), None)
+    if current_idx is None:
+        raise ValueError("Line item not found.")
+
+    return reorder_line_item(session, user_id, estimate_id, line_item_id, current_idx + direction)
+
+
 def group_line_item(
     session: Session,
     user_id: str,
@@ -745,7 +763,7 @@ def create_estimate_version(session: Session, user_id: str, estimate_id: str) ->
     return estimate_to_dict(version_estimate) if version_estimate else payload
 
 
-def export_estimate_json(session: Session, user_id: str, estimate_id: str, output_path: Path) -> dict[str, str]:
+def export_estimate_json(session: Session, user_id: str, estimate_id: str, output_path: Path | None = None) -> dict[str, str]:
     payload = get_estimate(session, user_id, estimate_id)
     safe_path = _resolve_output_path(output_path, f"estimate_{estimate_id}.json")
     safe_path.write_text(json.dumps(payload, indent=2))

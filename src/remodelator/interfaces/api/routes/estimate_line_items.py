@@ -89,7 +89,17 @@ def line_item_reorder(
 ) -> dict[str, Any]:
     def action() -> dict[str, Any]:
         with session_scope() as session:
-            return service.reorder_line_item(session, user_id, estimate_id, line_item_id, payload.new_index)
+            if payload.new_index is not None:
+                return service.reorder_line_item(session, user_id, estimate_id, line_item_id, payload.new_index)
+            if payload.direction is not None:
+                return service.reorder_line_item_by_direction(
+                    session,
+                    user_id,
+                    estimate_id,
+                    line_item_id,
+                    payload.direction,
+                )
+            raise ValueError("Provide either new_index or direction for reorder.")
 
     return handle(action)
 

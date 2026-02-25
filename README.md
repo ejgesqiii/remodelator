@@ -275,6 +275,7 @@ export REMODELATOR_API_RATE_LIMIT_ENABLED='true'
 export REMODELATOR_API_RATE_LIMIT_WINDOW_SECONDS='60'
 export REMODELATOR_API_RATE_LIMIT_PUBLIC_MAX='120'
 export REMODELATOR_API_RATE_LIMIT_AUTHENTICATED_MAX='240'
+export REMODELATOR_API_INCLUDE_TRACEBACK='false'
 export REMODELATOR_AUDIT_RETENTION_DAYS='365'
 export REMODELATOR_SQLITE_JOURNAL_MODE='WAL'
 export REMODELATOR_SQLITE_SYNCHRONOUS='NORMAL'
@@ -295,6 +296,7 @@ Request tracing + throttling behavior:
 - API rate limiting is enforced for non-static API paths when enabled,
 - rate-limited responses return `429` with `Retry-After`, `X-RateLimit-Limit`, and `X-RateLimit-Remaining`.
 - non-2xx responses include a consistent error envelope: `detail` + `error{code,message,status}` + `request_id`.
+- unhandled `500` responses include full traceback details in local/dev by default; production hides tracebacks unless `REMODELATOR_API_INCLUDE_TRACEBACK=true`.
 
 ## Quickstart (React Web)
 
@@ -321,6 +323,7 @@ Notes:
 - web dev server proxies `/api/*` to backend `127.0.0.1:8000`.
 - admin key default is `local-admin-key` unless overridden.
 - `scripts/run_web.sh` installs dependencies with `npm ci` only when `apps/web/node_modules` is missing.
+- `scripts/run_web.sh` enforces port `5173` (`--strictPort`) to avoid CORS drift.
 
 ## Admin and Demo Reset
 
@@ -383,6 +386,7 @@ Billing simulation behavior:
 - `/billing/subscription-state`: current subscription lifecycle summary (active/past_due/canceled + last event).
 - `/billing/simulate-estimate-charge`: defaults to configured real-time pricing amount if amount omitted.
 - `/billing/simulate-subscription`: defaults to configured annual subscription amount if amount omitted.
+- `/billing/simulate-refund`: defaults to configured real-time pricing amount if amount omitted.
 - live Stripe usage charges include a `return_url` for PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` with CORS/local fallback).
 - `/billing/simulate-event`: Stripe-like lifecycle/webhook simulation endpoint (`payment_method_attached`, `checkout_completed`, `usage_charge`, `invoice_paid`, `invoice_payment_failed`, `subscription_canceled`).
 - `/admin/audit-prune`: deletes audit rows older than configured retention window (`REMODELATOR_AUDIT_RETENTION_DAYS`, optional per-call override, supports `dry_run=true` preview mode).

@@ -213,11 +213,12 @@ Common success payload patterns:
    - `REMODELATOR_API_RATE_LIMIT_WINDOW_SECONDS`
    - `REMODELATOR_API_RATE_LIMIT_PUBLIC_MAX`
    - `REMODELATOR_API_RATE_LIMIT_AUTHENTICATED_MAX`
-10. Billing execution routes are provider-aware:
+10. Unhandled `500` payloads include tracebacks in local/dev by default; production hides them unless `REMODELATOR_API_INCLUDE_TRACEBACK=true`.
+11. Billing execution routes are provider-aware:
    - `simulation` provider executes local ledger simulation,
    - `stripe` provider executes live billing flows and fails loud when required credentials are missing or invalid.
    - live Stripe usage charges include `return_url` in PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` override, otherwise CORS/local fallback).
-11. `POST /admin/demo-reset` uses a shared rebuild path (`service.rebuild_demo_database`) that is also used by CLI reset commands to keep reset/reseed behavior consistent.
+12. `POST /admin/demo-reset` uses a shared rebuild path (`service.rebuild_demo_database`) that is also used by CLI reset commands to keep reset/reseed behavior consistent.
 
 ## Endpoint Inventory
 

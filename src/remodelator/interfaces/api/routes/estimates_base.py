@@ -148,11 +148,12 @@ def estimate_quickstart(
 @router.post("/estimates/{estimate_id}/export")
 def estimate_export(
     estimate_id: str,
-    payload: ExportRequest,
+    payload: ExportRequest | None = None,
     user_id: str = Depends(require_user_id),
 ) -> dict[str, str]:
     def action() -> dict[str, str]:
         with session_scope() as session:
-            return service.export_estimate_json(session, user_id, estimate_id, Path(payload.output_path))
+            output_path = Path(payload.output_path) if payload and payload.output_path else None
+            return service.export_estimate_json(session, user_id, estimate_id, output_path)
 
     return handle(action)

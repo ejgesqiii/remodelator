@@ -106,8 +106,8 @@ export function EstimateDetailPage() {
     });
 
     const reorderMutation = useMutation({
-        mutationFn: ({ lineItemId, direction }: { lineItemId: string; direction: number }) =>
-            estimatesApi.reorderLineItem(id!, lineItemId, direction),
+        mutationFn: ({ lineItemId, newIndex }: { lineItemId: string; newIndex: number }) =>
+            estimatesApi.reorderLineItem(id!, lineItemId, newIndex),
         onSuccess: () => invalidate(),
     });
 
@@ -118,16 +118,9 @@ export function EstimateDetailPage() {
     });
 
     const exportMutation = useMutation({
-        mutationFn: () => estimatesApi.exportEstimate(id!),
+        mutationFn: () => estimatesApi.exportEstimate(id!, `exports/estimate_${id}.json`),
         onSuccess: (data) => {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `estimate-${id}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            toast.success('Estimate exported');
+            toast.success(`Estimate exported to ${data.path}`);
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Export failed'),
     });
@@ -539,8 +532,8 @@ export function EstimateDetailPage() {
                                                         <button onClick={() => setEditingLineItem(line)} className="rounded-lg bg-transparent p-1.5 text-muted shadow-none transition-colors hover:bg-surface-active hover:text-foreground" aria-label="Edit">
                                                             <Pencil size={14} />
                                                         </button>
-                                                        <button onClick={() => reorderMutation.mutate({ lineItemId: line.id, direction: -1 })} disabled={idx === 0} className="rounded-lg bg-transparent p-1.5 text-muted shadow-none transition-colors hover:bg-surface-active hover:text-foreground disabled:opacity-30" aria-label="Move up"><ChevronUp size={14} /></button>
-                                                        <button onClick={() => reorderMutation.mutate({ lineItemId: line.id, direction: 1 })} disabled={idx === lines.length - 1} className="rounded-lg bg-transparent p-1.5 text-muted shadow-none transition-colors hover:bg-surface-active hover:text-foreground disabled:opacity-30" aria-label="Move down"><ChevronDown size={14} /></button>
+                                                        <button onClick={() => reorderMutation.mutate({ lineItemId: line.id, newIndex: idx - 1 })} disabled={idx === 0} className="rounded-lg bg-transparent p-1.5 text-muted shadow-none transition-colors hover:bg-surface-active hover:text-foreground disabled:opacity-30" aria-label="Move up"><ChevronUp size={14} /></button>
+                                                        <button onClick={() => reorderMutation.mutate({ lineItemId: line.id, newIndex: idx + 1 })} disabled={idx === lines.length - 1} className="rounded-lg bg-transparent p-1.5 text-muted shadow-none transition-colors hover:bg-surface-active hover:text-foreground disabled:opacity-30" aria-label="Move down"><ChevronDown size={14} /></button>
                                                         <button onClick={() => { if (confirm(`Remove "${line.item_name}"?`)) deleteItemMutation.mutate(line.id); }} className="rounded-lg bg-transparent p-1.5 text-muted shadow-none transition-colors hover:bg-destructive/10 hover:text-destructive" aria-label="Delete"><Trash2 size={14} /></button>
                                                     </div>
                                                 </td>

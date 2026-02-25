@@ -182,7 +182,8 @@ class LineItemUpdateRequest(StrictRequestModel):
 
 
 class ReorderRequest(StrictRequestModel):
-    new_index: int
+    new_index: int | None = None
+    direction: int | None = None
 
 
 class GroupRequest(StrictRequestModel):
@@ -225,7 +226,7 @@ class LlmApplyRequest(StrictRequestModel):
 
 
 class BillingRequest(StrictRequestModel):
-    amount: Decimal
+    amount: Decimal | None = None
     details: str = ""
     idempotency_key: str | None = None
 
@@ -282,7 +283,7 @@ class BillingProviderStatusResponse(BaseModel):
 
 
 class ExportRequest(StrictRequestModel):
-    output_path: str
+    output_path: str | None = None
 
 
 class BackupRestoreRequest(StrictRequestModel):

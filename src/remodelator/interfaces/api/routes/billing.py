@@ -161,13 +161,15 @@ def billing_simulate_event(payload: BillingSimulationEventRequest, user_id: str 
 @router.post("/billing/simulate-refund")
 def billing_refund(payload: BillingRequest, user_id: str = Depends(require_user_id)) -> dict[str, str]:
     def action() -> dict[str, str]:
+        settings = get_settings()
+        refund_amount = payload.amount if payload.amount is not None else settings.billing_realtime_pricing_amount
         with session_scope() as session:
             return execute_billing_command(
                 session,
                 user_id,
                 BillingCommand(
                     event_type="refund",
-                    amount=payload.amount * Decimal("-1"),
+                    amount=refund_amount * Decimal("-1"),
                     details=payload.details,
                     idempotency_key=payload.idempotency_key,
                 ),

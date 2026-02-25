@@ -34,6 +34,6 @@ export function simulateEvent(data: SimulateEventRequest): Promise<BillingMutati
     return post<BillingMutationResult>('/billing/simulate-event', data);
 }
 
-export function simulateRefund(data?: { amount?: number; details?: string; idempotency_key?: string }): Promise<BillingMutationResult> {
-    return post<BillingMutationResult>('/billing/simulate-refund', data || {});
+export function simulateRefund(data: { amount: number; details?: string; idempotency_key?: string }): Promise<BillingMutationResult> {
+    return post<BillingMutationResult>('/billing/simulate-refund', data);
 }

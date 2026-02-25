@@ -145,3 +145,45 @@ def test_app_shutdown_disposes_engine(monkeypatch, tmp_path: Path) -> None:
         assert response.status_code == 200
 
     assert dispose_calls["count"] == 1
+
+
+def test_unhandled_error_includes_traceback_by_default_in_local(monkeypatch, tmp_path: Path) -> None:
+    _set_test_data_dir(monkeypatch, tmp_path)
+    monkeypatch.delenv("REMODELATOR_API_INCLUDE_TRACEBACK", raising=False)
+    monkeypatch.setenv("REMODELATOR_ENV", "local")
+
+    app = create_api_app()
+
+    @app.get("/_boom-local")
+    def _boom_local() -> dict[str, str]:
+        raise RuntimeError("boom-local")
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.get("/_boom-local")
+    payload = response.json()
+
+    assert response.status_code == 500
+    assert payload["error"]["code"] == "internal_error"
+    assert payload["error"]["exception_type"] == "RuntimeError"
+    assert "boom-local" in payload["error"]["traceback"]
+
+
+def test_unhandled_error_omits_traceback_in_production(monkeypatch, tmp_path: Path) -> None:
+    _set_test_data_dir(monkeypatch, tmp_path)
+    monkeypatch.delenv("REMODELATOR_API_INCLUDE_TRACEBACK", raising=False)
+    monkeypatch.setenv("REMODELATOR_ENV", "production")
+
+    app = create_api_app()
+
+    @app.get("/_boom-prod")
+    def _boom_prod() -> dict[str, str]:
+        raise RuntimeError("boom-prod")
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        response = client.get("/_boom-prod")
+    payload = response.json()
+
+    assert response.status_code == 500
+    assert payload["error"]["code"] == "internal_error"
+    assert "exception_type" not in payload["error"]
+    assert "traceback" not in payload["error"]

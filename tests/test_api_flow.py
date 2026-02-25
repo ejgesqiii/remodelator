@@ -1028,3 +1028,107 @@ def test_stripe_webhook_falls_back_to_subscription_lookup_when_customer_missing(
     ledger = client.get("/billing/ledger?limit=20", headers=headers)
     assert ledger.status_code == 200
     assert any(row["event_type"] == "invoice_payment_failed" for row in ledger.json())
+
+
+def test_export_and_pdf_allow_empty_payload(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "simulation")
+    _ensure_db_migrated()
+
+    email = f"empty-export-{uuid4()}@example.com"
+    register = client.post(
+        "/auth/register",
+        json={"email": email, "password": "pw123456", "full_name": "Empty Export"},
+    )
+    if register.status_code == 200:
+        token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": email, "password": "pw123456"})
+        assert login.status_code == 200
+        token = login.json()["session_token"]
+    headers = {"x-session-token": token}
+
+    estimate = client.post(
+        "/estimates",
+        headers=headers,
+        json={"title": "No Payload Export", "customer_name": "Payloadless"},
+    )
+    assert estimate.status_code == 200
+    estimate_id = estimate.json()["id"]
+
+    exported = client.post(f"/estimates/{estimate_id}/export", headers=headers)
+    assert exported.status_code == 200
+    assert exported.json()["path"].endswith(f"estimate_{estimate_id}.json")
+
+    pdf = client.post(f"/proposals/{estimate_id}/pdf", headers=headers)
+    assert pdf.status_code == 200
+    assert pdf.json()["path"].endswith(f"proposal_{estimate_id}.pdf")
+
+
+def test_reorder_supports_legacy_direction_payload(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "simulation")
+    _ensure_db_migrated()
+
+    email = f"reorder-direction-{uuid4()}@example.com"
+    register = client.post(
+        "/auth/register",
+        json={"email": email, "password": "pw123456", "full_name": "Reorder Direction"},
+    )
+    if register.status_code == 200:
+        token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": email, "password": "pw123456"})
+        assert login.status_code == 200
+        token = login.json()["session_token"]
+    headers = {"x-session-token": token}
+
+    estimate = client.post(
+        "/estimates",
+        headers=headers,
+        json={"title": "Direction Reorder", "customer_name": "Direction"},
+    )
+    assert estimate.status_code == 200
+    estimate_id = estimate.json()["id"]
+
+    first = client.post(
+        f"/estimates/{estimate_id}/line-items",
+        headers=headers,
+        json={"item_name": "One", "quantity": "1", "unit_price": "1.00", "labor_hours": "0"},
+    )
+    second = client.post(
+        f"/estimates/{estimate_id}/line-items",
+        headers=headers,
+        json={"item_name": "Two", "quantity": "1", "unit_price": "2.00", "labor_hours": "0"},
+    )
+    assert first.status_code == 200
+    assert second.status_code == 200
+
+    reorder = client.post(
+        f"/estimates/{estimate_id}/line-items/{second.json()['id']}/reorder",
+        headers=headers,
+        json={"direction": -1},
+    )
+    assert reorder.status_code == 200
+    assert reorder.json()["line_items"][0]["id"] == second.json()["id"]
+
+
+def test_refund_defaults_amount_when_omitted(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "simulation")
+    _ensure_db_migrated()
+
+    email = f"refund-default-{uuid4()}@example.com"
+    register = client.post(
+        "/auth/register",
+        json={"email": email, "password": "pw123456", "full_name": "Refund Default"},
+    )
+    if register.status_code == 200:
+        token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": email, "password": "pw123456"})
+        assert login.status_code == 200
+        token = login.json()["session_token"]
+    headers = {"x-session-token": token}
+
+    refund = client.post("/billing/simulate-refund", headers=headers, json={})
+    assert refund.status_code == 200
+    assert refund.json()["event_type"] == "refund"
+    assert refund.json()["amount"] == "-10.00"

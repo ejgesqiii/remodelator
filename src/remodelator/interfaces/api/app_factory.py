@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import traceback
 from contextlib import asynccontextmanager
 from time import perf_counter
 from typing import Any
@@ -32,6 +34,20 @@ from remodelator.interfaces.web.router import TEMPLATES_DIR
 from remodelator.interfaces.web.router import router as web_router
 
 logger = logging.getLogger("remodelator.api")
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _include_traceback_in_response(app_env: str) -> bool:
+    # Local/dev defaults to verbose error payloads; production stays minimal unless
+    # explicitly overridden for controlled diagnostics.
+    default_value = app_env not in {"production", "prod"}
+    return _env_bool("REMODELATOR_API_INCLUDE_TRACEBACK", default_value)
 
 
 def _security_headers(response: Response) -> None:
@@ -159,6 +175,7 @@ def _error_payload(
 
 def create_api_app() -> FastAPI:
     settings = get_settings()
+    include_traceback = _include_traceback_in_response(settings.app_env)
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI):  # type: ignore[unused-argument]
@@ -229,6 +246,9 @@ def create_api_app() -> FastAPI:
             request_id=request_id,
             fallback_message="Internal server error.",
         )
+        if include_traceback:
+            payload["error"]["exception_type"] = type(exc).__name__
+            payload["error"]["traceback"] = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         response = JSONResponse(status_code=500, content=payload)
         response.headers["X-Request-ID"] = request_id
         _security_headers(response)

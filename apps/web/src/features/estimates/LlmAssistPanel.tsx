@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Bot, Sparkles, Check, X, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
@@ -51,6 +51,17 @@ export function LlmAssistPanel({ estimateId, lineItems, onApplied }: LlmAssistPa
     const selectedItem = lineItems.find((li) => li.id === selectedItemId);
     const isReady = status?.api_key_configured && status?.ready_for_live;
     const suggestion = suggestMutation.data;
+
+    useEffect(() => {
+        if (!selectedItemId) {
+            return;
+        }
+        if (lineItems.some((li) => li.id === selectedItemId)) {
+            return;
+        }
+        setSelectedItemId(null);
+        suggestMutation.reset();
+    }, [lineItems, selectedItemId, suggestMutation]);
 
     return (
         <div className="rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur-sm">
@@ -165,7 +176,7 @@ export function LlmAssistPanel({ estimateId, lineItems, onApplied }: LlmAssistPa
                                     suggested_price: parseFloat(suggestion.suggested_unit_price),
                                 })
                             }
-                            disabled={applyMutation.isPending}
+                            disabled={applyMutation.isPending || !selectedItemId}
                             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-foreground shadow-md transition-colors hover:bg-accent/90 disabled:opacity-50"
                         >
                             <Check size={14} /> Apply

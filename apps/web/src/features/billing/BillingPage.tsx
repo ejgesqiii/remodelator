@@ -75,7 +75,11 @@ export function BillingPage() {
     });
 
     const simRefundMutation = useMutation({
-        mutationFn: () => billingApi.simulateRefund(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
+        mutationFn: () =>
+            billingApi.simulateRefund({
+                amount: Number(policy?.realtime_pricing_amount ?? 10),
+                ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
+            }),
         onSuccess: (r) => { invalidate(); toast.success(`Refund: ${r.amount}`); },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Refund failed'),
     });

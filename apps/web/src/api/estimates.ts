@@ -45,8 +45,8 @@ export function quickstartEstimate(id: string, data: { catalog_node_name: string
     return post<Estimate>(`/estimates/${id}/quickstart`, data);
 }
 
-export function exportEstimate(id: string): Promise<{ path: string }> {
-    return post<{ path: string }>(`/estimates/${id}/export`);
+export function exportEstimate(id: string, outputPath?: string): Promise<{ path: string }> {
+    return post<{ path: string }>(`/estimates/${id}/export`, outputPath ? { output_path: outputPath } : {});
 }
 
 // ─── Line Items ───
@@ -62,8 +62,8 @@ export function deleteLineItem(estimateId: string, lineItemId: string): Promise<
     return del<void>(`/estimates/${estimateId}/line-items/${lineItemId}`);
 }
 
-export function reorderLineItem(estimateId: string, lineItemId: string, direction: number): Promise<void> {
-    return post<void>(`/estimates/${estimateId}/line-items/${lineItemId}/reorder`, { direction });
+export function reorderLineItem(estimateId: string, lineItemId: string, newIndex: number): Promise<void> {
+    return post<void>(`/estimates/${estimateId}/line-items/${lineItemId}/reorder`, { new_index: newIndex });
 }
 
 export function groupLineItems(estimateId: string, data: { group_name: string; line_item_id?: string }): Promise<void> {

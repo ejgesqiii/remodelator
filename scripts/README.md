@@ -27,6 +27,7 @@ This directory contains the authoritative local/CI automation entrypoints.
   - API startup performs safe local SQLite schema init/backfill before serving requests.
 - `run_web.sh`
   - Starts Vite web app on `127.0.0.1:5173`.
+  - Enforces `5173` (`--strictPort`) so backend CORS/proxy settings stay aligned.
   - Runs `npm ci` only when `apps/web/node_modules` is missing.
 - `quality_gate.sh`
   - Runs backend tests, dead-code checks, web tests/build/e2e, API doc sync, and markdown link-integrity checks.
