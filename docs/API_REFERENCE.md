@@ -1,9 +1,9 @@
 # API Reference (Human Maintained)
 
-Last updated: February 24, 2026
+Last updated: February 25, 2026
 
 This document covers request/response behavior and integration guidance.
-For an always-current endpoint list generated from source, see [API_ENDPOINTS_GENERATED.md](/Users/dylan/Documents/remodelator-main/docs/API_ENDPOINTS_GENERATED.md).
+For an always-current endpoint list generated from source, see [API_ENDPOINTS_GENERATED.md](API_ENDPOINTS_GENERATED.md).
 
 ## Auth Headers
 
@@ -210,4 +210,4 @@ Common success payload patterns:
 ## Endpoint Inventory
 
 For exhaustive endpoint inventory generated from source:
-- [API_ENDPOINTS_GENERATED.md](/Users/dylan/Documents/remodelator-main/docs/API_ENDPOINTS_GENERATED.md)
+- [API_ENDPOINTS_GENERATED.md](API_ENDPOINTS_GENERATED.md)

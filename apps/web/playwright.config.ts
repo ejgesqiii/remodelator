@@ -35,6 +35,7 @@ export default defineConfig({
         REMODELATOR_API_HOST: apiHost,
         REMODELATOR_API_PORT: String(apiPort),
         REMODELATOR_BILLING_PROVIDER: process.env.E2E_BILLING_PROVIDER ?? "simulation",
+        REMODELATOR_ADMIN_USER_EMAILS: process.env.E2E_ADMIN_USER_EMAILS ?? "admin-e2e@example.com",
         REMODELATOR_CORS_ORIGINS: `${webBaseUrl},http://localhost:${webPort}`,
       },
       port: apiPort,

@@ -16,6 +16,8 @@ OUT_FILE = ROOT / "docs" / "API_ENDPOINTS_GENERATED.md"
 def auth_for_path(path: str) -> str:
     if path.startswith("/admin/"):
         return "Admin (`x-admin-key`)"
+    if path == "/billing/webhook":
+        return "Public (Stripe signature)"
     if path in {"/db/migrate", "/db/seed"}:
         return "Public (local/dev only)"
     if path in {"/health", "/auth/register", "/auth/login", "/pricing/llm/status", "/catalog/tree", "/catalog/search"}:
@@ -35,7 +37,7 @@ def group_for_path(path: str) -> str:
     if path.startswith("/proposals"):
         return "Proposals"
     if path.startswith("/billing"):
-        return "Billing Simulation"
+        return "Billing"
     if path.startswith("/pricing/llm"):
         return "LLM Pricing"
     if path.startswith("/audit") or path.startswith("/activity"):

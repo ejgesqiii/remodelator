@@ -22,9 +22,12 @@ def _load_env_file(path: Path) -> None:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
+        value = value.strip()
         if not key:
             continue
-        os.environ.setdefault(key, value.strip())
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
 
 
 def _now_iso() -> str:
@@ -50,7 +53,7 @@ class ProbeResult:
 def _response_version(resource: Any) -> str | None:
     last_response = getattr(resource, "last_response", None)
     headers = getattr(last_response, "headers", None)
-    if isinstance(headers, dict):
+    if hasattr(headers, "get"):
         return headers.get("Stripe-Version")
     return None
 
@@ -84,6 +87,7 @@ def run_probe(*, amount_cents: int, currency: str, success_url: str, cancel_url:
         currency=currency.lower(),
         payment_method="pm_card_visa",
         confirm=True,
+        automatic_payment_methods={"enabled": True, "allow_redirects": "never"},
         description="Remodelator Stripe sandbox probe",
         metadata={"probe": "true"},
     )

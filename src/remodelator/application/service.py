@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
@@ -1018,16 +1019,44 @@ def _lookup_idempotent_billing_event(
     if not idempotency_key:
         return None
 
+    # Session autoflush is disabled globally; flush first so in-transaction writes are visible.
+    session.flush()
+    candidate_keys = _billing_idempotency_candidate_keys(user_id, idempotency_key)
     existing_key = session.execute(
-        select(IdempotencyRecord).where(
-            IdempotencyRecord.key == idempotency_key,
+        select(IdempotencyRecord)
+        .where(
             IdempotencyRecord.scope == "billing",
             IdempotencyRecord.user_id == user_id,
+            IdempotencyRecord.key.in_(candidate_keys),
         )
+        .order_by(IdempotencyRecord.created_at.desc())
+        .limit(1)
     ).scalar_one_or_none()
     if not existing_key or not existing_key.billing_event_id:
         return None
     return session.get(BillingEvent, existing_key.billing_event_id)
+
+
+def _billing_idempotency_storage_key(user_id: str, idempotency_key: str) -> str:
+    digest = hashlib.sha256(idempotency_key.encode("utf-8")).hexdigest()
+    return f"billing:{user_id}:{digest}"
+
+
+def _billing_idempotency_candidate_keys(user_id: str, idempotency_key: str) -> tuple[str, ...]:
+    # Keep backward compatibility for records created before per-user hashed storage.
+    keys = (
+        _billing_idempotency_storage_key(user_id, idempotency_key),
+        f"billing:{user_id}:{idempotency_key}",
+        idempotency_key,
+    )
+    deduped_keys: list[str] = []
+    seen: set[str] = set()
+    for key in keys:
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped_keys.append(key)
+    return tuple(deduped_keys)
 
 
 def _billing_event_response(
@@ -1056,13 +1085,21 @@ def record_billing_event(
     currency: str = "USD",
 ) -> dict[str, str]:
     _require_user(session, user_id)
+    normalized_idempotency_key = idempotency_key.strip() if idempotency_key else None
+    if normalized_idempotency_key == "":
+        normalized_idempotency_key = None
+    storage_idempotency_key = (
+        _billing_idempotency_storage_key(user_id, normalized_idempotency_key)
+        if normalized_idempotency_key
+        else None
+    )
 
-    existing_event = _lookup_idempotent_billing_event(session, user_id, idempotency_key)
+    existing_event = _lookup_idempotent_billing_event(session, user_id, normalized_idempotency_key)
     if existing_event:
         return _billing_event_response(
             existing_event,
             idempotency_status="replayed",
-            idempotency_key=idempotency_key,
+            idempotency_key=normalized_idempotency_key,
         )
 
     event = BillingEvent(
@@ -1076,22 +1113,24 @@ def record_billing_event(
     session.add(event)
     session.flush()
 
-    if idempotency_key:
+    if storage_idempotency_key:
         session.add(
             IdempotencyRecord(
                 id=_uid(),
-                key=idempotency_key,
+                key=storage_idempotency_key,
                 scope="billing",
                 user_id=user_id,
                 billing_event_id=event.id,
             )
         )
+        # Surface duplicate-idempotency conflicts within this call, not at outer commit.
+        session.flush()
 
     _audit(session, user_id, f"billing.{event_type}", "billing_event", event.id, details=details)
     return _billing_event_response(
         event,
         idempotency_status="created",
-        idempotency_key=idempotency_key,
+        idempotency_key=normalized_idempotency_key,
     )
 
 

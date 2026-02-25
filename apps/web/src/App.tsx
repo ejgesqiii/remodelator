@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { queryClient } from '@/lib/queryClient';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { AuthGuard } from '@/features/auth/AuthGuard';
+import { AdminGuard } from '@/features/auth/AdminGuard';
 
 const AppShell = lazy(() => import('@/components/layout/AppShell').then((m) => ({ default: m.AppShell })));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })));
@@ -62,7 +63,14 @@ export function App() {
                                 <Route path="templates" element={<TemplateListPage />} />
                                 <Route path="billing" element={<BillingPage />} />
                                 <Route path="settings" element={<SettingsPage />} />
-                                <Route path="admin" element={<AdminDashboardPage />} />
+                                <Route
+                                    path="admin"
+                                    element={
+                                        <AdminGuard>
+                                            <AdminDashboardPage />
+                                        </AdminGuard>
+                                    }
+                                />
                             </Route>
 
                             {/* Catch-all */}

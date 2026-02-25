@@ -28,12 +28,17 @@ This directory contains the authoritative local/CI automation entrypoints.
   - Starts Vite web app on `127.0.0.1:5173`.
   - Runs `npm ci` only when `apps/web/node_modules` is missing.
 - `quality_gate.sh`
-  - Runs backend tests, dead-code checks, web tests/build/e2e, and API doc sync check.
+  - Runs backend tests, dead-code checks, web tests/build/e2e, API doc sync, and markdown link-integrity checks.
 - `dead_code_check.sh`
   - Runs `ruff check src tests`.
   - Runs TypeScript no-unused checks (`tsc --noUnusedLocals --noUnusedParameters`).
 - `capture_release_evidence.sh`
   - Runs quality/docs/sqlite checks and writes timestamped bundle under `data/evidence/`.
+  - Supports `--include-stripe-release-gate` and `--stripe-env-file=.env` to append live Stripe sandbox/webhook verification.
+- `check_markdown_links.py`
+  - Validates local markdown links in active docs (`root/*.md`, `docs/*.md`, `scripts/README.md`, `apps/web/README.md`).
+  - Use `--check` to fail on broken links.
+  - Use `--include-archive` to validate `archive/docs/*.md` links too.
 - `ci_sqlite_probes.sh`
   - Runs SQLite migrate/seed/integrity/maintenance/envelope probes.
   - Writes artifacts to `data/.ci_outputs/` by default.
@@ -52,3 +57,9 @@ This directory contains the authoritative local/CI automation entrypoints.
 - `stripe_sandbox_probe.py`
   - Runs a live Stripe test-mode probe using `STRIPE_SECRET_KEY` (and optional `STRIPE_API_VERSION`).
   - Captures sanitized raw response evidence to `data/stripe_probe/latest.json`.
+- `stripe_webhook_golden_path.py`
+  - Runs a signed Stripe webhook lifecycle against a running API (`/billing/webhook` + state/ledger checks).
+  - Captures run evidence to `data/stripe_webhook_golden_path/latest.json`.
+- `stripe_release_gate.sh`
+  - Runs sandbox probe + signed webhook golden path + health checks in one pass.
+  - Writes consolidated release artifact to `data/stripe_release_gate/latest.json`.

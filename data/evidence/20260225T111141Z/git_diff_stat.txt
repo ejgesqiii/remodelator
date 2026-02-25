@@ -1,0 +1,18 @@
+ ACTION_PLAN.md                                   |   4 +-
+ README.md                                        |  10 +-
+ apps/web/playwright-report/index.html            |   2 +-
+ data/.e2e/remodelator.db                         | Bin 180224 -> 180224 bytes
+ data/.e2e/remodelator.db-shm                     | Bin 32768 -> 32768 bytes
+ data/.e2e/remodelator.db-wal                     | Bin 416152 -> 416152 bytes
+ data/remodelator.db                              | Bin 176128 -> 163840 bytes
+ data/remodelator.db-shm                          | Bin 32768 -> 0 bytes
+ data/remodelator.db-wal                          |   0
+ data/stripe_probe/latest.json                    |  15 ++-
+ docs/API_ENDPOINTS_GENERATED.md                  |  19 +--
+ scripts/README.md                                |   6 +
+ scripts/capture_release_evidence.sh              |  33 +++++-
+ scripts/generate_api_endpoints_doc.py            |   4 +-
+ scripts/stripe_sandbox_probe.py                  |   8 +-
+ src/remodelator/interfaces/api/routes/billing.py |   2 +
+ tests/test_api_flow.py                           | 143 +++++++++++++++++++++++
+ 17 files changed, 224 insertions(+), 22 deletions(-)

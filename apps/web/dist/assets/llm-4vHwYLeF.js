@@ -1,1 +1,0 @@
-import{p as n,g as i}from"./client-CZB5FU-Z.js";function l(){return i("/pricing/llm/status")}function r(t){return n("/pricing/llm/live",t)}function p(t){return n("/pricing/llm/apply",t)}export{r as a,p as b,l as g};

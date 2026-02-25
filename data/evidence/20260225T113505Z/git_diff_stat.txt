@@ -1,0 +1,78 @@
+ ACTION_PLAN.md                                     |  13 +-
+ ARCHITECTURE.md                                    |   5 +-
+ README.md                                          |  28 ++--
+ .../web/dist/assets/AdminDashboardPage-BjhbFK2q.js |   1 -
+ apps/web/dist/assets/AppShell-DjYqVaf6.js          |   1 -
+ apps/web/dist/assets/BillingPage-CVbaBV5f.js       |   1 -
+ apps/web/dist/assets/CatalogPage-CPqSegip.js       |   1 -
+ apps/web/dist/assets/DashboardPage-BF_jChF_.js     |   1 -
+ .../web/dist/assets/EstimateDetailPage-CixutNQP.js |   1 -
+ apps/web/dist/assets/EstimateListPage-cnEY2nH6.js  |   1 -
+ apps/web/dist/assets/LoginPage-hPUbbL_p.js         |   1 -
+ apps/web/dist/assets/ProposalPage-CkP03R1g.js      |   1 -
+ apps/web/dist/assets/RegisterPage-MovYM95Y.js      |   1 -
+ apps/web/dist/assets/SettingsPage-SX9UNQko.js      |   1 -
+ apps/web/dist/assets/TemplateListPage-Cw484684.js  |   1 -
+ apps/web/dist/assets/billing-CzMRQDiX.js           |   1 -
+ apps/web/dist/assets/catalog-Wqmak-46.js           |   1 -
+ apps/web/dist/assets/client-CZB5FU-Z.js            |   1 -
+ apps/web/dist/assets/estimates-D0mYDjU-.js         |   1 -
+ apps/web/dist/assets/index-CLC1XlwA.js             |  26 ----
+ apps/web/dist/assets/llm-4vHwYLeF.js               |   1 -
+ apps/web/dist/assets/useAuth-2ixeYPs8.js           |   1 -
+ apps/web/dist/index.html                           |   2 +-
+ apps/web/playwright-report/index.html              |   2 +-
+ apps/web/playwright.config.ts                      |   1 +
+ apps/web/src/App.tsx                               |  10 +-
+ data/.e2e/remodelator.db                           | Bin 180224 -> 180224 bytes
+ data/.e2e/remodelator.db-shm                       | Bin 32768 -> 32768 bytes
+ data/.e2e/remodelator.db-wal                       | Bin 416152 -> 506792 bytes
+ data/evidence/20260224T164504Z/SUMMARY.md          |  37 ------
+ data/evidence/20260224T164504Z/git_commit.txt      |   1 -
+ data/evidence/20260224T164504Z/git_diff_stat.txt   |  46 -------
+ data/evidence/20260224T164504Z/git_status.txt      |  50 -------
+ .../evidence/20260224T164504Z/sqlite_envelope.json |  14 --
+ .../20260224T164504Z/sqlite_integrity.json         |  10 --
+ .../20260224T164504Z/sqlite_maintenance.json       |  11 --
+ data/evidence/20260224T164518Z/SUMMARY.md          |  37 ------
+ data/evidence/20260224T164518Z/git_commit.txt      |   1 -
+ data/evidence/20260224T164518Z/git_diff_stat.txt   |  46 -------
+ data/evidence/20260224T164518Z/git_status.txt      |  50 -------
+ .../evidence/20260224T164518Z/sqlite_envelope.json |  14 --
+ .../20260224T164518Z/sqlite_integrity.json         |  10 --
+ .../20260224T164518Z/sqlite_maintenance.json       |  11 --
+ .../20260224T165207Z/NON_BLOCKER_STATUS.json       |  14 --
+ data/evidence/20260224T165207Z/SUMMARY.md          |  42 ------
+ data/evidence/20260224T165207Z/git_commit.txt      |   1 -
+ data/evidence/20260224T165207Z/git_diff_stat.txt   |  47 -------
+ data/evidence/20260224T165207Z/git_status.txt      |  51 --------
+ .../evidence/20260224T165207Z/sqlite_envelope.json |  14 --
+ .../20260224T165207Z/sqlite_integrity.json         |  10 --
+ .../20260224T165207Z/sqlite_maintenance.json       |  11 --
+ .../20260224T165223Z/NON_BLOCKER_STATUS.json       |  14 --
+ data/evidence/20260224T165223Z/SUMMARY.md          |  42 ------
+ data/evidence/20260224T165223Z/git_commit.txt      |   1 -
+ data/evidence/20260224T165223Z/git_diff_stat.txt   |  47 -------
+ data/evidence/20260224T165223Z/git_status.txt      |  51 --------
+ .../evidence/20260224T165223Z/sqlite_envelope.json |  14 --
+ .../20260224T165223Z/sqlite_integrity.json         |  10 --
+ .../20260224T165223Z/sqlite_maintenance.json       |  11 --
+ data/evidence/index.json                           |  97 +++++++-------
+ data/remodelator.db                                | Bin 176128 -> 163840 bytes
+ data/remodelator.db-shm                            | Bin 32768 -> 0 bytes
+ data/remodelator.db-wal                            |   0
+ data/stripe_probe/latest.json                      |  15 ++-
+ docs/API_ENDPOINTS_GENERATED.md                    |  19 +--
+ docs/API_REFERENCE.md                              |   6 +-
+ docs/BATCH_A_DEMO_NOTE.md                          |  64 ---------
+ docs/README.md                                     |  28 ++--
+ scripts/README.md                                  |  13 +-
+ scripts/capture_release_evidence.sh                |  50 ++++++-
+ scripts/generate_api_endpoints_doc.py              |   4 +-
+ scripts/quality_gate.sh                            |   6 +-
+ scripts/stripe_sandbox_probe.py                    |   8 +-
+ src/remodelator/application/service.py             |  53 +++++++-
+ src/remodelator/interfaces/api/routes/billing.py   |   2 +
+ tests/test_api_flow.py                             | 143 +++++++++++++++++++++
+ tests/test_billing_runtime.py                      | 119 +++++++++++++++++
+ 77 files changed, 513 insertions(+), 937 deletions(-)

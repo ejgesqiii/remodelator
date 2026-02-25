@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 from datetime import datetime, timedelta, timezone
 import os
 import tempfile
+import time
 from pathlib import Path
 from uuid import uuid4
 
@@ -23,6 +27,21 @@ from remodelator.infra.operation_lock import OperationLockTimeoutError  # noqa: 
 
 
 client = TestClient(app)
+
+
+def _stripe_signature_header(payload: bytes, webhook_secret: str, timestamp: int | None = None) -> str:
+    ts = timestamp or int(time.time())
+    signed_payload = f"{ts}.{payload.decode('utf-8')}".encode("utf-8")
+    signature = hmac.new(
+        webhook_secret.encode("utf-8"),
+        signed_payload,
+        hashlib.sha256,
+    ).hexdigest()
+    return f"t={ts},v1={signature}"
+
+
+def _ensure_db_migrated() -> None:
+    assert client.post("/db/migrate").status_code == 200
 
 
 def test_api_end_to_end(monkeypatch) -> None:
@@ -614,6 +633,7 @@ def test_stripe_webhook_flow(monkeypatch) -> None:
     monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
     monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+    _ensure_db_migrated()
 
     register = client.post(
         "/auth/register",
@@ -731,6 +751,7 @@ def test_stripe_webhook_requires_configured_webhook_secret(monkeypatch) -> None:
     monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
     monkeypatch.delenv("STRIPE_SECRET_KEY", raising=False)
     monkeypatch.delenv("STRIPE_WEBHOOK_SECRET", raising=False)
+    _ensure_db_migrated()
 
     response = client.post(
         "/billing/webhook",
@@ -747,6 +768,7 @@ def test_stripe_webhook_replay_and_invoice_events(monkeypatch) -> None:
     monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
     monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+    _ensure_db_migrated()
 
     email = f"webhook-replay-{uuid4()}@example.com"
     register = client.post(
@@ -841,3 +863,124 @@ def test_stripe_webhook_replay_and_invoice_events(monkeypatch) -> None:
     assert state.status_code == 200
     assert state.json()["subscription_id"] == "sub_webhook_replay_123"
     assert state.json()["status"] == "past_due"
+
+
+def test_stripe_webhook_real_signature_verification_and_replay(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
+    monkeypatch.delenv("STRIPE_SECRET_KEY", raising=False)
+    webhook_secret = "whsec_real_sig_test"
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", webhook_secret)
+    _ensure_db_migrated()
+
+    email = f"webhook-real-signature-{uuid4()}@example.com"
+    register = client.post(
+        "/auth/register",
+        json={"email": email, "password": "pw123456", "full_name": "Webhook Signature"},
+    )
+    if register.status_code == 200:
+        session_token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": email, "password": "pw123456"})
+        assert login.status_code == 200
+        session_token = login.json()["session_token"]
+
+    with session_scope() as session:
+        user = session.query(service.User).filter_by(email=email).first()
+        assert user is not None
+        user.stripe_customer_id = "cus_webhook_real_sig_123"
+
+    event = {
+        "id": "evt_real_sig_123",
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "customer": "cus_webhook_real_sig_123",
+                "subscription": "sub_real_sig_123",
+                "amount_total": 120000,
+            }
+        },
+    }
+    payload = json.dumps(event, separators=(",", ":")).encode("utf-8")
+    signature = _stripe_signature_header(payload, webhook_secret)
+
+    first = client.post(
+        "/billing/webhook",
+        content=payload,
+        headers={"content-type": "application/json", "stripe-signature": signature},
+    )
+    replay = client.post(
+        "/billing/webhook",
+        content=payload,
+        headers={"content-type": "application/json", "stripe-signature": signature},
+    )
+    assert first.status_code == 200
+    assert replay.status_code == 200
+    assert first.json()["status"] == "success"
+    assert replay.json()["status"] == "success"
+
+    headers = {"x-session-token": session_token}
+    state = client.get("/billing/subscription-state", headers=headers)
+    assert state.status_code == 200
+    assert state.json()["subscription_id"] == "sub_real_sig_123"
+    assert state.json()["status"] == "active"
+
+    ledger = client.get("/billing/ledger?limit=20", headers=headers)
+    assert ledger.status_code == 200
+    subscription_events = [row for row in ledger.json() if row["event_type"] == "subscription"]
+    assert len(subscription_events) == 1
+
+
+def test_stripe_webhook_falls_back_to_subscription_lookup_when_customer_missing(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+    _ensure_db_migrated()
+
+    email = f"webhook-subscription-lookup-{uuid4()}@example.com"
+    register = client.post(
+        "/auth/register",
+        json={"email": email, "password": "pw123456", "full_name": "Webhook Subscription Lookup"},
+    )
+    if register.status_code == 200:
+        session_token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": email, "password": "pw123456"})
+        assert login.status_code == 200
+        session_token = login.json()["session_token"]
+
+    with session_scope() as session:
+        user = session.query(service.User).filter_by(email=email).first()
+        assert user is not None
+        user.stripe_subscription_id = "sub_lookup_only_123"
+
+    def mock_verify(*args, **kwargs) -> dict:
+        return {}
+
+    monkeypatch.setattr("remodelator.application.stripe_service.StripeService.verify_webhook_signature", mock_verify)
+
+    invoice_failed = client.post(
+        "/billing/webhook",
+        json={
+            "id": "evt_invoice_lookup_123",
+            "type": "invoice.payment_failed",
+            "data": {
+                "object": {
+                    "subscription": "sub_lookup_only_123",
+                    "amount_due": 120000,
+                }
+            },
+        },
+        headers={"stripe-signature": "t=123,v1=fake"},
+    )
+    assert invoice_failed.status_code == 200
+    assert invoice_failed.json()["status"] == "success"
+
+    headers = {"x-session-token": session_token}
+    state = client.get("/billing/subscription-state", headers=headers)
+    assert state.status_code == 200
+    assert state.json()["subscription_id"] == "sub_lookup_only_123"
+    assert state.json()["status"] == "past_due"
+
+    ledger = client.get("/billing/ledger?limit=20", headers=headers)
+    assert ledger.status_code == 200
+    assert any(row["event_type"] == "invoice_payment_failed" for row in ledger.json())

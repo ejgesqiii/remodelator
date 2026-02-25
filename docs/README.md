@@ -23,23 +23,23 @@ npm ci --prefix apps/web
 ## Core Technical Docs
 
 - [Architecture](../ARCHITECTURE.md)
-- [UI Refactor Plan (Archived)](../archive/docs/UI_REFACTOR_PLAN_2026-02-25.md)
 - [Scripts Reference](../scripts/README.md)
 - [Technical Decisions](TECH_DECISIONS.md)
 - [API Reference](API_REFERENCE.md)
-- [UI/UX Interactions](UI_UX_INTERACTIONS.md)
 - [Migration Reconciliation Guide](MIGRATION_RECONCILIATION.md)
 - [SQLite Operations Runbook](SQLITE_OPERATIONS_RUNBOOK.md)
-- [Deployment Hardening Checklist](DEPLOYMENT_HARDENING_CHECKLIST.md)
-- [Blockers and Roadmap](BLOCKERS_AND_ROADMAP.md)
-- [Non-Blocker Completion Scorecard](NON_BLOCKER_COMPLETION.md)
 - [Launch Evidence Checklist](LAUNCH_EVIDENCE_CHECKLIST.md)
 
 ## Historical Execution Logs (Reference Only)
 
-- [Batch A Taskboard](BATCH_A_TASKBOARD.md)
-- [Batch B Taskboard](BATCH_B_TASKBOARD.md)
-- [Batch A Demo Note](BATCH_A_DEMO_NOTE.md)
+- [UI Refactor Plan](../archive/docs/UI_REFACTOR_PLAN_2026-02-25.md)
+- [UI/UX Interactions](../archive/docs/UI_UX_INTERACTIONS.md)
+- [Blockers and Roadmap](../archive/docs/BLOCKERS_AND_ROADMAP.md)
+- [Non-Blocker Completion Scorecard](../archive/docs/NON_BLOCKER_COMPLETION.md)
+- [Deployment Hardening Checklist](../archive/docs/DEPLOYMENT_HARDENING_CHECKLIST.md)
+- [Batch A Taskboard](../archive/docs/BATCH_A_TASKBOARD.md)
+- [Batch B Taskboard](../archive/docs/BATCH_B_TASKBOARD.md)
+- [Batch A Demo Note](../archive/docs/BATCH_A_DEMO_NOTE.md)
 
 ## Generated Docs
 
@@ -54,12 +54,16 @@ Verify sync (CI-safe):
 ```bash
 python3 scripts/generate_api_endpoints_doc.py --check
 ```
+Verify local markdown links (CI-safe):
+```bash
+python3 scripts/check_markdown_links.py --check
+```
 
 Run full local quality gate:
 ```bash
 ./scripts/quality_gate.sh
 ```
-GitHub CI executes the same gate via [ci.yml](../.github/workflows/ci.yml).
+
 Run dead/unused-code checks directly:
 ```bash
 ./scripts/dead_code_check.sh
@@ -69,11 +73,15 @@ Capture a timestamped release-evidence bundle:
 ```bash
 ./scripts/capture_release_evidence.sh
 ```
+Include live Stripe sandbox/webhook gate in the same bundle:
+```bash
+./scripts/capture_release_evidence.sh --include-stripe-release-gate --stripe-env-file=.env
+```
 
 Bundle outputs include:
 - `SUMMARY.md`
 - `NON_BLOCKER_STATUS.json`
-- quality/docs/sqlite artifact files
+- quality/docs/sqlite artifact files (`docs_links.log` included)
 
 Show latest bundle readiness quickly:
 ```bash

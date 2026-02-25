@@ -247,6 +247,8 @@ async def billing_webhook(request: Request) -> dict[str, str]:
             user = None
             if customer_id:
                 user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
+            if not user and subscription_id:
+                user = session.query(service.User).filter_by(stripe_subscription_id=subscription_id).first()
 
             if evt_type in {"checkout.session.completed", "checkout.session.async_payment_succeeded"}:
                 if not user:

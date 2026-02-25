@@ -5,14 +5,22 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
 SKIP_QUALITY_GATE="false"
+INCLUDE_STRIPE_RELEASE_GATE="false"
+STRIPE_ENV_FILE=".env"
 for arg in "$@"; do
   case "$arg" in
     --skip-quality-gate)
       SKIP_QUALITY_GATE="true"
       ;;
+    --include-stripe-release-gate)
+      INCLUDE_STRIPE_RELEASE_GATE="true"
+      ;;
+    --stripe-env-file=*)
+      STRIPE_ENV_FILE="${arg#*=}"
+      ;;
     *)
       echo "Unknown argument: $arg" >&2
-      echo "Usage: ./scripts/capture_release_evidence.sh [--skip-quality-gate]" >&2
+      echo "Usage: ./scripts/capture_release_evidence.sh [--skip-quality-gate] [--include-stripe-release-gate] [--stripe-env-file=.env]" >&2
       exit 2
       ;;
   esac
@@ -24,6 +32,8 @@ mkdir -p "$OUT_DIR"
 
 QUALITY_GATE_STATUS="skipped"
 DOCS_SYNC_STATUS="pending"
+DOCS_LINK_STATUS="pending"
+STRIPE_RELEASE_GATE_STATUS="skipped"
 
 if [[ "$SKIP_QUALITY_GATE" == "false" ]]; then
   QUALITY_GATE_STATUS="failed"
@@ -35,6 +45,18 @@ fi
 DOCS_SYNC_STATUS="failed"
 if python3 scripts/generate_api_endpoints_doc.py --check >"$OUT_DIR/docs_sync.log" 2>&1; then
   DOCS_SYNC_STATUS="passed"
+fi
+
+DOCS_LINK_STATUS="failed"
+if python3 scripts/check_markdown_links.py --check >"$OUT_DIR/docs_links.log" 2>&1; then
+  DOCS_LINK_STATUS="passed"
+fi
+
+if [[ "$INCLUDE_STRIPE_RELEASE_GATE" == "true" ]]; then
+  STRIPE_RELEASE_GATE_STATUS="failed"
+  if ./scripts/stripe_release_gate.sh --env-file "$STRIPE_ENV_FILE" --api-port 8010 --output "$OUT_DIR/stripe_release_gate.json" >"$OUT_DIR/stripe_release_gate.log" 2>&1; then
+    STRIPE_RELEASE_GATE_STATUS="passed"
+  fi
 fi
 
 remodelator db integrity-check --json >"$OUT_DIR/sqlite_integrity.json"
@@ -73,18 +95,23 @@ print("passed" if errors == 0 and locked_errors == 0 else "failed")
 PY
 )"
 
-TOTAL_CHECKS=5
+TOTAL_CHECKS=6
 PASSED_CHECKS=0
 [[ "$QUALITY_GATE_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
 [[ "$DOCS_SYNC_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
+[[ "$DOCS_LINK_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
 [[ "$SQLITE_INTEGRITY_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
 [[ "$SQLITE_MAINTENANCE_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
 [[ "$SQLITE_ENVELOPE_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
+if [[ "$INCLUDE_STRIPE_RELEASE_GATE" == "true" ]]; then
+  TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+  [[ "$STRIPE_RELEASE_GATE_STATUS" == "passed" ]] && PASSED_CHECKS=$((PASSED_CHECKS + 1))
+fi
 
 NON_BLOCKER_GATE_STATUS="failed"
 if [[ "$PASSED_CHECKS" -eq "$TOTAL_CHECKS" ]]; then
   NON_BLOCKER_GATE_STATUS="passed"
-elif [[ "$QUALITY_GATE_STATUS" == "skipped" && "$DOCS_SYNC_STATUS" == "passed" && "$SQLITE_INTEGRITY_STATUS" == "passed" && "$SQLITE_MAINTENANCE_STATUS" == "passed" && "$SQLITE_ENVELOPE_STATUS" == "passed" ]]; then
+elif [[ "$QUALITY_GATE_STATUS" == "skipped" && "$DOCS_SYNC_STATUS" == "passed" && "$DOCS_LINK_STATUS" == "passed" && "$SQLITE_INTEGRITY_STATUS" == "passed" && "$SQLITE_MAINTENANCE_STATUS" == "passed" && "$SQLITE_ENVELOPE_STATUS" == "passed" && ( "$INCLUDE_STRIPE_RELEASE_GATE" != "true" || "$STRIPE_RELEASE_GATE_STATUS" == "passed" ) ]]; then
   NON_BLOCKER_GATE_STATUS="partial"
 fi
 
@@ -98,9 +125,11 @@ payload = {
   "checks": {
     "quality_gate": "${QUALITY_GATE_STATUS}",
     "docs_sync": "${DOCS_SYNC_STATUS}",
+    "docs_links": "${DOCS_LINK_STATUS}",
     "sqlite_integrity": "${SQLITE_INTEGRITY_STATUS}",
     "sqlite_maintenance": "${SQLITE_MAINTENANCE_STATUS}",
     "sqlite_envelope": "${SQLITE_ENVELOPE_STATUS}",
+    "stripe_release_gate": "${STRIPE_RELEASE_GATE_STATUS}",
   },
   "passed_checks": ${PASSED_CHECKS},
   "total_checks": ${TOTAL_CHECKS},
@@ -121,19 +150,24 @@ cat >"$OUT_DIR/SUMMARY.md" <<EOF
 - Commit: $(cat "$OUT_DIR/git_commit.txt")
 - Quality gate status: $QUALITY_GATE_STATUS
 - Docs sync status: $DOCS_SYNC_STATUS
+- Docs links status: $DOCS_LINK_STATUS
 - SQLite integrity status: $SQLITE_INTEGRITY_STATUS
 - SQLite maintenance status: $SQLITE_MAINTENANCE_STATUS
 - SQLite envelope status: $SQLITE_ENVELOPE_STATUS
+- Stripe release gate status: $STRIPE_RELEASE_GATE_STATUS
 - Non-blocker gate status: $NON_BLOCKER_GATE_STATUS ($PASSED_CHECKS/$TOTAL_CHECKS checks)
 
 ## Included Artifacts
 
 - \`quality_gate.log\` (present when quality gate was run)
 - \`docs_sync.log\`
+- \`docs_links.log\`
 - \`NON_BLOCKER_STATUS.json\`
 - \`sqlite_integrity.json\`
 - \`sqlite_maintenance.json\`
 - \`sqlite_envelope.json\`
+- \`stripe_release_gate.log\` (present when stripe release gate is included)
+- \`stripe_release_gate.json\` (present when stripe release gate is included)
 - \`git_commit.txt\`
 - \`git_status.txt\`
 - \`git_diff_stat.txt\`
@@ -160,7 +194,17 @@ if [[ "$DOCS_SYNC_STATUS" == "failed" ]]; then
   exit 1
 fi
 
+if [[ "$DOCS_LINK_STATUS" == "failed" ]]; then
+  echo "Docs link check failed. See $OUT_DIR/docs_links.log" >&2
+  exit 1
+fi
+
 if [[ "$SQLITE_INTEGRITY_STATUS" == "failed" || "$SQLITE_MAINTENANCE_STATUS" == "failed" || "$SQLITE_ENVELOPE_STATUS" == "failed" ]]; then
   echo "SQLite evidence checks failed. See artifacts in $OUT_DIR" >&2
+  exit 1
+fi
+
+if [[ "$INCLUDE_STRIPE_RELEASE_GATE" == "true" && "$STRIPE_RELEASE_GATE_STATUS" == "failed" ]]; then
+  echo "Stripe release gate failed. See $OUT_DIR/stripe_release_gate.log" >&2
   exit 1
 fi

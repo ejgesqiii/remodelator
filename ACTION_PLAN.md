@@ -166,7 +166,8 @@ Production-ready seams:
 4. demo reset regression tests
 5. LLM live reliability tests (status, retry path, and fail-loud behavior)
 6. docs sync gate: regenerate endpoint inventory from source and keep architecture references current
-7. SQLite operability probe pack (`scripts/ci_sqlite_probes.sh`) in CI/local for integrity, maintenance, and concurrency envelope validation
+7. docs link-integrity gate: validate active markdown references (`scripts/check_markdown_links.py --check`)
+8. SQLite operability probe pack (`scripts/ci_sqlite_probes.sh`) in CI/local for integrity, maintenance, and concurrency envelope validation
 
 ### Frontend gates
 1. component tests for critical interactions
@@ -335,14 +336,14 @@ Batch A (complete):
 1. Product/UX modularization and panel decomposition complete.
 2. Domain/API route splits and service extraction baseline complete.
 3. Quality/Ops quality-gate + docs-sync discipline established.
-4. Execution board and close artifacts: `docs/BATCH_A_TASKBOARD.md`, `docs/BATCH_A_DEMO_NOTE.md`.
+4. Execution board and close artifacts: `archive/docs/BATCH_A_TASKBOARD.md`, `archive/docs/BATCH_A_DEMO_NOTE.md`.
 
 Batch B (complete):
 1. Product/UX: improve admin and billing interaction polish for client walkthrough.
 2. Domain/API: finalized error-contract consistency, request-rate limiting, lifecycle invariants, and production-auth guards.
 3. Quality/Ops: finalized launch evidence pack (quality gate, security checks, operating runbook).  
-   Artifact baseline: `docs/LAUNCH_EVIDENCE_CHECKLIST.md`, `docs/SQLITE_OPERATIONS_RUNBOOK.md`, `docs/DEPLOYMENT_HARDENING_CHECKLIST.md`.
-4. Active execution board: `docs/BATCH_B_TASKBOARD.md`.
+   Artifact baseline: `docs/LAUNCH_EVIDENCE_CHECKLIST.md`, `docs/SQLITE_OPERATIONS_RUNBOOK.md`, `archive/docs/DEPLOYMENT_HARDENING_CHECKLIST.md`.
+4. Active execution board: `archive/docs/BATCH_B_TASKBOARD.md`.
 
 Batch C (complete):
 1. Product/UX: launch-operability UX cleanup and hybrid billing transparency in admin/reporting.
@@ -407,6 +408,6 @@ Resolved items:
 - Stripe runtime command compatibility alignment across API/CLI/runtime command names.
 
 Verification evidence:
-- `pytest -q` -> `103 passed`
-- `pytest -q tests/test_billing_runtime.py tests/test_api_flow.py tests/test_cli_flow.py` -> `23 passed`
+- `pytest -q` -> `117 passed`
+- `pytest -q tests/test_billing_runtime.py tests/test_api_flow.py tests/test_cli_flow.py` -> `30 passed`
 - `cd apps/web && npm run build` -> success (`tsc --noEmit` + Vite build)

@@ -1,0 +1,32 @@
+ M ACTION_PLAN.md
+ M ARCHITECTURE.md
+ M README.md
+ M apps/web/playwright-report/index.html
+ M data/.e2e/remodelator.db
+ M data/.e2e/remodelator.db-shm
+ M data/.e2e/remodelator.db-wal
+ M data/evidence/index.json
+ M data/remodelator.db
+ D data/remodelator.db-shm
+ D data/remodelator.db-wal
+ M data/stripe_probe/latest.json
+ M docs/API_ENDPOINTS_GENERATED.md
+ D docs/BATCH_A_DEMO_NOTE.md
+ M docs/README.md
+ M scripts/README.md
+ M scripts/capture_release_evidence.sh
+ M scripts/generate_api_endpoints_doc.py
+ M scripts/stripe_sandbox_probe.py
+ M src/remodelator/application/service.py
+ M src/remodelator/interfaces/api/routes/billing.py
+ M tests/test_api_flow.py
+ M tests/test_billing_runtime.py
+?? archive/docs/BATCH_A_DEMO_NOTE.md
+?? data/evidence/20260225T111141Z/
+?? data/evidence/20260225T111550Z/
+?? data/evidence/20260225T112629Z/
+?? data/stripe_release_gate/
+?? data/stripe_webhook_golden_path/
+?? scripts/stripe_release_gate.sh
+?? scripts/stripe_webhook_golden_path.py
+?? tests/test_stripe_scripts.py

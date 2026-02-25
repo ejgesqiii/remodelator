@@ -9,8 +9,9 @@ Related docs:
 - [Technical Decisions](docs/TECH_DECISIONS.md)
 - [API Reference (maintained)](docs/API_REFERENCE.md)
 - [API Endpoints (generated)](docs/API_ENDPOINTS_GENERATED.md)
-- [UI/UX Interactions](docs/UI_UX_INTERACTIONS.md)
-- [Blockers and Roadmap](docs/BLOCKERS_AND_ROADMAP.md)
+- [Launch Evidence Checklist](docs/LAUNCH_EVIDENCE_CHECKLIST.md)
+- [Historical UI/UX Interactions (Archived)](archive/docs/UI_UX_INTERACTIONS.md)
+- [Historical Blockers and Roadmap (Archived)](archive/docs/BLOCKERS_AND_ROADMAP.md)
 
 ## 1) System Purpose
 

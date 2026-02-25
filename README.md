@@ -4,13 +4,14 @@ API-first rebuild of Remodelator focused on a full local functional demo first, 
 
 ## Verified Status (February 25, 2026)
 
-- backend regression suite is green: `pytest -q` -> `108 passed`
+- backend regression suite is green: `pytest -q` -> `117 passed`
 - Stripe-focused regression suites are green: `tests/test_billing_runtime.py`, `tests/test_api_flow.py`, `tests/test_cli_flow.py`
 - frontend type/build gate is green: `cd apps/web && npm run build`
 - Stripe sandbox hardening now includes:
   - idempotent SQLite schema upgrades for new Stripe columns/indexes
   - Stripe command compatibility across API/CLI/runtime paths
   - webhook persistence path for subscription/refund/cancel flows
+  - per-user billing idempotency storage (bounded key format + backward-compatible lookup)
   - normalized billing money serialization (`.2f`) for stable API/CLI contracts
 
 ## Product Direction
@@ -59,7 +60,6 @@ Project support:
 - `tests`: backend tests
 - `data`: local SQLite DB, exports, generated demo artifacts
 - `scripts`: helper scripts to run API/web demo
-- `stripe`: python SDK for live billing integration
 - `scripts/bootstrap_local.sh`: one-command local dependency bootstrap
 - `scripts/README.md`: canonical script index and quickstart command map
 - `ARCHITECTURE.md`: exhaustive technical architecture and API/UI reference
@@ -67,14 +67,15 @@ Project support:
 - `docs/TECH_DECISIONS.md`: explicit architecture/auth/integration decision records
 - `docs/API_REFERENCE.md`: maintained request/response and integration notes
 - `docs/API_ENDPOINTS_GENERATED.md`: generated source-of-truth endpoint list
-- `docs/UI_UX_INTERACTIONS.md`: panel-level UX flows and demo script
-- `docs/BLOCKERS_AND_ROADMAP.md`: blocker matrix and roadmap tracker
-- `docs/NON_BLOCKER_COMPLETION.md`: objective non-blocker completion scorecard
+- `docs/LAUNCH_EVIDENCE_CHECKLIST.md`: launch-operability verification checklist
+- `archive/docs/UI_UX_INTERACTIONS.md`: historical panel-level UX flow notes
+- `archive/docs/BLOCKERS_AND_ROADMAP.md`: historical blocker matrix snapshot
+- `archive/docs/NON_BLOCKER_COMPLETION.md`: historical completion scorecard
 - `ACTION_PLAN.md`: exhaustive phased roadmap
 
 Archive artifacts (non-authoritative, historical only):
-- `notes/*` is retained for background context and does not define current build scope/spec.
-- superseded root docs are retained under `archive/docs/*_2026-02-25.md`
+- `_notes_/*` is retained for background context and does not define current build scope/spec.
+- superseded planning/handover docs are retained under `archive/docs/*`
 
 ## Current Functional Coverage
 
@@ -167,6 +168,7 @@ remodelator db seed
 3. Run tests:
 ```bash
 python3 scripts/generate_api_endpoints_doc.py --check
+python3 scripts/check_markdown_links.py --check
 pytest -q
 ```
 
@@ -174,7 +176,7 @@ Or run the full local quality gate:
 ```bash
 ./scripts/quality_gate.sh
 ```
-GitHub CI (`.github/workflows/ci.yml`) runs this same command to keep local and CI gates aligned.
+Use this same command in CI to keep local and pipeline gates aligned.
 Run dead/unused-code checks directly:
 ```bash
 ./scripts/dead_code_check.sh
@@ -207,6 +209,14 @@ REMODELATOR_CI_OUTPUT_DIR=/tmp/remodelator_ci_outputs \
 Run a live Stripe sandbox probe and capture sanitized raw API responses:
 ```bash
 python3 scripts/stripe_sandbox_probe.py --output data/stripe_probe/latest.json
+```
+Run a full signed Stripe webhook golden path against a running API:
+```bash
+python3 scripts/stripe_webhook_golden_path.py --api-base-url http://127.0.0.1:8000 --output data/stripe_webhook_golden_path/latest.json
+```
+Run the consolidated Stripe release gate:
+```bash
+./scripts/stripe_release_gate.sh --env-file .env --api-port 8010 --output data/stripe_release_gate/latest.json
 ```
 
 4. Start API:
@@ -389,7 +399,7 @@ What remains externally provided by client for production-final signoff:
 6. written confirmation on legacy credential rotation status (if legacy environments still active).
 
 Authoritative tracker for these inputs:
-- `docs/BLOCKERS_AND_ROADMAP.md`
+- `ACTION_PLAN.md` sections "Open Questions (Real External Blockers Only)" and "Client Input Package (Exact Needed Artifacts)"
 
 ## Security Notes
 
