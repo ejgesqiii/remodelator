@@ -78,6 +78,7 @@ class Settings:
     billing_provider: str
     stripe_secret_key: str | None
     stripe_webhook_secret: str | None
+    stripe_api_version: str
     api_limit_max: int
     api_rate_limit_enabled: bool
     api_rate_limit_window_seconds: int
@@ -122,6 +123,7 @@ def get_settings() -> Settings:
         billing_provider = "simulation"
     stripe_secret_key = os.getenv("STRIPE_SECRET_KEY")
     stripe_webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
+    stripe_api_version = os.getenv("STRIPE_API_VERSION", "2026-01-28.clover").strip() or "2026-01-28.clover"
     api_limit_max = _env_int("REMODELATOR_API_LIMIT_MAX", 500, minimum=1)
     api_rate_limit_enabled = _env_bool("REMODELATOR_API_RATE_LIMIT_ENABLED", True)
     api_rate_limit_window_seconds = _env_int("REMODELATOR_API_RATE_LIMIT_WINDOW_SECONDS", 60, minimum=1)
@@ -160,6 +162,7 @@ def get_settings() -> Settings:
         billing_provider=billing_provider,
         stripe_secret_key=stripe_secret_key,
         stripe_webhook_secret=stripe_webhook_secret,
+        stripe_api_version=stripe_api_version,
         api_limit_max=api_limit_max,
         api_rate_limit_enabled=api_rate_limit_enabled,
         api_rate_limit_window_seconds=api_rate_limit_window_seconds,

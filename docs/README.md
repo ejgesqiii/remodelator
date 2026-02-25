@@ -22,28 +22,28 @@ npm ci --prefix apps/web
 
 ## Core Technical Docs
 
-- [Architecture](/Users/dylan/Documents/remodelator-main/ARCHITECTURE.md)
-- [UI Refactor Plan](/Users/dylan/Documents/remodelator-main/UI_REFACTOR_PLAN.md)
-- [Scripts Reference](/Users/dylan/Documents/remodelator-main/scripts/README.md)
-- [Technical Decisions](/Users/dylan/Documents/remodelator-main/docs/TECH_DECISIONS.md)
-- [API Reference](/Users/dylan/Documents/remodelator-main/docs/API_REFERENCE.md)
-- [UI/UX Interactions](/Users/dylan/Documents/remodelator-main/docs/UI_UX_INTERACTIONS.md)
-- [Migration Reconciliation Guide](/Users/dylan/Documents/remodelator-main/docs/MIGRATION_RECONCILIATION.md)
-- [SQLite Operations Runbook](/Users/dylan/Documents/remodelator-main/docs/SQLITE_OPERATIONS_RUNBOOK.md)
-- [Deployment Hardening Checklist](/Users/dylan/Documents/remodelator-main/docs/DEPLOYMENT_HARDENING_CHECKLIST.md)
-- [Blockers and Roadmap](/Users/dylan/Documents/remodelator-main/docs/BLOCKERS_AND_ROADMAP.md)
-- [Non-Blocker Completion Scorecard](/Users/dylan/Documents/remodelator-main/docs/NON_BLOCKER_COMPLETION.md)
-- [Launch Evidence Checklist](/Users/dylan/Documents/remodelator-main/docs/LAUNCH_EVIDENCE_CHECKLIST.md)
+- [Architecture](../ARCHITECTURE.md)
+- [UI Refactor Plan (Archived)](../archive/docs/UI_REFACTOR_PLAN_2026-02-25.md)
+- [Scripts Reference](../scripts/README.md)
+- [Technical Decisions](TECH_DECISIONS.md)
+- [API Reference](API_REFERENCE.md)
+- [UI/UX Interactions](UI_UX_INTERACTIONS.md)
+- [Migration Reconciliation Guide](MIGRATION_RECONCILIATION.md)
+- [SQLite Operations Runbook](SQLITE_OPERATIONS_RUNBOOK.md)
+- [Deployment Hardening Checklist](DEPLOYMENT_HARDENING_CHECKLIST.md)
+- [Blockers and Roadmap](BLOCKERS_AND_ROADMAP.md)
+- [Non-Blocker Completion Scorecard](NON_BLOCKER_COMPLETION.md)
+- [Launch Evidence Checklist](LAUNCH_EVIDENCE_CHECKLIST.md)
 
 ## Historical Execution Logs (Reference Only)
 
-- [Batch A Taskboard](/Users/dylan/Documents/remodelator-main/docs/BATCH_A_TASKBOARD.md)
-- [Batch B Taskboard](/Users/dylan/Documents/remodelator-main/docs/BATCH_B_TASKBOARD.md)
-- [Batch A Demo Note](/Users/dylan/Documents/remodelator-main/docs/BATCH_A_DEMO_NOTE.md)
+- [Batch A Taskboard](BATCH_A_TASKBOARD.md)
+- [Batch B Taskboard](BATCH_B_TASKBOARD.md)
+- [Batch A Demo Note](BATCH_A_DEMO_NOTE.md)
 
 ## Generated Docs
 
-- [API Endpoints (Generated)](/Users/dylan/Documents/remodelator-main/docs/API_ENDPOINTS_GENERATED.md)
+- [API Endpoints (Generated)](API_ENDPOINTS_GENERATED.md)
 
 Regenerate:
 ```bash
@@ -59,7 +59,7 @@ Run full local quality gate:
 ```bash
 ./scripts/quality_gate.sh
 ```
-GitHub CI executes the same gate via [ci.yml](/Users/dylan/Documents/remodelator-main/.github/workflows/ci.yml).
+GitHub CI executes the same gate via [ci.yml](../.github/workflows/ci.yml).
 Run dead/unused-code checks directly:
 ```bash
 ./scripts/dead_code_check.sh

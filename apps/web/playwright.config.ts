@@ -5,6 +5,12 @@ import { dirname, join } from "node:path";
 const appDir = dirname(fileURLToPath(import.meta.url));
 const repoDir = dirname(dirname(appDir));
 const e2eDataDir = join(repoDir, "data", ".e2e");
+const apiPort = Number(process.env.E2E_API_PORT ?? "8000");
+const webPort = Number(process.env.E2E_WEB_PORT ?? "5173");
+const apiHost = process.env.E2E_API_HOST ?? "127.0.0.1";
+const webHost = process.env.E2E_WEB_HOST ?? "127.0.0.1";
+const apiBaseUrl = `http://${apiHost}:${apiPort}`;
+const webBaseUrl = `http://${webHost}:${webPort}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -14,7 +20,7 @@ export default defineConfig({
   // keep execution serial to avoid cross-test write contention.
   workers: 1,
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? "http://127.0.0.1:5173",
+    baseURL: process.env.E2E_BASE_URL ?? webBaseUrl,
     trace: "on-first-retry",
   },
   webServer: [
@@ -26,15 +32,24 @@ export default defineConfig({
       env: {
         ...process.env,
         REMODELATOR_DATA_DIR: e2eDataDir,
+        REMODELATOR_API_HOST: apiHost,
+        REMODELATOR_API_PORT: String(apiPort),
+        REMODELATOR_BILLING_PROVIDER: process.env.E2E_BILLING_PROVIDER ?? "simulation",
+        REMODELATOR_CORS_ORIGINS: `${webBaseUrl},http://localhost:${webPort}`,
       },
-      port: 8000,
+      port: apiPort,
       reuseExistingServer: false,
       timeout: 120_000,
     },
     {
-      command: "npm run dev -- --host 127.0.0.1 --port 5173",
+      command: `npm run dev -- --host ${webHost} --port ${webPort}`,
       cwd: appDir,
-      port: 5173,
+      env: {
+        ...process.env,
+        VITE_API_PROXY_TARGET: apiBaseUrl,
+        VITE_API_URL: apiBaseUrl,
+      },
+      port: webPort,
       reuseExistingServer: false,
       timeout: 120_000,
     },

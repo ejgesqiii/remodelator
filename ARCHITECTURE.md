@@ -1,16 +1,16 @@
 # Remodelator vNext Architecture
 
-Last updated: February 24, 2026
+Last updated: February 25, 2026
 Audience: technical founder, lead engineer, implementation team
 Spec authority: current implementation + active docs in root/docs (`notes/*` treated as historical archive only)
 
 Related docs:
-- [Docs Index](/Users/dylan/Documents/remodelator-main/docs/README.md)
-- [Technical Decisions](/Users/dylan/Documents/remodelator-main/docs/TECH_DECISIONS.md)
-- [API Reference (maintained)](/Users/dylan/Documents/remodelator-main/docs/API_REFERENCE.md)
-- [API Endpoints (generated)](/Users/dylan/Documents/remodelator-main/docs/API_ENDPOINTS_GENERATED.md)
-- [UI/UX Interactions](/Users/dylan/Documents/remodelator-main/docs/UI_UX_INTERACTIONS.md)
-- [Blockers and Roadmap](/Users/dylan/Documents/remodelator-main/docs/BLOCKERS_AND_ROADMAP.md)
+- [Docs Index](docs/README.md)
+- [Technical Decisions](docs/TECH_DECISIONS.md)
+- [API Reference (maintained)](docs/API_REFERENCE.md)
+- [API Endpoints (generated)](docs/API_ENDPOINTS_GENERATED.md)
+- [UI/UX Interactions](docs/UI_UX_INTERACTIONS.md)
+- [Blockers and Roadmap](docs/BLOCKERS_AND_ROADMAP.md)
 
 ## 1) System Purpose
 
@@ -472,7 +472,7 @@ Resolved client decisions already applied:
 - [x] Launch billing model locked to hybrid (`$1200/year` + `$10` pricing event)
 - [x] Proposal content scope locked to neutral/default template for prototype
 - [ ] Pricing formula signoff using client-validated fixtures
-- [ ] Live billing provider integration (post-simulation phase)
+- [x] Live billing provider integration (Stripe sandbox + webhook path)
 - [ ] Hybrid billing policy detail lock integrated (trigger/retry/reversal semantics)
 - [ ] Stripe ownership + key/webhook provisioning lock
 - [ ] Compliance retention/export policy integration

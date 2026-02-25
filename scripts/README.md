@@ -1,6 +1,6 @@
 # Scripts Reference
 
-Last updated: February 24, 2026
+Last updated: February 25, 2026
 
 This directory contains the authoritative local/CI automation entrypoints.
 
@@ -49,3 +49,6 @@ This directory contains the authoritative local/CI automation entrypoints.
   - Prunes old evidence bundles (`--keep`, `--apply`, `--json`).
 - `demo_local.sh`
   - CLI-driven end-to-end local demo artifact generator in `data/demo_outputs/`.
+- `stripe_sandbox_probe.py`
+  - Runs a live Stripe test-mode probe using `STRIPE_SECRET_KEY` (and optional `STRIPE_API_VERSION`).
+  - Captures sanitized raw response evidence to `data/stripe_probe/latest.json`.

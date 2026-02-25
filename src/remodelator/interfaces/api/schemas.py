@@ -237,7 +237,7 @@ class BillingSubscriptionRequest(StrictRequestModel):
 
 
 class EstimateChargeRequest(StrictRequestModel):
-    estimate_id: str
+    estimate_id: str = "manual"
     amount: Decimal | None = None
     details: str = ""
     idempotency_key: str | None = None

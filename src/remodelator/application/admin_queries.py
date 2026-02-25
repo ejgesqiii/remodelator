@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal, ROUND_HALF_UP
+
 from sqlalchemy import Select, case, func, select
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,10 @@ from remodelator.infra.models import CatalogNode
 from remodelator.infra.models import Estimate
 from remodelator.infra.models import EstimateLineItem
 from remodelator.infra.models import User
+
+
+def _format_money(value: Decimal) -> str:
+    return f"{value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):.2f}"
 
 
 def _normalize_optional_filter(value: str | None) -> str | None:
@@ -34,7 +40,7 @@ def admin_summary(session: Session) -> dict[str, object]:
         "estimates": int(estimates or 0),
         "line_items": int(line_items or 0),
         "billing_events": int(billing_events or 0),
-        "billing_total_amount": str(total_billed),
+        "billing_total_amount": _format_money(Decimal(str(total_billed or 0))),
         "catalog_nodes": int(catalog_nodes or 0),
         "catalog_items": int(catalog_items or 0),
     }
@@ -168,7 +174,7 @@ def list_billing_ledger_admin(
             "id": row.id,
             "user_id": row.user_id,
             "event_type": row.event_type,
-            "amount": str(row.amount),
+            "amount": _format_money(row.amount),
             "currency": row.currency,
             "details": row.details,
             "created_at": row.created_at.isoformat(),

@@ -1,6 +1,6 @@
 # Remodelator vNext Action Plan
 
-Last updated: February 24, 2026  
+Last updated: February 25, 2026  
 Mode: API-first product build, polished React UI, full local functional demo first, production readiness second
 Spec authority: current codebase + active docs in root/docs (historical `notes/*` is non-authoritative)
 
@@ -395,29 +395,18 @@ Production release is complete only when all are true:
 6. deployment runbook, backup/restore, and rollback checklist are documented and tested,
 7. all quality gates pass on production profile settings (no dev bypass assumptions).
 
-## 21) Appendix A: Current Known Regressions (Handover Notes)
+## 21) Appendix A: Hardening Status (Resolved on February 25, 2026)
 
-Implementation of Phase E (Live Stripe Integration) is complete, but the final automated hardening pass revealed several regressions that require Senior Engineer attention:
+The Stripe hardening regressions discovered during Phase E are resolved in the current codebase state.
 
-### A.1) Decimal Precision Mismatches
-- **Issue**: API assertions expect `10.00` (string) but receive `10.0000`.
-- **Location**: `tests/test_api_flow.py`, `tests/test_cli_flow.py`.
-- **Cause**: Recent hardening of `billing_policy.py` to correctly surface live state changed assertion expectations.
+Resolved items:
+- Decimal precision normalization for billing responses (`10.00` contract consistency on create/replay/read paths).
+- SQLite schema compatibility migration for legacy local DB files (Stripe user columns/indexes auto-upgrade on migrate/init).
+- Stripe usage-charge runtime conflicts from duplicate mock customer IDs (safe remap flow before update).
+- Webhook subscription-state synchronization (subscription ID propagation and parsed state visibility).
+- Stripe runtime command compatibility alignment across API/CLI/runtime command names.
 
-### A.2) SQLite Unique Constraint Violations
-- **Issue**: `sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError) UNIQUE constraint failed: idempotency_records.id`.
-- **Location**: `test_billing_runtime.py::test_execute_billing_command_stripe_usage_success`.
-- **Cause**: Potential conflict in mock setup or test db re-initialization timing.
-
-### A.3) Webhook Synchronization Gaps
-- **Issue**: `test_stripe_webhook_flow` fails on subscription ID assertions.
-- **Error**: `AssertionError: assert None == 'sub_test_123'`.
-- **Context**: The partially mocked Stripe event handlers are not correctly updating the DB state in the test environment.
-
-### A.4) Configuration Reconciliations
-- **Action**: Verify `cors_allowed_origins` usage vs `cors_origins`.
-- **Status**: Patch applied to `billing_adapters.py`, but cross-suite verification is needed to ensure settings attribute names are consistent.
-
----
-**Handover Date**: 2026-02-25
-**Status**: Implementation Complete / Hardening Blocked by Regressions.
+Verification evidence:
+- `pytest -q` -> `103 passed`
+- `pytest -q tests/test_billing_runtime.py tests/test_api_flow.py tests/test_cli_flow.py` -> `23 passed`
+- `cd apps/web && npm run build` -> success (`tsc --noEmit` + Vite build)

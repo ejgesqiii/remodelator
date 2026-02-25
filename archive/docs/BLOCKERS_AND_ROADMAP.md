@@ -46,7 +46,7 @@ Roadmap execution is intentionally batched for rapid progress:
 7. LLM: OpenRouter remains required; no local fallback mode is used.
 
 Client unblocker source:
-- `CLIENT_UNBLOCKER_LETTER.md` is the authoritative request packet for pending inputs.
+- `CLIENT_UNBLOCKER_LETTER_2026-02-25.md` captures the historical request packet for pending inputs.
 
 ## Active and Queued Batches
 

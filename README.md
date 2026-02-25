@@ -2,6 +2,17 @@
 
 API-first rebuild of Remodelator focused on a full local functional demo first, then production hardening.
 
+## Verified Status (February 25, 2026)
+
+- backend regression suite is green: `pytest -q` -> `108 passed`
+- Stripe-focused regression suites are green: `tests/test_billing_runtime.py`, `tests/test_api_flow.py`, `tests/test_cli_flow.py`
+- frontend type/build gate is green: `cd apps/web && npm run build`
+- Stripe sandbox hardening now includes:
+  - idempotent SQLite schema upgrades for new Stripe columns/indexes
+  - Stripe command compatibility across API/CLI/runtime paths
+  - webhook persistence path for subscription/refund/cancel flows
+  - normalized billing money serialization (`.2f`) for stable API/CLI contracts
+
 ## Product Direction
 
 Target outcome:
@@ -52,7 +63,6 @@ Project support:
 - `scripts/bootstrap_local.sh`: one-command local dependency bootstrap
 - `scripts/README.md`: canonical script index and quickstart command map
 - `ARCHITECTURE.md`: exhaustive technical architecture and API/UI reference
-- `UI_REFACTOR_PLAN.md`: high-level UX rebuild blueprint and page/user-flow targets
 - `docs/README.md`: documentation index and maintenance commands
 - `docs/TECH_DECISIONS.md`: explicit architecture/auth/integration decision records
 - `docs/API_REFERENCE.md`: maintained request/response and integration notes
@@ -61,10 +71,10 @@ Project support:
 - `docs/BLOCKERS_AND_ROADMAP.md`: blocker matrix and roadmap tracker
 - `docs/NON_BLOCKER_COMPLETION.md`: objective non-blocker completion scorecard
 - `ACTION_PLAN.md`: exhaustive phased roadmap
-- `CLIENT_UNBLOCKER_LETTER.md`: non-technical client unblocker letter template
 
 Archive artifacts (non-authoritative, historical only):
 - `notes/*` is retained for background context and does not define current build scope/spec.
+- superseded root docs are retained under `archive/docs/*_2026-02-25.md`
 
 ## Current Functional Coverage
 
@@ -194,6 +204,10 @@ REMODELATOR_CI_SQLITE_DATA_DIR=/tmp/remodelator_ci_data \
 REMODELATOR_CI_OUTPUT_DIR=/tmp/remodelator_ci_outputs \
 ./scripts/ci_sqlite_probes.sh
 ```
+Run a live Stripe sandbox probe and capture sanitized raw API responses:
+```bash
+python3 scripts/stripe_sandbox_probe.py --output data/stripe_probe/latest.json
+```
 
 4. Start API:
 ```bash
@@ -255,6 +269,9 @@ export REMODELATOR_BILLING_ANNUAL_SUBSCRIPTION_AMOUNT='1200.00'
 export REMODELATOR_BILLING_REALTIME_PRICING_AMOUNT='10.00'
 export REMODELATOR_BILLING_CURRENCY='USD'
 export REMODELATOR_BILLING_PROVIDER='simulation'
+export STRIPE_SECRET_KEY='sk_test_...'
+export STRIPE_WEBHOOK_SECRET='whsec_...'
+export STRIPE_API_VERSION='2026-01-28.clover'
 ```
 
 Request tracing + throttling behavior:
@@ -372,7 +389,6 @@ What remains externally provided by client for production-final signoff:
 6. written confirmation on legacy credential rotation status (if legacy environments still active).
 
 Authoritative tracker for these inputs:
-- `CLIENT_UNBLOCKER_LETTER.md`
 - `docs/BLOCKERS_AND_ROADMAP.md`
 
 ## Security Notes

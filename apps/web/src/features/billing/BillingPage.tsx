@@ -41,20 +41,26 @@ export function BillingPage() {
 
     const simSubMutation = useMutation({
         mutationFn: () => billingApi.simulateSubscription(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
-        onSuccess: (r: any) => {
+        onSuccess: (r) => {
             // If the backend returned a Stripe checkout URL, redirect immediately
             if (r.checkout_url) {
                 window.location.href = r.checkout_url;
                 return;
             }
             invalidate();
-            toast.success(`Subscription: ${r.event_type}${r.idempotency_status !== 'new' ? ` (${r.idempotency_status})` : ''}`);
+            toast.success(
+                `Subscription: ${r.event_type ?? r.status ?? 'processed'}${r.idempotency_status ? ` (${r.idempotency_status})` : ''}`
+            );
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Simulation failed'),
     });
 
     const simChargeMutation = useMutation({
-        mutationFn: () => billingApi.simulateEstimateCharge(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
+        mutationFn: () =>
+            billingApi.simulateEstimateCharge({
+                estimate_id: 'manual',
+                ...(idempotencyKey ? { idempotency_key: idempotencyKey } : {}),
+            }),
         onSuccess: (r) => { invalidate(); toast.success(`Charge: ${r.amount}`); },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Charge failed'),
     });
@@ -141,10 +147,10 @@ export function BillingPage() {
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-2">
-                                        <button onClick={() => simEventMutation.mutate('card_attached')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Attach Card</button>
+                                        <button onClick={() => simEventMutation.mutate('payment_method_attached')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Attach Card</button>
                                         <button onClick={() => simSubMutation.mutate()} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Complete Checkout</button>
                                         <button onClick={() => simEventMutation.mutate('invoice_paid')} className="rounded-xl border border-border bg-surface-hover px-3 py-2 text-xs font-medium text-foreground shadow-none hover:bg-surface-active">Invoice Paid</button>
-                                        <button onClick={() => simEventMutation.mutate('payment_failed')} className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning shadow-none hover:bg-warning/20">Payment Failed</button>
+                                        <button onClick={() => simEventMutation.mutate('invoice_payment_failed')} className="rounded-xl border border-warning/30 bg-warning/10 px-3 py-2 text-xs font-medium text-warning shadow-none hover:bg-warning/20">Payment Failed</button>
                                         <button onClick={() => simEventMutation.mutate('subscription_canceled')} className="col-span-2 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive shadow-none hover:bg-destructive/20">Cancel Subscription</button>
                                     </div>
                                 )}

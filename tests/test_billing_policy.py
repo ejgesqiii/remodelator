@@ -40,6 +40,7 @@ def _settings(*, provider: str = "simulation", stripe_key: str | None = None, st
         billing_provider=provider,
         stripe_secret_key=stripe_key,
         stripe_webhook_secret=stripe_webhook,
+        stripe_api_version="2026-01-28.clover",
         api_limit_max=500,
         api_rate_limit_enabled=True,
         api_rate_limit_window_seconds=60,

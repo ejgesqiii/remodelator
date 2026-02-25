@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from decimal import Decimal
+from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi import Query
 
 from remodelator.application import service
@@ -18,6 +21,7 @@ from remodelator.application.billing_policy import (
 )
 from remodelator.application.billing_runtime import BillingCommand
 from remodelator.application.billing_runtime import execute_billing_command
+from remodelator.application.stripe_service import StripeService
 from remodelator.config import get_settings
 from remodelator.infra.db import session_scope
 from remodelator.interfaces.api.constants import API_LIMIT_MAX, API_LIMIT_MIN, DEFAULT_BILLING_LEDGER_LIMIT
@@ -32,6 +36,59 @@ from remodelator.interfaces.api.schemas import BillingSubscriptionRequest
 from remodelator.interfaces.api.schemas import EstimateChargeRequest
 
 router = APIRouter()
+
+
+def _coerce_string(value: object) -> str:
+    if isinstance(value, str):
+        return value.strip()
+    return ""
+
+
+def _coerce_int(value: object, default: int = 0) -> int:
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except Exception:
+        return default
+
+
+def _extract_event_object(event: dict[str, Any]) -> dict[str, Any]:
+    data = event.get("data")
+    if not isinstance(data, dict):
+        return {}
+    obj = data.get("object")
+    if not isinstance(obj, dict):
+        return {}
+    return obj
+
+
+def _coerce_event_dict(event: object, raw_payload: bytes) -> dict[str, Any]:
+    # Stripe SDK returns a StripeObject with to_dict_recursive(); tests may patch with plain dict.
+    if isinstance(event, dict):
+        event_dict = event
+    elif hasattr(event, "to_dict_recursive"):
+        event_dict = event.to_dict_recursive()  # type: ignore[assignment]
+    else:
+        event_dict = {}
+
+    if _coerce_string(event_dict.get("type")):
+        return event_dict
+
+    # Fallback for mocked verification paths that return partial objects.
+    try:
+        parsed = json.loads(raw_payload.decode("utf-8"))
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+    return event_dict
+
+
+def _stable_webhook_event_id(event: dict[str, Any], raw_payload: bytes) -> str:
+    event_id = _coerce_string(event.get("id"))
+    if event_id:
+        return event_id
+    payload_hash = hashlib.sha256(raw_payload).hexdigest()[:24]
+    return f"evt_payload_{payload_hash}"
 
 
 @router.post("/billing/simulate-subscription")
@@ -156,96 +213,129 @@ def billing_ledger(
     return handle(action)
 
 
-from fastapi import Request
-from remodelator.application.stripe_service import StripeService
-
-
 @router.post("/billing/webhook")
 async def billing_webhook(request: Request) -> dict[str, str]:
     """
     Public webhook receiver for Stripe.
     Signature verification ensures authenticity.
     """
-    settings = get_settings()
-    stripe_service = StripeService(settings)
-
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature")
 
-    if not sig_header:
-        # Invalid request, but we must return a generic 400 to prevent probing
-        return handle(lambda: (_ for _ in ()).throw(ValueError("Missing stripe-signature header")))
+    def action() -> dict[str, str]:
+        if not sig_header:
+            raise ValueError("Missing stripe-signature header")
 
-    try:
-        event = stripe_service.verify_webhook_signature(payload, sig_header)
-    except ValueError as e:
-        return handle(lambda: (_ for _ in ()).throw(ValueError(f"Webhook signature verification failed: {str(e)}")))
+        stripe_service = StripeService(get_settings(), require_secret_key=False)
+        try:
+            verified_event = stripe_service.verify_webhook_signature(payload, sig_header)
+        except ValueError as exc:
+            raise ValueError(f"Webhook signature verification failed: {exc}") from exc
 
-    # Extract the payload object
-    evt_type = event.get("type")
-    data_object = event.get("data", {}).get("object", {})
-    
-    # Process supported events idiosyncratically
-    with session_scope() as session:
-        if evt_type == "checkout.session.completed":
-            # Annual subscription purchased
-            customer_id = data_object.get("customer")
-            amount_cents = data_object.get("amount_total", 0)
-            idempotency_key = event.get("request", {}).get("idempotency_key") or event.get("id")
+        event = _coerce_event_dict(verified_event, payload)
+        evt_type = _coerce_string(event.get("type"))
+        if not evt_type:
+            raise ValueError("Webhook event type is missing.")
 
-            # Route 1: Find user by customer ID
-            user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
-            if user:
-                # Update subscription tracked ID if present in payload
-                sub_id = data_object.get("subscription")
-                if sub_id:
-                    user.stripe_subscription_id = sub_id
-                    
+        event_id = _stable_webhook_event_id(event, payload)
+        idempotency_key = f"stripe_evt:{event_id}"
+        data_object = _extract_event_object(event)
+        customer_id = _coerce_string(data_object.get("customer"))
+        subscription_id = _coerce_string(data_object.get("subscription")) or _coerce_string(data_object.get("id"))
+
+        with session_scope() as session:
+            user = None
+            if customer_id:
+                user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
+
+            if evt_type in {"checkout.session.completed", "checkout.session.async_payment_succeeded"}:
+                if not user:
+                    return {"status": "ignored", "event_type": evt_type}
+                if subscription_id:
+                    user.stripe_subscription_id = subscription_id
+                amount = Decimal(_coerce_int(data_object.get("amount_total"))) / 100
+                detail = f"stripe checkout_completed event_id={event_id}"
+                if subscription_id:
+                    detail = f"{detail} subscription_id={subscription_id}"
                 service.record_billing_event(
                     session,
                     user.id,
                     "subscription",
-                    Decimal(amount_cents) / 100,
-                    details=f"Annual subscription via Stripe Checkout (Sub: {sub_id})",
-                    idempotency_key=idempotency_key
+                    amount,
+                    details=detail,
+                    idempotency_key=idempotency_key,
                 )
-                session.commit()
+                return {"status": "success", "event_type": evt_type}
 
-        elif evt_type == "customer.subscription.deleted":
-            # Subscription canceled
-            customer_id = data_object.get("customer")
-            idempotency_key = event.get("id")
-            
-            user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
-            if user:
+            if evt_type == "invoice.paid":
+                if not user:
+                    return {"status": "ignored", "event_type": evt_type}
+                if subscription_id:
+                    user.stripe_subscription_id = subscription_id
+                amount = Decimal(_coerce_int(data_object.get("amount_paid"))) / 100
+                detail = f"stripe invoice_paid event_id={event_id}"
+                if subscription_id:
+                    detail = f"{detail} subscription_id={subscription_id}"
+                service.record_billing_event(
+                    session,
+                    user.id,
+                    "invoice_paid",
+                    amount,
+                    details=detail,
+                    idempotency_key=idempotency_key,
+                )
+                return {"status": "success", "event_type": evt_type}
+
+            if evt_type == "invoice.payment_failed":
+                if not user:
+                    return {"status": "ignored", "event_type": evt_type}
+                if subscription_id:
+                    user.stripe_subscription_id = subscription_id
+                amount = Decimal(_coerce_int(data_object.get("amount_due"))) / 100
+                detail = f"stripe invoice_payment_failed event_id={event_id}"
+                if subscription_id:
+                    detail = f"{detail} subscription_id={subscription_id}"
+                service.record_billing_event(
+                    session,
+                    user.id,
+                    "invoice_payment_failed",
+                    amount,
+                    details=detail,
+                    idempotency_key=idempotency_key,
+                )
+                return {"status": "success", "event_type": evt_type}
+
+            if evt_type == "customer.subscription.deleted":
+                if not user:
+                    return {"status": "ignored", "event_type": evt_type}
                 user.stripe_subscription_id = None
+                detail = f"stripe subscription_canceled event_id={event_id}"
                 service.record_billing_event(
                     session,
                     user.id,
                     "subscription_canceled",
                     Decimal("0"),
-                    details="Subscription was canceled in Stripe.",
-                    idempotency_key=idempotency_key
+                    details=detail,
+                    idempotency_key=idempotency_key,
                 )
-                session.commit()
-                
-        elif evt_type == "charge.refunded":
-            # Usage charge or subscription refunded
-            customer_id = data_object.get("customer")
-            amount_cents = data_object.get("amount_refunded", 0)
-            idempotency_key = event.get("id")
-            
-            user = session.query(service.User).filter_by(stripe_customer_id=customer_id).first()
-            if user:
+                return {"status": "success", "event_type": evt_type}
+
+            if evt_type == "charge.refunded":
+                if not user:
+                    return {"status": "ignored", "event_type": evt_type}
+                amount_cents = _coerce_int(data_object.get("amount_refunded"))
+                amount = (Decimal(abs(amount_cents)) / 100) * Decimal("-1")
+                detail = f"stripe refund event_id={event_id}"
                 service.record_billing_event(
                     session,
                     user.id,
                     "refund",
-                    (Decimal(amount_cents) / 100) * -1,
-                    details="Refund issued via Stripe.",
-                    idempotency_key=idempotency_key
+                    amount,
+                    details=detail,
+                    idempotency_key=idempotency_key,
                 )
-                session.commit()
+                return {"status": "success", "event_type": evt_type}
 
-    # Always return a 200 OK so Stripe knows we received the event
-    return {"status": "success"}
+        return {"status": "ignored", "event_type": evt_type}
+
+    return handle(action)

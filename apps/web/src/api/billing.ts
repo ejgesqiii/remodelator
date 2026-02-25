@@ -24,7 +24,9 @@ export function simulateSubscription(data?: { amount?: number; idempotency_key?:
     return post<BillingMutationResult>('/billing/simulate-subscription', data || {});
 }
 
-export function simulateEstimateCharge(data?: { amount?: number; details?: string; idempotency_key?: string }): Promise<BillingMutationResult> {
+export function simulateEstimateCharge(
+    data?: { estimate_id?: string; amount?: number; details?: string; idempotency_key?: string },
+): Promise<BillingMutationResult> {
     return post<BillingMutationResult>('/billing/simulate-estimate-charge', data || {});
 }
 

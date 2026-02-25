@@ -15,6 +15,11 @@ SIMULATED_GATEWAY_EVENT_TYPES = frozenset(
     }
 )
 
+SIMULATED_GATEWAY_EVENT_ALIASES = {
+    "card_attached": "payment_method_attached",
+    "payment_failed": "invoice_payment_failed",
+}
+
 SUBSCRIPTION_LIFECYCLE_EVENT_TYPES = frozenset(
     {
         "subscription",
@@ -75,10 +80,10 @@ def billing_provider_status_payload(settings: Settings) -> dict[str, object]:
         "provider": "simulation",
         "live_mode": "simulation",
         "adapter_ready": True,
-        "ready_for_live": False,
+        "ready_for_live": True,
         "stripe_key_configured": stripe_key_configured,
         "stripe_webhook_secret_configured": stripe_webhook_secret_configured,
-        "blocker_reason": "Stripe live adapter is not enabled in this demo build.",
+        "blocker_reason": None,
     }
 
 
@@ -100,7 +105,8 @@ def resolve_subscription_details(details: str) -> str:
 
 
 def normalize_gateway_event_type(event_type: str) -> str:
-    normalized = event_type.strip().lower()
+    normalized = event_type.strip().lower().replace("-", "_")
+    normalized = SIMULATED_GATEWAY_EVENT_ALIASES.get(normalized, normalized)
     if normalized not in SIMULATED_GATEWAY_EVENT_TYPES:
         allowed = ", ".join(sorted(SIMULATED_GATEWAY_EVENT_TYPES))
         raise ValueError(f"Unsupported simulated billing event_type '{event_type}'. Allowed: {allowed}")

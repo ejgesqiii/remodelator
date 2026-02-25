@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
 import stripe
@@ -14,13 +14,18 @@ logger = logging.getLogger(__name__)
 
 
 class StripeService:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, *, require_secret_key: bool = True) -> None:
         self.settings = settings
-        if not settings.stripe_secret_key:
-            raise CriticalDependencyError("Stripe API key is not configured.")
-        stripe.api_key = settings.stripe_secret_key
+        if require_secret_key and not settings.stripe_secret_key:
+            raise CriticalDependencyError("STRIPE_SECRET_KEY is not configured. Stripe API key is not configured.")
+        if settings.stripe_secret_key:
+            stripe.api_key = settings.stripe_secret_key
         # Use an explicit API version for stability
-        stripe.api_version = "2024-12-18.acacia"
+        stripe.api_version = settings.stripe_api_version
+
+    @staticmethod
+    def _to_cents(amount: Decimal) -> int:
+        return int((amount * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
     def get_or_create_customer(self, user: User) -> str:
         """
@@ -60,7 +65,9 @@ class StripeService:
         Returns the checkout URL.
         """
         # Stripe expects integer amounts in cents
-        amount_cents = int(amount * 100)
+        amount_cents = self._to_cents(amount)
+        if amount_cents <= 0:
+            raise ValueError("Stripe checkout amount must be greater than zero.")
 
         kwargs: dict[str, Any] = {
             "customer": customer_id,
@@ -104,7 +111,9 @@ class StripeService:
         """
         Captures a real-time usage charge directly if the customer has a payment method on file.
         """
-        amount_cents = int(amount * 100)
+        amount_cents = self._to_cents(amount)
+        if amount_cents <= 0:
+            raise ValueError("Stripe usage charge amount must be greater than zero.")
 
         kwargs: dict[str, Any] = {
             "amount": amount_cents,
@@ -120,10 +129,10 @@ class StripeService:
         try:
             intent = stripe.PaymentIntent.create(**kwargs)
             return intent
-        except stripe.error.CardError as e: # type: ignore
+        except stripe.error.CardError as e:  # type: ignore
             # Expose card errors cleanly
             raise ValueError(f"Payment failed: {e.user_message}") from e
-        except stripe.error.StripeError as e: # type: ignore
+        except stripe.error.StripeError as e:  # type: ignore
             raise RuntimeError(f"Stripe usage charge failed: {e.user_message or str(e)}") from e
 
     def verify_webhook_signature(self, payload: bytes, sig_header: str) -> stripe.Event:
@@ -131,14 +140,16 @@ class StripeService:
         Verifies and constructs a Webhook Event from Stripe.
         """
         if not self.settings.stripe_webhook_secret:
-            raise CriticalDependencyError("Stripe webhook secret is not configured.")
+            raise CriticalDependencyError(
+                "STRIPE_WEBHOOK_SECRET is not configured. Stripe webhook secret is not configured."
+            )
 
         try:
             event = stripe.Webhook.construct_event(
                 payload, sig_header, self.settings.stripe_webhook_secret
             )
             return event
-        except stripe.error.SignatureVerificationError as e: # type: ignore
+        except stripe.error.SignatureVerificationError as e:  # type: ignore
             logger.warning("Invalid Stripe webhook signature.")
             raise ValueError("Invalid webhook signature") from e
         except ValueError as e:

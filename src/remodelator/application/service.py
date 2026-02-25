@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from uuid import uuid4
 
@@ -61,6 +61,10 @@ def _uid() -> str:
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _format_money(value: Decimal) -> str:
+    return f"{value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):.2f}"
 
 
 def _resolve_output_path(output_path: Path | None, default_filename: str) -> Path:
@@ -1006,46 +1010,69 @@ def list_audit_events(session: Session, user_id: str, limit: int = 50) -> list[d
     ]
 
 
-def simulate_billing_event(
+def _lookup_idempotent_billing_event(
+    session: Session,
+    user_id: str,
+    idempotency_key: str | None,
+) -> BillingEvent | None:
+    if not idempotency_key:
+        return None
+
+    existing_key = session.execute(
+        select(IdempotencyRecord).where(
+            IdempotencyRecord.key == idempotency_key,
+            IdempotencyRecord.scope == "billing",
+            IdempotencyRecord.user_id == user_id,
+        )
+    ).scalar_one_or_none()
+    if not existing_key or not existing_key.billing_event_id:
+        return None
+    return session.get(BillingEvent, existing_key.billing_event_id)
+
+
+def _billing_event_response(
+    event: BillingEvent,
+    *,
+    idempotency_status: str,
+    idempotency_key: str | None,
+) -> dict[str, str]:
+    return {
+        "billing_event_id": event.id,
+        "event_type": event.event_type,
+        "amount": _format_money(event.amount),
+        "idempotency_status": idempotency_status,
+        "idempotency_key": idempotency_key or "",
+    }
+
+
+def record_billing_event(
     session: Session,
     user_id: str,
     event_type: str,
     amount: Decimal,
+    *,
     details: str = "",
     idempotency_key: str | None = None,
+    currency: str = "USD",
 ) -> dict[str, str]:
     _require_user(session, user_id)
 
-    if idempotency_key:
-        existing_key = session.execute(
-            select(IdempotencyRecord).where(
-                IdempotencyRecord.key == idempotency_key,
-                IdempotencyRecord.scope == "billing",
-                IdempotencyRecord.user_id == user_id,
-            )
-        ).scalar_one_or_none()
-        if existing_key and existing_key.billing_event_id:
-            existing_event = session.get(BillingEvent, existing_key.billing_event_id)
-            if existing_event:
-                return {
-                    "billing_event_id": existing_event.id,
-                    "event_type": existing_event.event_type,
-                    "amount": str(existing_event.amount),
-                    "idempotency_status": "replayed",
-                    "idempotency_key": idempotency_key,
-                }
+    existing_event = _lookup_idempotent_billing_event(session, user_id, idempotency_key)
+    if existing_event:
+        return _billing_event_response(
+            existing_event,
+            idempotency_status="replayed",
+            idempotency_key=idempotency_key,
+        )
 
-    if event_type in SIMULATED_GATEWAY_EVENT_TYPES:
-        previous_lifecycle_event = session.execute(
-            select(BillingEvent.event_type)
-            .where(BillingEvent.user_id == user_id)
-            .where(BillingEvent.event_type.in_(tuple(SUBSCRIPTION_LIFECYCLE_EVENT_TYPES)))
-            .order_by(BillingEvent.created_at.desc())
-            .limit(1)
-        ).scalar_one_or_none()
-        validate_gateway_lifecycle_transition(event_type, previous_lifecycle_event)
-
-    event = BillingEvent(id=_uid(), user_id=user_id, event_type=event_type, amount=amount, details=details)
+    event = BillingEvent(
+        id=_uid(),
+        user_id=user_id,
+        event_type=event_type,
+        amount=amount,
+        currency=currency,
+        details=details,
+    )
     session.add(event)
     session.flush()
 
@@ -1061,13 +1088,41 @@ def simulate_billing_event(
         )
 
     _audit(session, user_id, f"billing.{event_type}", "billing_event", event.id, details=details)
-    return {
-        "billing_event_id": event.id,
-        "event_type": event_type,
-        "amount": str(amount),
-        "idempotency_status": "created",
-        "idempotency_key": idempotency_key or "",
-    }
+    return _billing_event_response(
+        event,
+        idempotency_status="created",
+        idempotency_key=idempotency_key,
+    )
+
+
+def simulate_billing_event(
+    session: Session,
+    user_id: str,
+    event_type: str,
+    amount: Decimal,
+    details: str = "",
+    idempotency_key: str | None = None,
+) -> dict[str, str]:
+    _require_user(session, user_id)
+
+    if event_type in SIMULATED_GATEWAY_EVENT_TYPES:
+        previous_lifecycle_event = session.execute(
+            select(BillingEvent.event_type)
+            .where(BillingEvent.user_id == user_id)
+            .where(BillingEvent.event_type.in_(tuple(SUBSCRIPTION_LIFECYCLE_EVENT_TYPES)))
+            .order_by(BillingEvent.created_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+        validate_gateway_lifecycle_transition(event_type, previous_lifecycle_event)
+
+    return record_billing_event(
+        session,
+        user_id,
+        event_type,
+        amount,
+        details=details,
+        idempotency_key=idempotency_key,
+    )
 
 
 def list_billing_ledger(session: Session, user_id: str, limit: int = 50) -> list[dict[str, str]]:
@@ -1079,7 +1134,7 @@ def list_billing_ledger(session: Session, user_id: str, limit: int = 50) -> list
         {
             "id": row.id,
             "event_type": row.event_type,
-            "amount": str(row.amount),
+            "amount": _format_money(row.amount),
             "currency": row.currency,
             "details": row.details,
             "created_at": row.created_at.isoformat(),
@@ -1098,7 +1153,7 @@ def _extract_subscription_id(details: str) -> str | None:
 
 
 def subscription_state(session: Session, user_id: str, subscription_id: str | None = None) -> dict[str, object]:
-    _require_user(session, user_id)
+    user = _require_user(session, user_id)
     settings = get_settings()
     query = (
         select(BillingEvent)
@@ -1133,7 +1188,7 @@ def subscription_state(session: Session, user_id: str, subscription_id: str | No
             "currency": settings.billing_currency,
         }
 
-    resolved_subscription_id = subscription_id or _extract_subscription_id(last.details)
+    resolved_subscription_id = subscription_id or _extract_subscription_id(last.details) or user.stripe_subscription_id
     status_map = {
         "subscription_canceled": ("canceled", False, True, False),
         "invoice_payment_failed": ("past_due", False, False, True),
@@ -1149,7 +1204,7 @@ def subscription_state(session: Session, user_id: str, subscription_id: str | No
         "canceled": canceled,
         "past_due": past_due,
         "last_event_type": last.event_type,
-        "last_event_amount": str(last.amount),
+        "last_event_amount": _format_money(last.amount),
         "last_event_at": last.created_at.isoformat(),
         "annual_subscription_amount": f"{settings.billing_annual_subscription_amount:.2f}",
         "realtime_pricing_amount": f"{settings.billing_realtime_pricing_amount:.2f}",

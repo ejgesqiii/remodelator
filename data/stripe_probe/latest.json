@@ -1,0 +1,7 @@
+{
+  "error_message": "Invalid API Key provided: \"sk_test*************************************************************************************************8Cv\"",
+  "error_type": "AuthenticationError",
+  "generated_at": "2026-02-25T10:46:26.480039+00:00",
+  "status": "error",
+  "stripe_api_version_requested": "2026-01-28.clover"
+}

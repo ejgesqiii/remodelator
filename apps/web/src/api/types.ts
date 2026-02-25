@@ -162,11 +162,15 @@ export type BillingEvent = {
 };
 
 export type BillingMutationResult = {
-    billing_event_id: string;
-    event_type: string;
-    amount: string;
-    idempotency_status: string;
+    billing_event_id?: string;
+    event_type?: string;
+    amount?: string;
+    idempotency_status?: string;
     idempotency_key?: string;
+    status?: string;
+    checkout_url?: string;
+    payment_intent?: string;
+    message?: string;
 };
 
 export type SimulateEventRequest = {

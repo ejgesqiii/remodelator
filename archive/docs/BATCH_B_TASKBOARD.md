@@ -5,7 +5,7 @@ Batch window: active (2-3 day execution slices)
 
 ## Batch Objective
 
-Complete all non-blocked production hardening so remaining work is limited to explicit external answers in `CLIENT_UNBLOCKER_LETTER.md`.
+Complete all non-blocked production hardening so remaining work is limited to explicit external answers in `CLIENT_UNBLOCKER_LETTER_2026-02-25.md`.
 
 ## Exit Gate
 

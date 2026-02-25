@@ -28,6 +28,10 @@ E2E smoke test:
 ```bash
 npm run test:e2e
 ```
+Use alternate ports if `8000`/`5173` are already in use:
+```bash
+E2E_API_PORT=8001 E2E_WEB_PORT=5174 npm run test:e2e
+```
 
 Preferred from repository root:
 ```bash
@@ -37,13 +41,12 @@ Preferred from repository root:
 ## API Connection
 
 Default client base:
-- `/api`
-
-Vite dev proxy maps `/api/*` to:
-- `http://127.0.0.1:8000/*`
+- `http://localhost:8000`
 
 Optional override:
-- `VITE_API_BASE`
+- `VITE_API_URL`
+
+Vite dev proxy can still route `/api/*` to a backend target (`VITE_API_PROXY_TARGET`) for ad-hoc calls.
 
 ## Current UI Coverage
 

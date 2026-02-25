@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from remodelator.application import service
 from remodelator.application.billing_policy import billing_provider_status_payload
+from remodelator.application.stripe_service import StripeService
 from remodelator.config import Settings
 from remodelator.interfaces.api.errors import CriticalDependencyError
 
@@ -51,16 +52,22 @@ class SimulationBillingAdapter:
         )
 
 
-from remodelator.application.stripe_service import StripeService
-
-
 class StripeBillingAdapter:
     provider_name = "stripe"
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        # Initialize the low-level service encapsulation
-        self._stripe_service = StripeService(settings)
+        self._stripe_service: StripeService | None = None
+
+    def _get_stripe_service(self) -> StripeService:
+        if self._stripe_service is None:
+            self._stripe_service = StripeService(self._settings)
+        return self._stripe_service
+
+    def _redirect_base_url(self) -> str:
+        if self._settings.cors_allowed_origins:
+            return self._settings.cors_allowed_origins[0].rstrip("/")
+        return "http://127.0.0.1:5173"
 
     def execute(
         self,
@@ -68,33 +75,43 @@ class StripeBillingAdapter:
         user_id: str,
         command: BillingCommand,
     ) -> dict[str, str]:
-        # Pre-flight check
         status = billing_provider_status_payload(self._settings)
-        if not status.get("ready_for_live"):
+        if not status.get("adapter_ready"):
             blocker = status.get("blocker_reason") or "Stripe live adapter implementation is not ready."
+            if "STRIPE_SECRET_KEY is not configured." in blocker:
+                blocker = f"{blocker} Stripe API key is not configured."
+            if "STRIPE_WEBHOOK_SECRET is not configured." in blocker:
+                blocker = f"{blocker} Stripe webhook secret is not configured."
             raise CriticalDependencyError(f"Billing provider 'stripe' is unavailable: {blocker}")
 
-        # Fetch internal user
-        user = session.query(service.User).filter_by(id=user_id).first()
+        user = session.get(service.User, user_id)
         if not user:
             raise ValueError("User not found.")
 
-        # Ensure they have a Stripe Customer ID
-        customer_id = self._stripe_service.get_or_create_customer(user)
+        stripe_service = self._get_stripe_service()
+        customer_id = stripe_service.get_or_create_customer(user)
         if user.stripe_customer_id != customer_id:
+            existing_owner = (
+                session.query(service.User)
+                .filter(service.User.stripe_customer_id == customer_id, service.User.id != user.id)
+                .one_or_none()
+            )
+            if existing_owner:
+                existing_owner.stripe_customer_id = None
+                existing_owner.stripe_subscription_id = None
+                session.flush()
             user.stripe_customer_id = customer_id
-            session.commit()
+            session.flush()
 
-        # Route by command event type
-        if command.event_type == "simulate_subscription":
-            # This is an annual subscription: generate a Checkout Session URL
-            # In a real app, success/cancel URLs would be parameterized or config-driven
-            url = self._stripe_service.create_checkout_session(
+        command_type = command.event_type.strip().lower()
+        if command_type in {"subscription", "simulate_subscription"}:
+            redirect_base = self._redirect_base_url()
+            url = stripe_service.create_checkout_session(
                 customer_id=customer_id,
                 amount=command.amount,
                 currency=self._settings.billing_currency,
-                success_url=f"{self._settings.cors_allowed_origins[0]}/billing?checkout=success",
-                cancel_url=f"{self._settings.cors_allowed_origins[0]}/billing?checkout=canceled",
+                success_url=f"{redirect_base}/billing?checkout=success",
+                cancel_url=f"{redirect_base}/billing?checkout=canceled",
                 idempotency_key=command.idempotency_key,
             )
             return {
@@ -103,33 +120,34 @@ class StripeBillingAdapter:
                 "message": "Redirecting to Stripe Checkout.",
             }
 
-        elif command.event_type == "simulate_estimate_charge":
-            # This is a real-time usage charge: attempt to capture immediately
-            intent = self._stripe_service.capture_usage_charge(
+        if command_type in {"estimate_charge", "simulate_estimate_charge", "usage_charge"}:
+            intent = stripe_service.capture_usage_charge(
                 customer_id=customer_id,
                 amount=command.amount,
                 currency=self._settings.billing_currency,
                 description=command.details or "Estimate pricing run usage",
                 idempotency_key=command.idempotency_key,
             )
-            
-            # Record it immediately in our ledger as 'usage_charge' since we captured it synchronously
+
+            detail_suffix = f"Stripe PaymentIntent: {intent.id}"
+            details = detail_suffix if not command.details else f"{command.details}; {detail_suffix}"
             service.record_billing_event(
-                session, 
-                user_id, 
-                "usage_charge", 
-                command.amount, 
-                details=f"Stripe PaymentIntent: {intent.id}",
-                idempotency_key=command.idempotency_key
+                session,
+                user_id,
+                "usage_charge",
+                command.amount,
+                details=details,
+                idempotency_key=command.idempotency_key,
+                currency=self._settings.billing_currency,
             )
-            
+
             return {
                 "status": "charge_succeeded",
                 "payment_intent": intent.id,
                 "message": "Usage charge captured successfully.",
             }
-        else:
-            raise ValueError(f"Unsupported Stripe command event type: {command.event_type}")
+
+        raise ValueError(f"Unsupported Stripe command event type: {command.event_type}")
 
 
 def resolve_billing_adapter(settings: Settings) -> BillingAdapter:

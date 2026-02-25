@@ -1,0 +1,1 @@
+import{j as e}from"./query-BVapmMUr.js";import{c as m}from"./cn-C8nBGPD0.js";import{b as n}from"./EmptyState-CZ0oPKrL.js";const r={sm:"text-sm",md:"text-base",lg:"text-lg",xl:"text-2xl"};function l({value:s,size:t="md",className:o}){return e.jsx("span",{className:m("font-mono font-semibold",r[t],o),children:n(s)})}export{l as M};
