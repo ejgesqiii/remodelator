@@ -136,6 +136,7 @@ Billing knobs:
 4. `REMODELATOR_BILLING_PROVIDER` (`simulation` or `stripe`)
 5. `STRIPE_SECRET_KEY` (required for live stripe mode)
 6. `STRIPE_WEBHOOK_SECRET` (required when webhook validation is enabled)
+7. `STRIPE_PAYMENT_RETURN_URL` (optional explicit return URL for PaymentIntent confirmations in live stripe mode)
 
 LLM knobs:
 1. `OPENROUTER_API_KEY`
@@ -166,7 +167,7 @@ Production-ready seams:
 4. demo reset regression tests
 5. LLM live reliability tests (status, retry path, and fail-loud behavior)
 6. docs sync gate: regenerate endpoint inventory from source and keep architecture references current
-7. docs link-integrity gate: validate active markdown references (`scripts/check_markdown_links.py --check`)
+7. docs link-integrity gate: validate markdown references including archive docs (`scripts/check_markdown_links.py --check --include-archive`)
 8. SQLite operability probe pack (`scripts/ci_sqlite_probes.sh`) in CI/local for integrity, maintenance, and concurrency envelope validation
 
 ### Frontend gates
@@ -342,7 +343,7 @@ Batch B (complete):
 1. Product/UX: improve admin and billing interaction polish for client walkthrough.
 2. Domain/API: finalized error-contract consistency, request-rate limiting, lifecycle invariants, and production-auth guards.
 3. Quality/Ops: finalized launch evidence pack (quality gate, security checks, operating runbook).  
-   Artifact baseline: `docs/LAUNCH_EVIDENCE_CHECKLIST.md`, `docs/SQLITE_OPERATIONS_RUNBOOK.md`, `archive/docs/DEPLOYMENT_HARDENING_CHECKLIST.md`.
+   Artifact baseline: `docs/LAUNCH_EVIDENCE_CHECKLIST.md`, `docs/SQLITE_OPERATIONS_RUNBOOK.md`, `docs/DEPLOYMENT_HARDENING_CHECKLIST.md`.
 4. Active execution board: `archive/docs/BATCH_B_TASKBOARD.md`.
 
 Batch C (complete):
@@ -350,10 +351,10 @@ Batch C (complete):
 2. Domain/API: live billing provider adapter and policy-driven retention/export controls.
 3. Quality/Ops: deployment hardening artifacts and restore drills.
 
-Batch D (Handover / Verification):
-1. Hardening: Resolving test suite regressions (decimal precision, SQLite unique constraints).
-2. Verification: Final sandbox E2E walkthroughs.
-3. Documentation: Root-level audit and final sync (complete).
+Batch D (Handover / Verification, complete):
+1. Hardening regressions resolved (decimal precision, SQLite unique constraints, webhook synchronization).
+2. Verification completed via sandbox walkthrough scripts and release gate evidence.
+3. Documentation root/docs alignment audited and synchronized.
 
 ## 17) Definition of "Objectively Better"
 
@@ -408,6 +409,6 @@ Resolved items:
 - Stripe runtime command compatibility alignment across API/CLI/runtime command names.
 
 Verification evidence:
-- `pytest -q` -> `117 passed`
-- `pytest -q tests/test_billing_runtime.py tests/test_api_flow.py tests/test_cli_flow.py` -> `30 passed`
-- `cd apps/web && npm run build` -> success (`tsc --noEmit` + Vite build)
+- `pytest -q` -> passing
+- `pytest -q tests/test_billing_runtime.py tests/test_api_flow.py tests/test_cli_flow.py` -> passing
+- `cd apps/web && npm run build` -> passing (`tsc --noEmit` + Vite build)

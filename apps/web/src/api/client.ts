@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/authStore';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { API_BASE } from '@/lib/constants';
 
 export class ApiError extends Error {
@@ -19,11 +20,28 @@ export class ApiError extends Error {
     }
 }
 
+function normalizedPath(path: string): string {
+    const [base] = path.split('?');
+    return base;
+}
+
+export function requiresAdminKeyHeader(path: string, method: string): boolean {
+    const basePath = normalizedPath(path);
+    const upperMethod = method.toUpperCase();
+    if (upperMethod !== 'POST') {
+        return false;
+    }
+    return basePath === '/admin/demo-reset' || basePath === '/admin/audit-prune';
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const token = useAuthStore.getState().token;
+    const adminApiKey = useAdminAuthStore.getState().adminApiKey.trim();
+    const method = (options?.method ?? 'GET').toUpperCase();
     const headers: HeadersInit = {
         'Content-Type': 'application/json',
         ...(token ? { 'x-session-token': token } : {}),
+        ...(adminApiKey && requiresAdminKeyHeader(path, method) ? { 'x-admin-key': adminApiKey } : {}),
         ...options?.headers,
     };
 

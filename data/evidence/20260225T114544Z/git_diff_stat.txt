@@ -1,0 +1,27 @@
+ ACTION_PLAN.md                                     |   2 +-
+ README.md                                          |   2 +-
+ apps/web/node_modules/.vite/vitest/results.json    |   2 +-
+ apps/web/playwright-report/index.html              |   2 +-
+ archive/docs/NON_BLOCKER_COMPLETION.md             |  50 +++++++++----------
+ data/.e2e/remodelator.db                           | Bin 180224 -> 180224 bytes
+ data/.e2e/remodelator.db-shm                       | Bin 32768 -> 32768 bytes
+ data/.e2e/remodelator.db-wal                       | Bin 416152 -> 506792 bytes
+ .../20260224T170249Z/NON_BLOCKER_STATUS.json       |  14 ------
+ data/evidence/20260224T170249Z/SUMMARY.md          |  42 ----------------
+ data/evidence/20260224T170249Z/git_commit.txt      |   1 -
+ data/evidence/20260224T170249Z/git_diff_stat.txt   |  48 ------------------
+ data/evidence/20260224T170249Z/git_status.txt      |  54 ---------------------
+ .../evidence/20260224T170249Z/sqlite_envelope.json |  14 ------
+ .../20260224T170249Z/sqlite_integrity.json         |  10 ----
+ .../20260224T170249Z/sqlite_maintenance.json       |  11 -----
+ data/evidence/index.json                           |  22 ++++-----
+ data/remodelator.db                                | Bin 176128 -> 163840 bytes
+ data/remodelator.db-shm                            | Bin 32768 -> 0 bytes
+ data/remodelator.db-wal                            |   0
+ data/stripe_probe/latest.json                      |   8 +--
+ data/stripe_release_gate/latest.json               |   4 +-
+ data/stripe_webhook_golden_path/latest.json        |   8 +--
+ docs/README.md                                     |   2 +-
+ scripts/capture_release_evidence.sh                |   2 +-
+ scripts/quality_gate.sh                            |   2 +-
+ 26 files changed, 53 insertions(+), 247 deletions(-)

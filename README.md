@@ -4,7 +4,7 @@ API-first rebuild of Remodelator focused on a full local functional demo first, 
 
 ## Verified Status (February 25, 2026)
 
-- backend regression suite is green: `pytest -q` -> `117 passed`
+- backend regression suite is green (`pytest -q`).
 - Stripe-focused regression suites are green: `tests/test_billing_runtime.py`, `tests/test_api_flow.py`, `tests/test_cli_flow.py`
 - frontend type/build gate is green: `cd apps/web && npm run build`
 - Stripe sandbox hardening now includes:
@@ -41,7 +41,7 @@ UI quality standard:
 Backend quality standard:
 - deterministic Decimal pricing logic in domain layer,
 - API-first contracts with typed frontend integration,
-- simulation-first billing adapter plus OpenRouter-required LLM with fail-loud behavior,
+- provider-driven billing runtime (`simulation` and `stripe`) plus OpenRouter-required LLM with fail-loud behavior,
 - structured request tracing (`X-Request-ID`) and config-driven API rate limiting.
 
 ## Repository Map
@@ -100,7 +100,7 @@ Backend/CLI/API currently supports:
 - audit/activity reporting
 - user backup export/restore APIs
 - admin summary/users/activity/billing ledger
-- admin demo reset endpoint and CLI command
+- admin demo reset endpoint and CLI command (UI requires explicit `x-admin-key` entry for destructive actions)
 - migration dry-run SQL analyzer with row/column validation and JSON report output
 - snapshot reconciliation diff tooling for migration verification
 - secure password hashing (PBKDF2) with automatic legacy SHA-256 hash upgrade on successful login
@@ -131,6 +131,7 @@ Web currently supports:
 - structured LLM suggestion cards (price/mode/provider/model/confidence/rationale) in UI
 - global dependency blocker banners for LLM readiness and Stripe live-billing readiness
 - admin summary/users/activity/billing/demo reset controls
+- admin audit prune supports both preview (`dry_run`) and execute from UI
 - full Playwright golden-path demo scenario (register -> estimate workflow -> template -> billing replay -> admin reset)
 
 ## Quickstart (Backend)
@@ -168,7 +169,7 @@ remodelator db seed
 3. Run tests:
 ```bash
 python3 scripts/generate_api_endpoints_doc.py --check
-python3 scripts/check_markdown_links.py --check
+python3 scripts/check_markdown_links.py --check --include-archive
 pytest -q
 ```
 
@@ -282,6 +283,7 @@ export REMODELATOR_BILLING_PROVIDER='simulation'
 export STRIPE_SECRET_KEY='sk_test_...'
 export STRIPE_WEBHOOK_SECRET='whsec_...'
 export STRIPE_API_VERSION='2026-01-28.clover'
+export STRIPE_PAYMENT_RETURN_URL='https://app.example.com/billing/return'
 ```
 
 Request tracing + throttling behavior:
@@ -376,6 +378,7 @@ Billing simulation behavior:
 - `/billing/subscription-state`: current subscription lifecycle summary (active/past_due/canceled + last event).
 - `/billing/simulate-estimate-charge`: defaults to configured real-time pricing amount if amount omitted.
 - `/billing/simulate-subscription`: defaults to configured annual subscription amount if amount omitted.
+- live Stripe usage charges include a `return_url` for PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` with CORS/local fallback).
 - `/billing/simulate-event`: Stripe-like lifecycle/webhook simulation endpoint (`payment_method_attached`, `checkout_completed`, `usage_charge`, `invoice_paid`, `invoice_payment_failed`, `subscription_canceled`).
 - `/admin/audit-prune`: deletes audit rows older than configured retention window (`REMODELATOR_AUDIT_RETENTION_DAYS`, optional per-call override, supports `dry_run=true` preview mode).
 

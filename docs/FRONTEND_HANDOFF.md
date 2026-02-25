@@ -2,7 +2,7 @@
 
 **Last Updated:** February 25, 2026
 
-This document summarizes the completion of the Phase 4 UI/UX Refactor, detailing how to run the system, the architecture status, and future backend integration work.
+This document summarizes the current frontend implementation state, how to run and validate it, and what remains for further production hardening.
 
 ---
 
@@ -38,9 +38,9 @@ npm run test       # Runs the unit and component tests (Vitest)
 npm run test:e2e   # Runs the Golden Path end-to-end user workflows (Playwright)
 ```
 
-**Backend Tests:**
+**Backend + Full-System Quality Gate:**
 ```bash
-./scripts/quality_gate.sh  # Runs the full rigorous backed test suite and linter
+./scripts/quality_gate.sh  # Runs backend tests, dead-code checks, web tests/build/e2e, docs sync, and markdown link checks
 ```
 
 ---
@@ -48,14 +48,15 @@ npm run test:e2e   # Runs the Golden Path end-to-end user workflows (Playwright)
 ## 2. API Capability Expression & Architecture Status
 
 **UI & API Alignment**
-The UI has been completely rebuilt using a Feature-sliced standard SPA architecture. It fully expresses the backend's 40+ endpoints via the 10 domain modules inside `apps/web/src/api/`.
-- **Admin Endpoints:** Fully represented. Dangerous actions like Demo Reset and Audit Prune are safely guarded by type-to-confirm dialogs in the UI.
+The UI is built with a feature-sliced SPA architecture and aligns with the backend contract represented in the typed API modules under `apps/web/src/api/`.
+- **Admin Endpoints:** Represented in UI. Admin read routes are role-driven; destructive actions require explicit admin key entry in the Admin page and remain disabled until key presence + local confirmation rules are met.
+- **Admin Dashboard Coverage:** Includes summary, users, activity, billing ledger, demo reset, and audit-prune preview/execute flows.
 - **Billing Endpoints:** 100% represented. You can simulate Stripe attach, checkout, charge, and refund workflows directly from the Billing Page while watching the visual timeline ledger update in real-time.
 - **Estimates/Line Items:** Advanced backend features like grouping, reordering, quick-starting from catalog room categories, duplicate/versioning, and recalculations all have dedicated frontend controls.
 - **LLM / OpenRouter:** Fully piped into the "LLM Assist" slide-out panel on the line-item editor.
 
 **Cleanup & Dead Code Pruning**
-During Phase 4, the completely obsolete monolithic `apps/web/src_legacy` and all outdated UX documentation (e.g., `UI_UX_INTERACTIONS.md`, taskboards) were aggressively pruned from the active directories and moved to the `/archive/` folder. The active `apps/web/src` codebase is fresh, fully typed, heavily reliant on TanStack Query, and contains zero "dead" code.
+During Phase 4, the completely obsolete monolithic `apps/web/src_legacy` and all outdated UX documentation (e.g., `UI_UX_INTERACTIONS.md`, taskboards) were aggressively pruned from the active directories and moved to the `/archive/` folder. The active `apps/web/src` codebase is fresh, fully typed, heavily reliant on TanStack Query, and the repository dead-code gate currently passes.
 
 ---
 
@@ -71,22 +72,29 @@ If a user registers or logs in with an email address that matches the backend `R
 
 **Method 2: Admin API Key**
 For programmatic access or high-risk destructive actions (like `Demo Reset`), the system requires a direct Admin API Key.
-- **Local Dev Default:** In local mode, the key defaults to `local-admin-key`. The UI will automatically use this default to allow you to test `Demo Reset` locally without friction.
+- **Local Dev Default:** In local mode, backend default is `local-admin-key` unless overridden.
+- **UI Behavior:** The Admin page provides an explicit `x-admin-key` input. Destructive actions remain disabled until a key is entered.
 - **Production Mode:** If `REMODELATOR_ENV=production` is set on the backend, the `local-admin-key` is strictly rejected. You must explicitly configure `REMODELATOR_ADMIN_API_KEY` and deploy that key alongside the frontend.
 
 ---
 
-## 3. Future Pruning & Potential Backend Work
+## 4. Current State and Next Work
 
-The current state is incredibly cohesive, but there are a few architectural gaps intentionally deferred for "Phase E: Productionization":
+Current validated state:
+1. Frontend route coverage includes dashboard, estimates, catalog, templates, billing, settings, and admin with role + key gating.
+2. Stripe sandbox flows (probe + signed webhook lifecycle) are automated and passing.
+3. Stripe PaymentIntent usage-charge flow now sends a return URL (`STRIPE_PAYMENT_RETURN_URL` with CORS/local fallback) to avoid missing-return-url payment failures.
+4. Docs sync and markdown link integrity checks are part of the core quality gate.
+
+Potential next production hardening work:
 
 1. **Forgot Password Flow:** 
    Currently deferred across both the UI and Backend because an email delivery provider (like SendGrid or AWS SES) has not been integrated yet. Once integrated, the backend requires a password reset token endpoint, and the UI will need the respective views.
    
-2. **Live Stripe Adapter:** 
-   We mapped the UI perfectly to the "simulation" billing mode. The backend still needs the external Stripe webhook listener activated and the live API wrapper fully implemented when migrating from simulation to real-world billing.
+2. **Stripe Operational Tooling:** 
+   Live Stripe adapter/webhook support is implemented and validated in sandbox. Remaining work is production operations hardening (alerts, runbooks, key rotation cadence, incident handling playbooks).
 
 3. **Local LLM Fallback:** 
    Right now, the backend relies strictly on OpenRouter (`/pricing/llm/live`) and takes a "fail-loud" approach if OpenRouter is down. If business requirements necessitate high-availability independent of internet/OpenRouter, a deterministic local fallback (or local small model) should be implemented in the backend.
 
-**Conclusion:** The codebase is in a truly "bulletproof" state. The API contracts are strictly adhered to, the UI is scalable without brittle overlapping logic, and the application is structurally sound for vNext launch.
+**Conclusion:** The frontend is contract-aligned with current backend behavior and covered by unit + e2e + full quality-gate checks. Remaining work is primarily production operations scope rather than core feature parity.

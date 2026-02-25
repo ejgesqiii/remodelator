@@ -1,0 +1,87 @@
+ M ACTION_PLAN.md
+ M README.md
+ D apps/web/dist/assets/AdminDashboardPage-BMAsXRWp.js
+ D apps/web/dist/assets/AppShell-D8iWb8PW.js
+ D apps/web/dist/assets/BillingPage-1DZKdVLO.js
+ D apps/web/dist/assets/CatalogPage-B6pf72xr.js
+ D apps/web/dist/assets/DashboardPage-FxwkTt2m.js
+ D apps/web/dist/assets/EstimateDetailPage-2UXNI1SU.js
+ D apps/web/dist/assets/EstimateListPage--MqZtAcF.js
+ D apps/web/dist/assets/LoginPage-CSSUiN_3.js
+ D apps/web/dist/assets/ProposalPage-Daty3uH7.js
+ D apps/web/dist/assets/RegisterPage-5wyGAgMV.js
+ D apps/web/dist/assets/SettingsPage-BIiGiwZ9.js
+ D apps/web/dist/assets/TemplateListPage-QEjwD0EC.js
+ D apps/web/dist/assets/billing-By_ry0nH.js
+ D apps/web/dist/assets/catalog-izJKRsF9.js
+ D apps/web/dist/assets/client-DPKpE0-G.js
+ D apps/web/dist/assets/estimates-BaIN8vef.js
+ D apps/web/dist/assets/index-C4JObndq.css
+ D apps/web/dist/assets/index-CwauQ0k6.js
+ D apps/web/dist/assets/llm-Bn3VKyuE.js
+ D apps/web/dist/assets/state-B9IHhQuw.js
+ D apps/web/dist/assets/useAuth-rd4zb0Rf.js
+ M apps/web/dist/index.html
+ M apps/web/e2e/admin-access.spec.ts
+ M apps/web/node_modules/.vite/vitest/results.json
+ M apps/web/playwright-report/index.html
+ M apps/web/src/api/client.ts
+ M apps/web/src/features/admin/AdminDashboardPage.tsx
+ M archive/docs/NON_BLOCKER_COMPLETION.md
+ M data/.e2e/remodelator.db
+ M data/.e2e/remodelator.db-shm
+ M data/.e2e/remodelator.db-wal
+ D data/evidence/20260224T170249Z/NON_BLOCKER_STATUS.json
+ D data/evidence/20260224T170249Z/SUMMARY.md
+ D data/evidence/20260224T170249Z/git_commit.txt
+ D data/evidence/20260224T170249Z/git_diff_stat.txt
+ D data/evidence/20260224T170249Z/git_status.txt
+ D data/evidence/20260224T170249Z/sqlite_envelope.json
+ D data/evidence/20260224T170249Z/sqlite_integrity.json
+ D data/evidence/20260224T170249Z/sqlite_maintenance.json
+ D data/evidence/20260224T170459Z/NON_BLOCKER_STATUS.json
+ D data/evidence/20260224T170459Z/SUMMARY.md
+ D data/evidence/20260224T170459Z/git_commit.txt
+ D data/evidence/20260224T170459Z/git_diff_stat.txt
+ D data/evidence/20260224T170459Z/git_status.txt
+ D data/evidence/20260224T170459Z/sqlite_envelope.json
+ D data/evidence/20260224T170459Z/sqlite_integrity.json
+ D data/evidence/20260224T170459Z/sqlite_maintenance.json
+ M data/evidence/index.json
+ M data/remodelator.db
+ D data/remodelator.db-shm
+ D data/remodelator.db-wal
+ M data/stripe_probe/latest.json
+ M data/stripe_release_gate/latest.json
+ M data/stripe_webhook_golden_path/latest.json
+ M docs/FRONTEND_HANDOFF.md
+ M docs/README.md
+ M scripts/capture_release_evidence.sh
+ M scripts/quality_gate.sh
+?? apps/web/dist/assets/AdminDashboardPage-DfxsurJ4.js
+?? apps/web/dist/assets/AppShell-AsiVIJ96.js
+?? apps/web/dist/assets/BillingPage-Ckj5ZkVv.js
+?? apps/web/dist/assets/CatalogPage-CSxWGUUT.js
+?? apps/web/dist/assets/DashboardPage-Zu2dkzyF.js
+?? apps/web/dist/assets/EstimateDetailPage-Cbdsf20l.js
+?? apps/web/dist/assets/EstimateListPage-C2fkQuPq.js
+?? apps/web/dist/assets/LoginPage-CJ1uGrx4.js
+?? apps/web/dist/assets/ProposalPage-B0zJ-K6u.js
+?? apps/web/dist/assets/RegisterPage-BvAtrlNR.js
+?? apps/web/dist/assets/SettingsPage-BiqWTfay.js
+?? apps/web/dist/assets/TemplateListPage-BBO1xT30.js
+?? apps/web/dist/assets/billing-BrYQeVRY.js
+?? apps/web/dist/assets/catalog-CGfl1p5d.js
+?? apps/web/dist/assets/client-CmKpQSBU.js
+?? apps/web/dist/assets/estimates-dShLoEkT.js
+?? apps/web/dist/assets/index-D3F43ZQy.js
+?? apps/web/dist/assets/index-DXLlzTbc.css
+?? apps/web/dist/assets/llm-BTBil3QN.js
+?? apps/web/dist/assets/state-BAZDGeK2.js
+?? apps/web/dist/assets/useAuth-CFBAroAl.js
+?? apps/web/src/features/auth/AdminGuard.test.tsx
+?? apps/web/src/stores/adminAuthStore.ts
+?? data/.e2e/.lock.admin-audit-prune
+?? data/evidence/20260225T114130Z/
+?? data/evidence/20260225T114544Z/
+?? data/evidence/20260225T115148Z/

@@ -1,6 +1,6 @@
 # Launch Evidence Checklist
 
-Last updated: February 24, 2026
+Last updated: February 25, 2026
 
 Purpose: map each production-readiness deliverable to verifiable evidence (tests, commands, docs, or runtime artifacts).
 
@@ -95,6 +95,9 @@ Purpose: map each production-readiness deliverable to verifiable evidence (tests
   - Command: `./scripts/capture_release_evidence.sh`
   - Output artifact path: `data/evidence/<UTC_TIMESTAMP>/`
   - Includes machine-readable non-blocker status file: `NON_BLOCKER_STATUS.json`
+- [x] Stripe sandbox release gate (probe + webhook golden path) is verifiable.
+  - Command: `./scripts/stripe_release_gate.sh --env-file .env --api-port 8010`
+  - Output artifact path: `data/stripe_release_gate/latest.json`
 - [x] Evidence index for bundle history can be regenerated.
   - Command: `./scripts/evidence_index.sh`
   - Output artifact path: `data/evidence/index.json`

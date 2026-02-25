@@ -204,7 +204,8 @@ Common success payload patterns:
    - `REMODELATOR_API_RATE_LIMIT_AUTHENTICATED_MAX`
 10. Billing execution routes are provider-aware:
    - `simulation` provider executes local ledger simulation,
-   - `stripe` provider fails loud until live adapter enablement and required credentials are in place.
+   - `stripe` provider executes live billing flows and fails loud when required credentials are missing or invalid.
+   - live Stripe usage charges include `return_url` in PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` override, otherwise CORS/local fallback).
 11. `POST /admin/demo-reset` uses a shared rebuild path (`service.rebuild_demo_database`) that is also used by CLI reset commands to keep reset/reseed behavior consistent.
 
 ## Endpoint Inventory

@@ -58,7 +58,7 @@ def _response_version(resource: Any) -> str | None:
     return None
 
 
-def run_probe(*, amount_cents: int, currency: str, success_url: str, cancel_url: str) -> ProbeResult:
+def run_probe(*, amount_cents: int, currency: str, success_url: str, cancel_url: str, return_url: str) -> ProbeResult:
     account = stripe.Account.retrieve()
     probe_customer = stripe.Customer.create(
         email=f"probe-{uuid4()}@example.com",
@@ -88,6 +88,7 @@ def run_probe(*, amount_cents: int, currency: str, success_url: str, cancel_url:
         payment_method="pm_card_visa",
         confirm=True,
         automatic_payment_methods={"enabled": True, "allow_redirects": "never"},
+        return_url=return_url,
         description="Remodelator Stripe sandbox probe",
         metadata={"probe": "true"},
     )
@@ -128,6 +129,11 @@ def main() -> int:
         default="https://example.com/stripe-probe-cancel",
         help="Checkout cancel URL (default: https://example.com/stripe-probe-cancel).",
     )
+    parser.add_argument(
+        "--return-url",
+        default="https://example.com/stripe-probe-return",
+        help="PaymentIntent return URL (default: https://example.com/stripe-probe-return).",
+    )
     args = parser.parse_args()
 
     _load_env_file(Path(args.env_file))
@@ -148,6 +154,7 @@ def main() -> int:
             currency=currency,
             success_url=args.success_url.strip(),
             cancel_url=args.cancel_url.strip(),
+            return_url=args.return_url.strip(),
         )
     except stripe.error.StripeError as exc:  # type: ignore[attr-defined]
         failure = {

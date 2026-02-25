@@ -19,7 +19,7 @@ Remodelator vNext is an API-first estimating platform for remodeling workflows, 
 - deterministic pricing,
 - complete local demo capability (LLM paths require OpenRouter connectivity),
 - full UI control for all core workflows,
-- simulation-first billing plus OpenRouter-required LLM,
+- provider-driven billing (simulation and live Stripe paths) plus OpenRouter-required LLM,
 - production-ready seams for auth, billing, and deployment.
 
 Primary outcome:
@@ -29,7 +29,7 @@ Primary outcome:
 
 1. Domain logic in backend only.
 2. Decimal money math only (no float business math).
-3. Simulation where explicitly scoped (billing); fail-loud external dependency for LLM.
+3. Provider-driven billing behavior with fail-loud dependency handling; fail-loud external dependency for LLM.
 4. UI is a typed API client, not a second business-logic layer.
 5. Security defaults should be safe (token auth, constrained file IO, secret-based config).
 6. Determinism and testability over cleverness.
@@ -211,6 +211,7 @@ Important env vars:
   - `REMODELATOR_BILLING_PROVIDER` (`simulation` or `stripe`)
   - `STRIPE_SECRET_KEY`
   - `STRIPE_WEBHOOK_SECRET`
+  - `STRIPE_PAYMENT_RETURN_URL` (optional override for PaymentIntent confirmation return URL)
 
 - LLM
   - `OPENROUTER_API_KEY`
@@ -373,13 +374,13 @@ Auth requirement legend:
 
 ### Billing & Proposals
 - Dedicated `/estimates/:id/proposal` render preview.
-- Billing dashboard (`/billing`) with Simulation/Stripe mode toggle.
+- Billing dashboard (`/billing`) with provider-status visibility and Stripe-like lifecycle simulation controls.
 - Idempotency key testing input with structured event/status Timeline.
 - Visual billing feed showing lifecycle events.
 
 ### Admin Tools
-- Dedicated `/admin` sub-routes for summary/users/activity/billing.
-- High-risk destructive actions (Demo reset, Audit prune) secured behind type-to-confirm dialogs.
+- Dedicated `/admin` dashboard for summary/users/activity/billing ledger.
+- High-risk destructive actions (Demo reset, Audit prune) secured behind admin key gating; audit prune supports preview (`dry_run`) and execute paths.
 
 ## 13) End-to-End Demo Flow (Reference)
 
@@ -412,8 +413,8 @@ Auth requirement legend:
   - LLM parser and fail-loud OpenRouter behavior
   - auth security and token checks
 - Frontend tests:
-  - formatter/session/action-runner unit tests
-  - app smoke test
+  - auth/admin-guard and API-client header routing unit tests
+  - app smoke and role-gate e2e coverage
 - E2E:
   - full local demo journey
   - smoke load test

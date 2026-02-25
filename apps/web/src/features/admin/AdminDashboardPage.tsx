@@ -13,12 +13,17 @@ import {
 
 import { formatMoney, formatDate } from '@/lib/formatters';
 import * as adminApi from '@/api/admin';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import { toast } from 'sonner';
 
 export function AdminDashboardPage() {
     const queryClient = useQueryClient();
     const [resetConfirm, setResetConfirm] = useState('');
     const [pruneRetention, setPruneRetention] = useState('90');
+    const adminApiKey = useAdminAuthStore((s) => s.adminApiKey);
+    const setAdminApiKey = useAdminAuthStore((s) => s.setAdminApiKey);
+    const clearAdminApiKey = useAdminAuthStore((s) => s.clearAdminApiKey);
+    const hasAdminApiKey = adminApiKey.trim().length > 0;
 
     const { data: summary, isLoading: summaryLoading } = useQuery({
         queryKey: ['admin-summary'],
@@ -35,6 +40,11 @@ export function AdminDashboardPage() {
         queryFn: () => adminApi.getAdminActivity({ limit: 20 }),
     });
 
+    const { data: billingLedger = [] } = useQuery({
+        queryKey: ['admin-billing-ledger'],
+        queryFn: () => adminApi.getAdminBillingLedger({ limit: 20 }),
+    });
+
     const resetMutation = useMutation({
         mutationFn: adminApi.demoReset,
         onSuccess: () => {
@@ -46,9 +56,19 @@ export function AdminDashboardPage() {
     });
 
     const pruneMutation = useMutation({
-        mutationFn: () => adminApi.pruneAudit({ retention_days: parseInt(pruneRetention) || 90 }),
-        onSuccess: (r) => {
+        mutationFn: (dryRun: boolean) => {
+            const retentionDays = Number.parseInt(pruneRetention, 10);
+            return adminApi.pruneAudit({
+                retention_days: Number.isFinite(retentionDays) && retentionDays > 0 ? retentionDays : 90,
+                dry_run: dryRun,
+            });
+        },
+        onSuccess: (r, dryRun) => {
             queryClient.invalidateQueries({ queryKey: ['admin-activity'] });
+            if (dryRun) {
+                toast.success(`Preview: ${r.deleted} records would be pruned`);
+                return;
+            }
             toast.success(`Pruned ${r.deleted} records`);
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Prune failed'),
@@ -57,6 +77,38 @@ export function AdminDashboardPage() {
     return (
         <div className="space-y-6">
             <PageHeader title="Admin" description="System administration and monitoring" icon={ShieldCheck} />
+
+            <div className="rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur-sm">
+                <h2 className="mb-2 font-heading text-base font-semibold">Admin API Key</h2>
+                <p className="mb-4 text-sm text-muted-foreground">
+                    Required for destructive admin actions like demo reset and audit prune.
+                </p>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                    <div className="flex-1 space-y-2">
+                        <label htmlFor="admin-api-key" className="text-xs font-medium text-muted-foreground">
+                            x-admin-key
+                        </label>
+                        <input
+                            id="admin-api-key"
+                            type="password"
+                            autoComplete="off"
+                            value={adminApiKey}
+                            onChange={(e) => setAdminApiKey(e.target.value)}
+                            placeholder="Enter admin API key"
+                            className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        />
+                    </div>
+                    <div className="flex items-end">
+                        <button
+                            onClick={clearAdminApiKey}
+                            disabled={!hasAdminApiKey}
+                            className="rounded-xl border border-border bg-background/60 px-4 py-3 text-sm text-muted-foreground shadow-none hover:text-foreground disabled:opacity-40"
+                        >
+                            Clear Key
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             {/* Stats */}
             {summaryLoading ? (
@@ -151,7 +203,7 @@ export function AdminDashboardPage() {
                         />
                         <button
                             onClick={() => resetMutation.mutate()}
-                            disabled={resetConfirm !== 'RESET' || resetMutation.isPending}
+                            disabled={resetConfirm !== 'RESET' || resetMutation.isPending || !hasAdminApiKey}
                             className="flex w-full items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground shadow-md hover:bg-destructive-hover disabled:opacity-30"
                         >
                             {resetMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive-foreground/30 border-t-destructive-foreground" /> : <RotateCcw size={14} />}
@@ -162,7 +214,7 @@ export function AdminDashboardPage() {
                     {/* Audit Prune */}
                     <div className="space-y-3 rounded-xl border border-destructive/20 bg-background/30 p-4">
                         <h3 className="text-sm font-semibold">Audit Prune</h3>
-                        <p className="text-xs text-muted-foreground">Delete audit records older than retention days.</p>
+                        <p className="text-xs text-muted-foreground">Preview or delete audit records older than retention days.</p>
                         <div className="flex items-center gap-2">
                             <input
                                 type="number"
@@ -172,16 +224,55 @@ export function AdminDashboardPage() {
                             />
                             <span className="shrink-0 text-xs text-muted-foreground">days</span>
                         </div>
-                        <button
-                            onClick={() => pruneMutation.mutate()}
-                            disabled={pruneMutation.isPending}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive shadow-none hover:bg-destructive/20 disabled:opacity-30"
-                        >
-                            {pruneMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive/30 border-t-destructive" /> : <Trash2 size={14} />}
-                            Prune Audit
-                        </button>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                            <button
+                                onClick={() => pruneMutation.mutate(true)}
+                                disabled={pruneMutation.isPending || !hasAdminApiKey}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/60 px-4 py-2.5 text-sm font-semibold text-foreground shadow-none hover:bg-surface-hover disabled:opacity-30"
+                            >
+                                {pruneMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" /> : <Trash2 size={14} />}
+                                Preview
+                            </button>
+                            <button
+                                onClick={() => pruneMutation.mutate(false)}
+                                disabled={pruneMutation.isPending || !hasAdminApiKey}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm font-semibold text-destructive shadow-none hover:bg-destructive/20 disabled:opacity-30"
+                            >
+                                {pruneMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-destructive/30 border-t-destructive" /> : <Trash2 size={14} />}
+                                Prune Audit
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur-sm">
+                <h2 className="mb-4 font-heading text-base font-semibold">Billing Ledger</h2>
+                {billingLedger.length === 0 ? (
+                    <EmptyState icon={CreditCard} title="No billing events" />
+                ) : (
+                    <div className="max-h-80 space-y-2 overflow-y-auto">
+                        {billingLedger.map((entry) => (
+                            <div key={entry.id} className="rounded-xl border border-border bg-background/50 px-4 py-3 transition-colors hover:bg-surface-hover">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <StatusBadge status={entry.event_type} size="sm" />
+                                            <span className="truncate text-xs text-muted-foreground">{entry.user_id}</span>
+                                        </div>
+                                        {entry.details && (
+                                            <p className="mt-1 truncate text-xs text-muted-foreground">{entry.details}</p>
+                                        )}
+                                    </div>
+                                    <div className="shrink-0 text-right">
+                                        <p className="text-sm font-semibold">{formatMoney(entry.amount)}</p>
+                                        <p className="text-xs text-muted">{formatDate(entry.created_at)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

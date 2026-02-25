@@ -1,0 +1,29 @@
+ M ACTION_PLAN.md
+ M README.md
+ M apps/web/node_modules/.vite/vitest/results.json
+ M apps/web/playwright-report/index.html
+ M archive/docs/NON_BLOCKER_COMPLETION.md
+ M data/.e2e/remodelator.db
+ M data/.e2e/remodelator.db-shm
+ M data/.e2e/remodelator.db-wal
+ D data/evidence/20260224T170249Z/NON_BLOCKER_STATUS.json
+ D data/evidence/20260224T170249Z/SUMMARY.md
+ D data/evidence/20260224T170249Z/git_commit.txt
+ D data/evidence/20260224T170249Z/git_diff_stat.txt
+ D data/evidence/20260224T170249Z/git_status.txt
+ D data/evidence/20260224T170249Z/sqlite_envelope.json
+ D data/evidence/20260224T170249Z/sqlite_integrity.json
+ D data/evidence/20260224T170249Z/sqlite_maintenance.json
+ M data/evidence/index.json
+ M data/remodelator.db
+ D data/remodelator.db-shm
+ D data/remodelator.db-wal
+ M data/stripe_probe/latest.json
+ M data/stripe_release_gate/latest.json
+ M data/stripe_webhook_golden_path/latest.json
+ M docs/README.md
+ M scripts/capture_release_evidence.sh
+ M scripts/quality_gate.sh
+?? apps/web/src/features/auth/AdminGuard.test.tsx
+?? data/evidence/20260225T114130Z/
+?? data/evidence/20260225T114544Z/

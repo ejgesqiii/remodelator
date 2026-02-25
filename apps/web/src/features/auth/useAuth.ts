@@ -2,17 +2,20 @@ import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
+import { useAdminAuthStore } from '@/stores/adminAuthStore';
 import * as authApi from '@/api/auth';
 import type { LoginRequest, RegisterRequest } from '@/api/types';
 
 export function useAuth() {
     const navigate = useNavigate();
     const { setAuth, clearAuth, token, email, role, userId } = useAuthStore();
+    const clearAdminApiKey = useAdminAuthStore((s) => s.clearAdminApiKey);
 
     const loginMutation = useMutation({
         mutationFn: (data: LoginRequest) => authApi.login(data),
         onSuccess: (res) => {
             setAuth(res);
+            clearAdminApiKey();
             navigate('/');
         },
     });
@@ -21,14 +24,16 @@ export function useAuth() {
         mutationFn: (data: RegisterRequest) => authApi.register(data),
         onSuccess: (res) => {
             setAuth(res);
+            clearAdminApiKey();
             navigate('/');
         },
     });
 
     const logout = useCallback(() => {
         clearAuth();
+        clearAdminApiKey();
         navigate('/login');
-    }, [clearAuth, navigate]);
+    }, [clearAdminApiKey, clearAuth, navigate]);
 
     return {
         isAuthenticated: !!token,

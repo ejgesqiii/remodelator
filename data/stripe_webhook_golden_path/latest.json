@@ -1,8 +1,8 @@
 {
   "api_base_url": "http://127.0.0.1:8010",
-  "customer_id": "cus_U2lyFv4O2M4l5X",
-  "email": "stripe-webhook-golden-f5b83795-09ff-4efe-be37-62ba186e605f@example.com",
-  "generated_at": "2026-02-25T11:38:31.522435+00:00",
+  "customer_id": "cus_U2mdXjxWOZUBGk",
+  "email": "stripe-webhook-golden-cbd58076-7b04-4101-96cc-be3417120fb9@example.com",
+  "generated_at": "2026-02-25T12:19:54.822741+00:00",
   "ledger_event_count": 5,
   "ledger_event_types": [
     "subscription_canceled",
@@ -16,7 +16,7 @@
   "replay_subscription_events": 1,
   "stripe_api_version_effective": "2026-01-28.clover",
   "stripe_api_version_requested": "2026-01-28.clover",
-  "subscription_id": "sub_golden_329ca765580e4543b94b",
+  "subscription_id": "sub_golden_7becb1859c39430eab22",
   "subscription_status_after_canceled": "canceled",
   "subscription_status_after_checkout": "active",
   "subscription_status_after_invoice_failed": "past_due",

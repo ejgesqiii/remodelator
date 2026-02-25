@@ -1,6 +1,6 @@
 # SQLite Operations Runbook
 
-Last updated: February 24, 2026
+Last updated: February 25, 2026
 Scope: local/demo and single-user launch baseline for Remodelator vNext.
 
 ## 1) Runtime Profile

@@ -48,6 +48,6 @@ echo "[6/7] Docs sync check"
 python3 scripts/generate_api_endpoints_doc.py --check
 
 echo "[7/7] Markdown docs link check"
-python3 scripts/check_markdown_links.py --check
+python3 scripts/check_markdown_links.py --check --include-archive
 
 echo "Quality gate passed."

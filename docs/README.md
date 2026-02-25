@@ -29,6 +29,7 @@ npm ci --prefix apps/web
 - [Migration Reconciliation Guide](MIGRATION_RECONCILIATION.md)
 - [SQLite Operations Runbook](SQLITE_OPERATIONS_RUNBOOK.md)
 - [Launch Evidence Checklist](LAUNCH_EVIDENCE_CHECKLIST.md)
+- [Deployment Hardening Checklist](DEPLOYMENT_HARDENING_CHECKLIST.md)
 
 ## Historical Execution Logs (Reference Only)
 
@@ -36,7 +37,6 @@ npm ci --prefix apps/web
 - [UI/UX Interactions](../archive/docs/UI_UX_INTERACTIONS.md)
 - [Blockers and Roadmap](../archive/docs/BLOCKERS_AND_ROADMAP.md)
 - [Non-Blocker Completion Scorecard](../archive/docs/NON_BLOCKER_COMPLETION.md)
-- [Deployment Hardening Checklist](../archive/docs/DEPLOYMENT_HARDENING_CHECKLIST.md)
 - [Batch A Taskboard](../archive/docs/BATCH_A_TASKBOARD.md)
 - [Batch B Taskboard](../archive/docs/BATCH_B_TASKBOARD.md)
 - [Batch A Demo Note](../archive/docs/BATCH_A_DEMO_NOTE.md)
@@ -56,7 +56,7 @@ python3 scripts/generate_api_endpoints_doc.py --check
 ```
 Verify local markdown links (CI-safe):
 ```bash
-python3 scripts/check_markdown_links.py --check
+python3 scripts/check_markdown_links.py --check --include-archive
 ```
 
 Run full local quality gate:

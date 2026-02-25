@@ -1,5 +1,5 @@
 {
-  "api_base_url": "http://127.0.0.1:8015",
+  "api_base_url": "http://127.0.0.1:8018",
   "artifacts": {
     "sandbox_probe": "data/stripe_probe/latest.json",
     "webhook_golden_path": "data/stripe_webhook_golden_path/latest.json"
@@ -27,6 +27,6 @@
       "invoice_paid": "active"
     }
   },
-  "generated_at": "2026-02-25T11:37:42.733038+00:00",
+  "generated_at": "2026-02-25T12:19:06.395383+00:00",
   "status": "ok"
 }

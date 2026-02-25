@@ -48,7 +48,7 @@ if python3 scripts/generate_api_endpoints_doc.py --check >"$OUT_DIR/docs_sync.lo
 fi
 
 DOCS_LINK_STATUS="failed"
-if python3 scripts/check_markdown_links.py --check >"$OUT_DIR/docs_links.log" 2>&1; then
+if python3 scripts/check_markdown_links.py --check --include-archive >"$OUT_DIR/docs_links.log" 2>&1; then
   DOCS_LINK_STATUS="passed"
 fi
 

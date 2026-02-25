@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
+from urllib.parse import urlparse
 
 import stripe
 
@@ -26,6 +27,25 @@ class StripeService:
     @staticmethod
     def _to_cents(amount: Decimal) -> int:
         return int((amount * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+
+    @staticmethod
+    def _is_http_url(candidate: str) -> bool:
+        parsed = urlparse(candidate)
+        return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+    def _resolve_payment_return_url(self) -> str:
+        configured = (self.settings.stripe_payment_return_url or "").strip()
+        if configured:
+            if self._is_http_url(configured):
+                return configured
+            logger.warning("Invalid STRIPE_PAYMENT_RETURN_URL value '%s'; falling back to CORS/local URL.", configured)
+
+        if self.settings.cors_allowed_origins:
+            origin = self.settings.cors_allowed_origins[0].strip()
+            if self._is_http_url(origin):
+                return f"{origin.rstrip('/')}/billing?stripe_return=1"
+
+        return "http://127.0.0.1:5173/billing?stripe_return=1"
 
     def get_or_create_customer(self, user: User) -> str:
         """
@@ -122,6 +142,7 @@ class StripeService:
             "description": description,
             "confirm": True,
             "automatic_payment_methods": {"enabled": True, "allow_redirects": "never"},
+            "return_url": self._resolve_payment_return_url(),
         }
         if idempotency_key:
             kwargs["idempotency_key"] = f"pi_{idempotency_key}"

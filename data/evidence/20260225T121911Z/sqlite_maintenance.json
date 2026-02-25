@@ -1,0 +1,11 @@
+{
+  "backend": "sqlite",
+  "status": "ok",
+  "integrity_check": "ok",
+  "quick_check": "ok",
+  "wal_checkpoint": [
+    0,
+    0,
+    0
+  ]
+}

@@ -1,6 +1,6 @@
 # Technical Decisions (ADR-lite)
 
-Last updated: February 24, 2026
+Last updated: February 25, 2026
 
 ## D1: API-First Monolith for vNext
 
@@ -57,7 +57,7 @@ Implication:
 ## D5: Billing Simulation + OpenRouter-Required LLM
 
 Decision:
-- Billing remains local simulation for demo scope.
+- Billing uses a provider-driven runtime: simulation for deterministic local flows and live Stripe when credentials are configured.
 - LLM runs through OpenRouter only and fails loud on provider/config/network errors.
 
 Why:
@@ -65,7 +65,7 @@ Why:
 - LLM quality and acceptance must match real provider behavior, not local heuristics.
 
 Implication:
-- Billing production adapter (Stripe/webhooks) remains phase-two.
+- Billing execution is switchable through `REMODELATOR_BILLING_PROVIDER` without route rewrites.
 - OpenRouter API key and network availability are required for LLM demo readiness.
 
 ## D6: SQLite-First Runtime, Optional PostgreSQL Track
@@ -96,18 +96,18 @@ Why:
 Implication:
 - New core features are not complete until reachable and understandable in UI.
 
-## D8: App-Shell Composition Separated from Workflow Orchestration
+## D8: Thin Route Composition and Feature-Owned UI Logic
 
 Decision:
 - Keep `App.tsx` as a thin composition shell.
-- Centralize state/action/data wiring in `useAppController`.
+- Keep data-fetching and action orchestration inside feature pages/hooks backed by typed API modules.
 
 Why:
-- Reduces coupling between rendering and workflow plumbing.
-- Makes panel-prop wiring easier to reason about and safer to refactor.
+- Reduces coupling between global route composition and feature behavior.
+- Keeps feature slices independently maintainable and testable.
 
 Implication:
-- New UI flow wiring should be added in controller/hook modules, not directly in rendering components.
+- New UI flow wiring should live in feature modules and shared hooks, not in top-level route composition.
 
 ## D9: Config-Driven CORS and Baseline Security Headers
 
@@ -184,8 +184,8 @@ Implication:
 
 Decision:
 - Route billing execution through a provider runtime layer instead of directly calling simulation writes.
-- Keep `simulation` provider as active execution path.
-- Make `stripe` provider fail loud until live adapter enablement.
+- Keep `simulation` provider as a deterministic default path.
+- Execute `stripe` provider when selected and configured; fail loud on missing/invalid live dependencies.
 
 Why:
 - Preserves a clean seam for live billing integration without route-level rewrites.

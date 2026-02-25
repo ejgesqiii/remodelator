@@ -34,6 +34,7 @@ def _settings(api_key: str | None = None) -> Settings:
         stripe_secret_key=None,
         stripe_webhook_secret=None,
         stripe_api_version="2026-01-28.clover",
+        stripe_payment_return_url=None,
         api_limit_max=500,
         api_rate_limit_enabled=True,
         api_rate_limit_window_seconds=60,
