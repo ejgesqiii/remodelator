@@ -59,7 +59,7 @@ flowchart LR
 - `src/remodelator/interfaces/cli`
   - Operational CLI (including migration SQL dry-run analysis, snapshot reconciliation diff commands, and SQLite integrity checks).
 - `apps/web`
-  - React TypeScript client (panel-based workflow shell).
+  - React TypeScript client (Feature-sliced standard SPA).
 - `tests`
   - Backend unit/integration/security tests.
 - `apps/web/e2e`
@@ -96,19 +96,18 @@ flowchart LR
 
 ### Web Client
 - Framework: React + TypeScript + Vite
-- Entrypoint: `apps/web/src/App.tsx`
-- App controller orchestration: `apps/web/src/lib/useAppController.ts` (state, loaders, action wiring, panel prop assembly)
-- Navigation model: panel switcher (`Session`, `Workspace`, `Catalog + Templates`, `Billing + Output`, `Admin + Logs`)
-- Action/data modules: `apps/web/src/lib/*Actions.ts` + `dataLoaders.ts` to keep API workflow logic outside component rendering
-- Lifecycle/state hooks: `useSessionBootstrap.ts`, `useEstimateSelectionSync.ts`, `useWorkspaceForms.ts`, `useProfileState.ts`, `useSessionStorage.ts`, `useCatalogState.ts`, `useOutputState.ts`, `useAuthState.ts`, `useLlmState.ts`, `useWorkspaceCoreState.ts`
-- Panel props are assembled directly in `useAppController.ts` to avoid pass-through wrapper indirection.
-- Panel composition boundary: `apps/web/src/components/MainPanels.tsx`
-- Panel decomposition examples:
-  - workspace detail sections split into `apps/web/src/panels/workspace/*`
-  - session sections split into `apps/web/src/panels/session/*`
-  - catalog sections split into `apps/web/src/panels/catalog/*`
-  - output sections split into `apps/web/src/panels/output/*`
-  - admin result rendering split into `apps/web/src/panels/admin/AdminResultView.tsx`
+- Routing: React Router v7 (Standard URL-driven SPA)
+- Server State: TanStack Query v5 (Caching, invalidation, background sync)
+- Client State: Zustand (Local ephemeral state)
+- Architecture: Feature-sliced (Grouped by domain under `apps/web/src/features/`)
+- Forms: React Hook Form + Zod validation
+- Styling: Tailwind CSS v4 + custom design system
+- Components: Accessible primitives via shadcn/ui (Radix)
+- Navigation model: URL-driven routes with standard layouts (`/estimates`, `/catalog`, `/billing`, etc.)
+- Key directories:
+  - `src/api/`: Typed API client modules mapping 1:1 to backend routers.
+  - `src/features/`: Domain slices (e.g., `estimates/`, `billing/`) encapsulating pages, components, and hooks.
+  - `src/components/`: Shared UI layout shells, data-displays, and primitives.
 
 ### Data Store
 - Local demo default: SQLite under `data/`
@@ -345,40 +344,39 @@ Auth requirement legend:
 ## 12) UI/UX Interaction Model
 
 ### Navigation shell
-- Sidebar controls panel-level context switching.
-- Panels expose full workflows without requiring CLI.
+- LeftSidebar controls primary application routing.
+- URL-driven navigation for deep linking and browser history.
 
-### Session panel
-- Register/login/logout.
-- Forgot-password flow intentionally deferred until email delivery is implemented.
+### Settings / Profile
+- Register/login/logout with protected routing.
 - Profile defaults update.
-- Activity and audit visibility.
-- Snapshot export/restore.
+- Activity and audit visibility in settings.
+- Snapshot export/restore in settings.
 
-### Workspace panel
-- Estimate creation and selection.
+### Estimates Workspace
+- Estimate List page with sorting and filtering.
+- Estimate Detail page (3-zone layout) for active workspace.
 - Customer/job metadata update.
-- Quick-start estimate seeding from catalog room categories.
-- Full line-item CRUD + reorder + grouping.
-- LLM suggest/apply with OpenRouter-required status display plus structured suggestion card output.
-- Estimate lifecycle actions and status control.
+- Quick-start estimate seeding via slide-out modal from catalog tree.
+- Full line-item CRUD + reorder + inline-editing on TanStack Table.
+- LLM price assist sidebar panel with OpenRouter-required status display.
+- Estimate lifecycle actions and status dropdown control.
 
-### Catalog panel
-- Search and quick-add catalog items to selected estimate.
+### Catalog & Templates
+- Dedicated `/catalog` page with expandable tree + search.
 - Upsert/import catalog operations.
-- Template save/list/apply.
+- Dedicated `/templates` page with save/apply interactions.
 - Export estimate JSON and proposal PDF triggers.
 
-### Billing + Output panel
-- Proposal render preview.
-- Billing simulation actions (charge/subscription/refund).
-- Idempotency key testing with structured event/status response cards.
-- Billing ledger visibility.
+### Billing & Proposals
+- Dedicated `/estimates/:id/proposal` render preview.
+- Billing dashboard (`/billing`) with Simulation/Stripe mode toggle.
+- Idempotency key testing input with structured event/status Timeline.
+- Visual billing feed showing lifecycle events.
 
-### Admin panel
-- Summary/users/activity/billing admin views.
-- Demo reset action.
-- Live operation log stream.
+### Admin Tools
+- Dedicated `/admin` sub-routes for summary/users/activity/billing.
+- High-risk destructive actions (Demo reset, Audit prune) secured behind type-to-confirm dialogs.
 
 ## 13) End-to-End Demo Flow (Reference)
 

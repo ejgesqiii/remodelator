@@ -706,44 +706,44 @@ Every list/table has a designed empty state with:
 
 **Goal**: Content management and output generation.
 
-- [ ] Build `api/catalog.ts`, `api/templates.ts`, `api/proposals.ts`
-- [ ] Build Catalog browser page with tree navigation + search
-- [ ] Build catalog item cards with "Add to estimate" action
-- [ ] Build Upsert Item dialog and Import dialog
-- [ ] Build Template List page
-- [ ] Build Save Template + Apply Template dialogs
-- [ ] Build Proposal Preview page
-- [ ] Build PDF export action
-- [ ] Build LLM Assist panel (status indicator, suggest action, suggestion card, apply action)
-- [ ] Verify: Catalog browse → add to estimate → save template → apply template → render proposal → export PDF
+- [x] Build `api/catalog.ts`, `api/templates.ts`, `api/proposals.ts`
+- [x] Build Catalog browser page with tree navigation + search
+- [x] Build catalog item cards with "Add to estimate" action
+- [x] Build Upsert Item dialog and Import dialog
+- [x] Build Template List page
+- [x] Build Save Template + Apply Template dialogs
+- [x] Build Proposal Preview page
+- [x] Build PDF export action
+- [x] Build LLM Assist panel (status indicator, suggest action, suggestion card, apply action)
+- [x] Verify: Catalog browse → add to estimate → save template → apply template → render proposal → export PDF
 
 ### Phase 4: Billing + Admin (est. 2-3 days)
 
 **Goal**: Billing simulation and admin operations.
 
-- [ ] Build `api/billing.ts` and `api/admin.ts`
-- [ ] Build Billing Dashboard with subscription + usage cards
-- [ ] Build simulation lifecycle buttons
-- [ ] Build billing ledger timeline
-- [ ] Build idempotency key testing UI
-- [ ] Build Admin Dashboard with stat cards
-- [ ] Build Admin Users/Activity/Billing data tables with filters
-- [ ] Build Demo Reset dialog (type-to-confirm)
-- [ ] Build Audit Prune dialog (with dry-run preview)
-- [ ] Verify: Full billing simulation lifecycle + admin reset works
+- [x] Build `api/billing.ts` and `api/admin.ts`
+- [x] Build Billing Dashboard with subscription + usage cards
+- [x] Build simulation lifecycle buttons
+- [x] Build billing ledger timeline
+- [x] Build idempotency key testing UI
+- [x] Build Admin Dashboard with stat cards
+- [x] Build Admin Users/Activity/Billing data tables with filters
+- [x] Build Demo Reset dialog (type-to-confirm)
+- [x] Build Audit Prune dialog (with dry-run preview)
+- [x] Verify: Full billing simulation lifecycle + admin reset works
 
 ### Phase 5: Settings + Dashboard + Polish (est. 2-3 days)
 
 **Goal**: Complete all pages and visual polish.
 
-- [ ] Build Settings page (profile form, backup section, activity/audit)
-- [ ] Build Dashboard page (stats, recent estimates, quick actions, system health)
-- [ ] Polish all pages: micro-animations, hover effects, transitions
-- [ ] Dark/light mode toggle
-- [ ] Responsive breakpoint testing
-- [ ] Loading skeleton implementation for all pages
-- [ ] Empty state design for all lists
-- [ ] Error state handling across all pages
+- [x] Build Settings page (profile form, backup section, activity/audit)
+- [x] Build Dashboard page (stats, recent estimates, quick actions, system health)
+- [x] Polish all pages: micro-animations, hover effects, transitions
+- [x] Dark/light mode toggle
+- [x] Responsive breakpoint testing
+- [x] Loading skeleton implementation for all pages
+- [x] Empty state design for all lists
+- [x] Error state handling across all pages
 
 ### Phase 6: Testing + Hardening (est. 1-2 days)
 

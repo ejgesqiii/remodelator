@@ -40,7 +40,7 @@ Core implementation:
 - `src/remodelator/infra`: DB models, persistence, external adapters
 - `src/remodelator/interfaces/api`: FastAPI endpoints
 - `src/remodelator/interfaces/cli`: Typer CLI
-- `apps/web`: React web client (API-first; `src/App.tsx` is a thin shell, orchestration in `src/lib/useAppController.ts`)
+- `apps/web`: React web client (API-first, Feature-sliced Architecture, React Router, TanStack Query, Tailwind v4)
 
 Project support:
 - `requirements.txt`: backend runtime install wrapper (`-e .`)
