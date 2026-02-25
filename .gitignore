@@ -44,3 +44,6 @@ obj/
 *.dll
 *.exe
 *.pdb
+
+# Local secrets
+.env
