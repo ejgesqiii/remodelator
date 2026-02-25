@@ -102,7 +102,7 @@ export type UpdateLineItemRequest = {
 export type CatalogTreeNode = {
     node_id: string | null;
     name: string;
-    items: Array<{ id: string; name: string }>;
+    items: Array<{ id: string; name: string; unit_price?: string; labor_hours?: string }>;
 };
 
 export type CatalogItem = {

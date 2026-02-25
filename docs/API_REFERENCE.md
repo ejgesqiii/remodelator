@@ -10,6 +10,7 @@ For an always-current endpoint list generated from source, see [API_ENDPOINTS_GE
 - User-auth routes: `x-session-token`
 - Admin read routes: `x-admin-key` or admin-role `x-session-token`
 - Admin mutation routes (`POST /admin/demo-reset`, `POST /admin/audit-prune`): `x-admin-key`
+- Catalog mutation routes (`POST /catalog/upsert`, `POST /catalog/import`): admin-role `x-session-token`
 - Optional request tracing header: `x-request-id` (if provided, echoed back in `X-Request-ID`)
 - Legacy user header: `x-user-id` is disabled by default and should remain disabled in production.
 - Local bootstrap routes (`/db/migrate`, `/db/seed`) are disabled when `REMODELATOR_ENV=production`.
@@ -84,6 +85,16 @@ For an always-current endpoint list generated from source, see [API_ENDPOINTS_GE
   - `discount_value`
   - `discount_is_percent`
   - `group_name`
+
+### Catalog browse + admin mutations
+- `GET /catalog/tree` (public read)
+  - returns category tree rows with item fields: `id`, `name`, `unit_price`, `labor_hours`
+- `GET /catalog/search` (public read)
+  - query params:
+    - `query` (required)
+    - `limit` (optional, default `20`, bounded by API limits)
+- `POST /catalog/upsert` (admin-role session required)
+- `POST /catalog/import` (admin-role session required)
 
 ### Billing simulation
 - `GET /billing/policy`

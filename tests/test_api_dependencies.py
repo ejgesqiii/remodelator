@@ -109,3 +109,46 @@ def test_require_admin_read_access_requires_header() -> None:
 
     assert exc_info.value.status_code == 401
     assert "Missing admin auth header" in str(exc_info.value.detail)
+
+
+def test_require_admin_user_id_accepts_admin_session(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(dependencies.service, "resolve_user_id_from_session_token", lambda _: "user-admin")
+
+    @contextmanager
+    def _fake_session_scope():
+        yield object()
+
+    monkeypatch.setattr(dependencies, "session_scope", _fake_session_scope)
+    monkeypatch.setattr(dependencies.service, "require_admin_user_access", lambda _session, _user_id: None)
+
+    actor = dependencies.require_admin_user_id("good-token")
+    assert actor == "user-admin"
+
+
+def test_require_admin_user_id_requires_session_token() -> None:
+    with pytest.raises(HTTPException) as exc_info:
+        dependencies.require_admin_user_id(None)
+
+    assert exc_info.value.status_code == 401
+    assert "Missing x-session-token header" in str(exc_info.value.detail)
+
+
+def test_require_admin_user_id_rejects_non_admin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(dependencies.service, "resolve_user_id_from_session_token", lambda _: "user-basic")
+
+    @contextmanager
+    def _fake_session_scope():
+        yield object()
+
+    monkeypatch.setattr(dependencies, "session_scope", _fake_session_scope)
+
+    def _reject(_session: object, _user_id: str) -> None:
+        raise ValueError("admin only")
+
+    monkeypatch.setattr(dependencies.service, "require_admin_user_access", _reject)
+
+    with pytest.raises(HTTPException) as exc_info:
+        dependencies.require_admin_user_id("basic-token")
+
+    assert exc_info.value.status_code == 403
+    assert "admin only" in str(exc_info.value.detail)

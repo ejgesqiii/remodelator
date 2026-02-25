@@ -25,7 +25,7 @@ A local build is "finished" only when all items below are usable via web UI:
 4. estimate quick-start from catalog room categories
 5. line item add/edit/remove/reorder/group
 6. deterministic recalc with visible subtotal/tax/total
-7. catalog tree/search/upsert/import
+7. catalog tree/search plus admin-only upsert/import
 8. templates save/list/apply
 9. proposal render and PDF export
 10. estimate export

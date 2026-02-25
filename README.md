@@ -85,7 +85,7 @@ Backend/CLI/API currently supports:
 - estimate quick-start from catalog room (`/estimates/{estimate_id}/quickstart`)
 - line-item operations: add/edit/remove/reorder/group
 - deterministic Decimal-based recalculation
-- catalog tree/search/upsert/import and seed data
+- catalog tree/search (user-facing) plus admin-only upsert/import and seed data
 - template save/apply
 - proposal text render and PDF generation
 - billing simulation and ledger
@@ -116,8 +116,8 @@ Web currently supports:
 - estimate create/select/detail update (customer fields, markup, tax)
 - estimate quick-start from room category (Bathroom/Kitchen/etc) to seed starter items
 - line-item add/edit/remove/reorder/group with advanced pricing fields
-- catalog search + add-to-estimate
-- catalog upsert/import (JSON) from web
+- estimate add-item panel with inline catalog picker (category tree + search + one-click add)
+- catalog management (upsert/import JSON) from web for admin-role sessions only
 - estimate actions: recalc/status/duplicate/version/unlock
 - template save/apply/list
 - proposal render
@@ -324,6 +324,7 @@ Admin access model:
 - Admin read endpoints (`/admin/summary`, `/admin/users`, `/admin/activity`, `/admin/billing-ledger`) accept either:
   - valid `x-admin-key`, or
   - admin-role `x-session-token` (email in `REMODELATOR_ADMIN_USER_EMAILS`).
+- Catalog mutation endpoints (`/catalog/upsert`, `/catalog/import`) require an admin-role `x-session-token`.
 - Demo reset (`/admin/demo-reset`) requires valid `x-admin-key`.
 
 Local default key:

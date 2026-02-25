@@ -9,11 +9,14 @@ import {
 import { cn } from '@/lib/cn';
 import { useDebounce } from '@/hooks/useDebounce';
 import * as catalogApi from '@/api/catalog';
+import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import type { CatalogItem } from '@/api/types';
 
 export function CatalogPage() {
     const queryClient = useQueryClient();
+    const role = useAuthStore((s) => s.role);
+    const canManageCatalog = role === 'admin';
     const [search, setSearch] = useState('');
     const debouncedSearch = useDebounce(search, 300);
     const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -80,16 +83,20 @@ export function CatalogPage() {
         <div className="space-y-6">
             <PageHeader
                 title="Catalog"
-                description="Browse and manage remodeling items"
+                description={
+                    canManageCatalog
+                        ? 'Browse and manage remodeling items'
+                        : 'Browse remodeling items (catalog management is admin-only)'
+                }
                 icon={Package}
-                actions={
+                actions={canManageCatalog ? (
                     <button
                         onClick={() => { setEditingItem(null); setShowUpsert(true); }}
                         className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary-hover"
                     >
                         <Plus size={18} /> Add Item
                     </button>
-                }
+                ) : null}
             />
 
             {/* Search */}
@@ -104,7 +111,7 @@ export function CatalogPage() {
             </div>
 
             {/* Upsert dialog */}
-            {showUpsert && (
+            {canManageCatalog && showUpsert && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
                     <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-lg">
                         <div className="mb-4 flex items-center justify-between">
@@ -231,7 +238,7 @@ export function CatalogPage() {
                                         {'unit_price' in item && (
                                             <MoneyDisplay value={item.unit_price} size="sm" />
                                         )}
-                                        {'unit_price' in item && (
+                                        {'unit_price' in item && canManageCatalog && (
                                             <button
                                                 onClick={() => openEdit(item as CatalogItem)}
                                                 className="rounded-lg bg-transparent p-1.5 text-muted opacity-0 shadow-none transition-all group-hover:opacity-100 hover:bg-surface-active hover:text-foreground"

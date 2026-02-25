@@ -173,6 +173,7 @@ All monetary outputs are quantized Decimal values.
   - valid `x-admin-key`, or
   - admin-role `x-session-token` (`REMODELATOR_ADMIN_USER_EMAILS`).
 - `POST /admin/demo-reset` and `POST /admin/audit-prune` require `x-admin-key`.
+- Catalog mutations (`POST /catalog/upsert`, `POST /catalog/import`) require admin-role `x-session-token`.
 - Production mode rejects default `local-admin-key`.
 
 ## 9) Configuration Surface
@@ -277,8 +278,8 @@ Auth requirement legend:
 |---|---|---|---|
 | GET | `/catalog/tree` | Public | Read catalog tree |
 | GET | `/catalog/search` | Public | Search catalog |
-| POST | `/catalog/upsert` | User | Create/update catalog item |
-| POST | `/catalog/import` | User | Bulk import catalog items |
+| POST | `/catalog/upsert` | Admin user (`x-session-token`) | Create/update catalog item |
+| POST | `/catalog/import` | Admin user (`x-session-token`) | Bulk import catalog items |
 
 ### Templates
 
@@ -368,9 +369,13 @@ Auth requirement legend:
 
 ### Catalog & Templates
 - Dedicated `/catalog` page with expandable tree + search.
-- Upsert/import catalog operations.
+- Upsert/import catalog operations are admin-only.
 - Dedicated `/templates` page with save/apply interactions.
 - Export estimate JSON and proposal PDF triggers.
+
+Estimate detail add-item UX:
+- `Add Item` opens a split panel with manual line-item form (left) and catalog picker (right).
+- Catalog picker supports category browsing and search; selecting an item adds it directly to the estimate.
 
 ### Billing & Proposals
 - Dedicated `/estimates/:id/proposal` render preview.

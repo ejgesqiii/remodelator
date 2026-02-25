@@ -1,1 +1,0 @@
-import{p as e,g as a}from"./client-DPKpE0-G.js";function r(){return a("/catalog/tree")}function n(t){return a(`/catalog/search?q=${encodeURIComponent(t)}`)}function s(t){return e("/catalog/upsert",t)}export{r as g,n as s,s as u};

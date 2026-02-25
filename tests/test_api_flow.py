@@ -58,6 +58,7 @@ def test_api_end_to_end(monkeypatch) -> None:
         }
 
     monkeypatch.setattr(service, "suggest_price_openrouter", _openrouter_stub)
+    monkeypatch.setenv("REMODELATOR_ADMIN_USER_EMAILS", "api@example.com")
 
     health = client.get("/health")
     assert health.status_code == 200
@@ -93,8 +94,22 @@ def test_api_end_to_end(monkeypatch) -> None:
         user_id = reg.json()["user_id"]
 
     headers = {"x-session-token": session_token}
+
+    non_admin_register = client.post(
+        "/auth/register",
+        json={"email": "api-user@example.com", "password": "pw123456", "full_name": "API User"},
+    )
+    if non_admin_register.status_code == 200:
+        non_admin_token = non_admin_register.json()["session_token"]
+    else:
+        non_admin_login = client.post("/auth/login", json={"email": "api-user@example.com", "password": "pw123456"})
+        assert non_admin_login.status_code == 200
+        non_admin_token = non_admin_login.json()["session_token"]
+    non_admin_headers = {"x-session-token": non_admin_token}
+
     metadata_login = client.post("/auth/login", json={"email": "api@example.com", "password": "pw123456"})
     assert metadata_login.status_code == 200
+    assert metadata_login.json()["role"] == "admin"
 
     invalid_token_profile = client.get("/profile", headers={"x-session-token": "bad.token"})
     assert invalid_token_profile.status_code == 401
@@ -105,7 +120,7 @@ def test_api_end_to_end(monkeypatch) -> None:
     assert legacy_header_profile.json()["error"]["code"] == "auth_error"
     profile = client.get("/profile", headers=headers)
     assert profile.status_code == 200
-    assert profile.json()["role"] in {"user", "admin"}
+    assert profile.json()["role"] == "admin"
 
     estimate = client.post(
         "/estimates",
@@ -190,6 +205,29 @@ def test_api_end_to_end(monkeypatch) -> None:
     assert llm_apply.status_code == 200
     assert llm_apply.json()["id"] == line_item_id
 
+    catalog_upsert_denied = client.post(
+        "/catalog/upsert",
+        headers=non_admin_headers,
+        json={
+            "name": "API User Should Not Upsert",
+            "unit_price": "9.99",
+            "labor_hours": "0.25",
+            "description": "non-admin should be blocked",
+        },
+    )
+    assert catalog_upsert_denied.status_code == 403
+
+    catalog_import_denied = client.post(
+        "/catalog/import",
+        headers=non_admin_headers,
+        json={
+            "items": [
+                {"name": "API User Import Blocked", "unit_price": "11.50", "labor_hours": "0.75"},
+            ]
+        },
+    )
+    assert catalog_import_denied.status_code == 403
+
     catalog_upsert = client.post(
         "/catalog/upsert",
         headers=headers,
@@ -220,6 +258,12 @@ def test_api_end_to_end(monkeypatch) -> None:
     catalog_search = client.get("/catalog/search?query=API%20Import&limit=10")
     assert catalog_search.status_code == 200
     assert len(catalog_search.json()) >= 2
+
+    catalog_tree = client.get("/catalog/tree")
+    assert catalog_tree.status_code == 200
+    kitchen_node = next((node for node in catalog_tree.json() if node["name"] == "Kitchen"), None)
+    assert kitchen_node is not None
+    assert all("unit_price" in item and "labor_hours" in item for item in kitchen_node["items"])
 
     template_saved = client.post(
         "/templates/save",

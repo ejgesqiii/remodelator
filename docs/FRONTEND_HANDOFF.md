@@ -53,6 +53,7 @@ The UI is built with a feature-sliced SPA architecture and aligns with the backe
 - **Admin Dashboard Coverage:** Includes summary, users, activity, billing ledger, demo reset, and audit-prune preview/execute flows.
 - **Billing Endpoints:** 100% represented. You can simulate Stripe attach, checkout, charge, and refund workflows directly from the Billing Page while watching the visual timeline ledger update in real-time.
 - **Estimates/Line Items:** Advanced backend features like grouping, reordering, quick-starting from catalog room categories, duplicate/versioning, and recalculations all have dedicated frontend controls.
+- **Estimate Add-Item UX:** The estimate detail page now includes an inline catalog picker (tree + search) inside the Add Item flow, so users can select catalog items and add them directly as line items without leaving the estimate screen.
 - **LLM / OpenRouter:** Fully piped into the "LLM Assist" slide-out panel on the line-item editor.
 
 **Cleanup & Dead Code Pruning**

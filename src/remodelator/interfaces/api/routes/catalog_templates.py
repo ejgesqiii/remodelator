@@ -9,7 +9,7 @@ from remodelator.application import service
 from remodelator.infra.db import session_scope
 from remodelator.interfaces.api.constants import API_LIMIT_MAX, API_LIMIT_MIN
 from remodelator.interfaces.api.constants import DEFAULT_CATALOG_SEARCH_LIMIT, DEFAULT_TEMPLATE_LIST_LIMIT
-from remodelator.interfaces.api.dependencies import require_user_id
+from remodelator.interfaces.api.dependencies import require_admin_user_id, require_user_id
 from remodelator.interfaces.api.router_utils import handle
 from remodelator.interfaces.api.schemas import CatalogImportRequest
 from remodelator.interfaces.api.schemas import CatalogUpsertRequest
@@ -41,7 +41,7 @@ def catalog_search(
 
 
 @router.post("/catalog/upsert")
-def catalog_upsert(payload: CatalogUpsertRequest, user_id: str = Depends(require_user_id)) -> dict[str, Any]:
+def catalog_upsert(payload: CatalogUpsertRequest, user_id: str = Depends(require_admin_user_id)) -> dict[str, Any]:
     def action() -> dict[str, Any]:
         with session_scope() as session:
             return service.upsert_catalog_item(
@@ -58,7 +58,7 @@ def catalog_upsert(payload: CatalogUpsertRequest, user_id: str = Depends(require
 
 
 @router.post("/catalog/import")
-def catalog_import(payload: CatalogImportRequest, user_id: str = Depends(require_user_id)) -> dict[str, int]:
+def catalog_import(payload: CatalogImportRequest, user_id: str = Depends(require_admin_user_id)) -> dict[str, int]:
     def action() -> dict[str, int]:
         with session_scope() as session:
             return service.import_catalog_items(session, user_id, [row.model_dump() for row in payload.items])

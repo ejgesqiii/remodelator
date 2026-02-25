@@ -854,6 +854,7 @@ def upsert_catalog_item(
     node_id: str | None = None,
 ) -> dict[str, str]:
     _require_user(session, user_id)
+    require_admin_user_access(session, user_id)
     clean_name = name.strip()
     if not clean_name:
         raise ValueError("Catalog item name is required.")
@@ -902,6 +903,7 @@ def import_catalog_json(session: Session, user_id: str, path: Path) -> dict[str,
 
 def import_catalog_items(session: Session, user_id: str, items: list[dict[str, object]]) -> dict[str, int]:
     _require_user(session, user_id)
+    require_admin_user_access(session, user_id)
     inserted = 0
     updated = 0
 
@@ -931,7 +933,14 @@ def show_catalog_tree(session: Session) -> list[dict[str, object]]:
     by_node: dict[str, list[dict[str, str]]] = {}
     for item in items:
         key = item.node_id or "unassigned"
-        by_node.setdefault(key, []).append({"id": item.id, "name": item.name})
+        by_node.setdefault(key, []).append(
+            {
+                "id": item.id,
+                "name": item.name,
+                "unit_price": str(item.unit_price),
+                "labor_hours": str(item.labor_hours),
+            }
+        )
 
     result: list[dict[str, object]] = []
     for node in nodes:

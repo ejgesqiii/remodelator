@@ -28,23 +28,19 @@ test("full local demo workflow", async ({ page }) => {
   await createForm.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.getByText("Estimate created")).toBeVisible();
 
-  // Open estimate details and add an item.
+  // Open estimate details and add an item from catalog picker.
   await page.getByRole("link", { name: estimateTitle }).first().click();
   await expect(page.getByRole("heading", { name: estimateTitle })).toBeVisible();
   await page.getByRole("button", { name: /Add Item/ }).click();
-  await page.getByPlaceholder("Item name *").fill("Custom Tile Install");
-  await page.getByPlaceholder("Quantity").fill("2");
-  await page.getByPlaceholder("Unit price").fill("45.00");
-  await page.getByPlaceholder("Labor hours").fill("1.50");
-  await page.getByPlaceholder("Markup %").fill("11");
-  await page.getByPlaceholder("Group").fill("Phase-1");
-  await page.getByRole("button", { name: /^Add$/ }).click();
+  await expect(page.getByText("Catalog Picker")).toBeVisible();
+  await page.getByRole("button", { name: "Kitchen" }).click();
+  await page.getByRole("button", { name: "Add Countertop Install" }).click();
   await expect(page.getByText("Line item added")).toBeVisible();
 
   // Recalculate totals and verify item is visible.
   await page.getByRole("button", { name: "Recalculate" }).click();
   await expect(page.getByText("Totals recalculated")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Custom Tile Install" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Countertop Install", exact: true })).toBeVisible();
 
   // Proposal view.
   await page.getByRole("link", { name: "View Proposal" }).click();

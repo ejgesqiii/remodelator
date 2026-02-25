@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { StatusBadge } from '@/components/data-display/StatusBadge';
 import { MoneyDisplay } from '@/components/data-display/MoneyDisplay';
@@ -8,11 +8,13 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import {
     ClipboardList, Plus, Trash2, Pencil, ChevronUp, ChevronDown,
     RotateCcw, Copy, GitBranch, Lock, Unlock, FileText,
-    ArrowLeft, Save, Zap, Download,
+    ArrowLeft, Save, Zap, Download, Search, ChevronRight, Package,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { formatMoney, formatStatus } from '@/lib/formatters';
 import * as estimatesApi from '@/api/estimates';
+import * as catalogApi from '@/api/catalog';
+import { useDebounce } from '@/hooks/useDebounce';
 import { toast } from 'sonner';
 import { LlmAssistPanel } from './LlmAssistPanel';
 import { QuickstartDialog } from './QuickstartDialog';
@@ -40,9 +42,45 @@ export function EstimateDetailPage() {
         item_name: '', quantity: '', unit_price: '', labor_hours: '0',
         item_markup_pct: '0', discount_value: '0', group_name: '',
     });
+    const [catalogSearch, setCatalogSearch] = useState('');
+    const [catalogExpandedNodes, setCatalogExpandedNodes] = useState<Set<string>>(new Set());
+    const [catalogSelectedCategory, setCatalogSelectedCategory] = useState<string | null>(null);
+    const [closeCatalogAfterAdd, setCloseCatalogAfterAdd] = useState(false);
+    const debouncedCatalogSearch = useDebounce(catalogSearch, 250);
 
     const [quickstartOpen, setQuickstartOpen] = useState(false);
     const [editingLineItem, setEditingLineItem] = useState<LineItem | null>(null);
+
+    const { data: catalogTree = [], isLoading: catalogTreeLoading } = useQuery({
+        queryKey: ['catalog-tree'],
+        queryFn: catalogApi.getCatalogTree,
+        enabled: addingItem,
+    });
+    const { data: catalogSearchResults = [] } = useQuery({
+        queryKey: ['catalog-search', debouncedCatalogSearch],
+        queryFn: () => catalogApi.searchCatalog(debouncedCatalogSearch),
+        enabled: addingItem && debouncedCatalogSearch.length >= 2,
+    });
+
+    const resetItemForm = () => {
+        setItemForm({
+            item_name: '',
+            quantity: '',
+            unit_price: '',
+            labor_hours: '0',
+            item_markup_pct: '0',
+            discount_value: '0',
+            group_name: '',
+        });
+    };
+
+    const resetAddItemPanel = () => {
+        setAddingItem(false);
+        setCatalogSearch('');
+        setCatalogSelectedCategory(null);
+        setCatalogExpandedNodes(new Set());
+        resetItemForm();
+    };
 
     const invalidate = () => {
         queryClient.invalidateQueries({ queryKey: ['estimate', id] });
@@ -57,7 +95,7 @@ export function EstimateDetailPage() {
 
     const addItemMutation = useMutation({
         mutationFn: (data: Parameters<typeof estimatesApi.addLineItem>[1]) => estimatesApi.addLineItem(id!, data),
-        onSuccess: () => { invalidate(); setAddingItem(false); setItemForm({ item_name: '', quantity: '', unit_price: '', labor_hours: '0', item_markup_pct: '0', discount_value: '0', group_name: '' }); toast.success('Line item added'); },
+        onSuccess: () => { invalidate(); toast.success('Line item added'); },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed to add item'),
     });
 
@@ -115,6 +153,55 @@ export function EstimateDetailPage() {
         onSuccess: () => { invalidate(); toast.success('Status updated'); },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Status update failed'),
     });
+
+    const toggleCatalogNode = (name: string) => {
+        setCatalogExpandedNodes((prev) => {
+            const next = new Set(prev);
+            if (next.has(name)) {
+                next.delete(name);
+            } else {
+                next.add(name);
+            }
+            return next;
+        });
+    };
+
+    const categoryItems = useMemo(() => {
+        if (!catalogSelectedCategory) return [];
+        const selectedNode = catalogTree.find((node) => node.name === catalogSelectedCategory);
+        return selectedNode?.items ?? [];
+    }, [catalogSelectedCategory, catalogTree]);
+
+    const catalogDisplayItems = debouncedCatalogSearch.length >= 2 ? catalogSearchResults : categoryItems;
+
+    const addCatalogItemToEstimate = (item: { name: string; unit_price?: string; labor_hours?: string }) => {
+        addItemMutation.mutate(
+            {
+                item_name: item.name,
+                quantity: 1,
+                unit_price: parseFloat(item.unit_price ?? '0') || 0,
+                labor_hours: parseFloat(item.labor_hours ?? '0') || 0,
+                item_markup_pct: parseFloat(itemForm.item_markup_pct) || 0,
+                discount_value: 0,
+                group_name: itemForm.group_name || undefined,
+            },
+            {
+                onSuccess: () => {
+                    if (closeCatalogAfterAdd) {
+                        resetAddItemPanel();
+                        return;
+                    }
+                    setItemForm((prev) => ({
+                        ...prev,
+                        item_name: item.name,
+                        quantity: '1',
+                        unit_price: item.unit_price ?? prev.unit_price,
+                        labor_hours: item.labor_hours ?? prev.labor_hours,
+                    }));
+                },
+            }
+        );
+    };
 
     if (isLoading) {
         return (
@@ -248,7 +335,13 @@ export function EstimateDetailPage() {
                                     <Zap size={14} /> Quick Start
                                 </button>
                                 <button
-                                    onClick={() => setAddingItem(!addingItem)}
+                                    onClick={() => {
+                                        if (addingItem) {
+                                            resetAddItemPanel();
+                                            return;
+                                        }
+                                        setAddingItem(true);
+                                    }}
                                     className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-md hover:bg-primary-hover"
                                 >
                                     <Plus size={14} /> Add Item
@@ -256,41 +349,146 @@ export function EstimateDetailPage() {
                             </div>
                         </div>
 
-                        {/* Add item form */}
+                        {/* Add item form + catalog picker */}
                         {addingItem && (
-                            <form
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    addItemMutation.mutate({
-                                        item_name: itemForm.item_name,
-                                        quantity: parseFloat(itemForm.quantity) || 1,
-                                        unit_price: parseFloat(itemForm.unit_price) || 0,
-                                        labor_hours: parseFloat(itemForm.labor_hours) || 0,
-                                        item_markup_pct: parseFloat(itemForm.item_markup_pct) || 0,
-                                        discount_value: parseFloat(itemForm.discount_value) || 0,
-                                        group_name: itemForm.group_name || undefined,
-                                    });
-                                }}
-                                className="mb-4 space-y-3 rounded-xl border border-primary/20 bg-background/50 p-4"
-                            >
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    <input value={itemForm.item_name} onChange={(e) => setItemForm({ ...itemForm, item_name: e.target.value })} placeholder="Item name *" required className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                    <input value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} placeholder="Quantity" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                    <input value={itemForm.unit_price} onChange={(e) => setItemForm({ ...itemForm, unit_price: e.target.value })} placeholder="Unit price" type="number" step="0.01" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            <div className="mb-4 grid gap-4 rounded-xl border border-primary/20 bg-background/50 p-4 lg:grid-cols-2">
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        addItemMutation.mutate(
+                                            {
+                                                item_name: itemForm.item_name,
+                                                quantity: parseFloat(itemForm.quantity) || 1,
+                                                unit_price: parseFloat(itemForm.unit_price) || 0,
+                                                labor_hours: parseFloat(itemForm.labor_hours) || 0,
+                                                item_markup_pct: parseFloat(itemForm.item_markup_pct) || 0,
+                                                discount_value: parseFloat(itemForm.discount_value) || 0,
+                                                group_name: itemForm.group_name || undefined,
+                                            },
+                                            {
+                                                onSuccess: () => {
+                                                    resetAddItemPanel();
+                                                },
+                                            }
+                                        );
+                                    }}
+                                    className="space-y-3 rounded-xl border border-border bg-surface/60 p-4"
+                                >
+                                    <h3 className="font-heading text-sm font-semibold">Manual Line Item</h3>
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                        <input value={itemForm.item_name} onChange={(e) => setItemForm({ ...itemForm, item_name: e.target.value })} placeholder="Item name *" required className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                        <input value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} placeholder="Quantity" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                        <input value={itemForm.unit_price} onChange={(e) => setItemForm({ ...itemForm, unit_price: e.target.value })} placeholder="Unit price" type="number" step="0.01" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                        <input value={itemForm.labor_hours} onChange={(e) => setItemForm({ ...itemForm, labor_hours: e.target.value })} placeholder="Labor hours" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                        <input value={itemForm.item_markup_pct} onChange={(e) => setItemForm({ ...itemForm, item_markup_pct: e.target.value })} placeholder="Markup %" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                        <input value={itemForm.group_name} onChange={(e) => setItemForm({ ...itemForm, group_name: e.target.value })} placeholder="Group" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                    </div>
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <input
+                                            type="checkbox"
+                                            checked={closeCatalogAfterAdd}
+                                            onChange={(e) => setCloseCatalogAfterAdd(e.target.checked)}
+                                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                                        />
+                                        Close catalog after adding an item
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button type="submit" disabled={addItemMutation.isPending} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary-hover disabled:opacity-50">
+                                            {addItemMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Plus size={14} />}
+                                            Add
+                                        </button>
+                                        <button type="button" onClick={resetAddItemPanel} className="rounded-xl bg-transparent px-3 py-2 text-sm text-muted-foreground shadow-none hover:text-foreground">Cancel</button>
+                                    </div>
+                                </form>
+
+                                <div className="rounded-xl border border-border bg-surface/60 p-4">
+                                    <h3 className="mb-3 flex items-center gap-2 font-heading text-sm font-semibold">
+                                        <Package size={15} />
+                                        Catalog Picker
+                                    </h3>
+                                    <div className="relative mb-3">
+                                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+                                        <input
+                                            value={catalogSearch}
+                                            onChange={(e) => setCatalogSearch(e.target.value)}
+                                            placeholder="Search catalog..."
+                                            className="w-full rounded-xl border border-input-border bg-input py-2.5 pl-9 pr-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                        />
+                                    </div>
+                                    <div className="grid gap-3 lg:grid-cols-5">
+                                        <div className="space-y-1 lg:col-span-2">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Categories</p>
+                                            <div className="max-h-64 space-y-0.5 overflow-auto rounded-lg border border-border bg-background/50 p-2">
+                                                {catalogTreeLoading ? (
+                                                    <p className="p-2 text-xs text-muted-foreground">Loading...</p>
+                                                ) : catalogTree.length === 0 ? (
+                                                    <p className="p-2 text-xs text-muted-foreground">No categories</p>
+                                                ) : (
+                                                    catalogTree.map((node) => {
+                                                        const expanded = catalogExpandedNodes.has(node.name);
+                                                        const selected = catalogSelectedCategory === node.name;
+                                                        return (
+                                                            <button
+                                                                key={node.name}
+                                                                onClick={() => {
+                                                                    toggleCatalogNode(node.name);
+                                                                    setCatalogSelectedCategory(node.name);
+                                                                    setCatalogSearch('');
+                                                                }}
+                                                                className={cn(
+                                                                    'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors',
+                                                                    selected
+                                                                        ? 'bg-primary/10 text-primary'
+                                                                        : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'
+                                                                )}
+                                                            >
+                                                                {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                                                                <span className="truncate">{node.name}</span>
+                                                            </button>
+                                                        );
+                                                    })
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1 lg:col-span-3">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                                                {debouncedCatalogSearch.length >= 2 ? 'Search Results' : 'Items'}
+                                            </p>
+                                            <div className="max-h-64 space-y-1 overflow-auto rounded-lg border border-border bg-background/50 p-2">
+                                                {catalogDisplayItems.length === 0 ? (
+                                                    <p className="p-2 text-xs text-muted-foreground">
+                                                        {debouncedCatalogSearch.length >= 2
+                                                            ? 'No matching items'
+                                                            : 'Select a category or search to pick an item'}
+                                                    </p>
+                                                ) : (
+                                                    catalogDisplayItems.map((item) => (
+                                                        <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface px-2 py-1.5">
+                                                            <div className="min-w-0">
+                                                                <p className="truncate text-xs font-medium">{item.name}</p>
+                                                                <p className="text-[11px] text-muted-foreground">
+                                                                    {item.labor_hours ?? '0'}h labor
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xs font-semibold text-foreground">${item.unit_price ?? '0.00'}</span>
+                                                                <button
+                                                                    onClick={() => addCatalogItemToEstimate(item)}
+                                                                    disabled={addItemMutation.isPending}
+                                                                    aria-label={`Add ${item.name}`}
+                                                                    className="rounded-lg bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                                                                >
+                                                                    Add
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                    <input value={itemForm.labor_hours} onChange={(e) => setItemForm({ ...itemForm, labor_hours: e.target.value })} placeholder="Labor hours" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                    <input value={itemForm.item_markup_pct} onChange={(e) => setItemForm({ ...itemForm, item_markup_pct: e.target.value })} placeholder="Markup %" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                    <input value={itemForm.group_name} onChange={(e) => setItemForm({ ...itemForm, group_name: e.target.value })} placeholder="Group" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button type="submit" disabled={addItemMutation.isPending} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary-hover disabled:opacity-50">
-                                        {addItemMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Plus size={14} />}
-                                        Add
-                                    </button>
-                                    <button type="button" onClick={() => setAddingItem(false)} className="rounded-xl bg-transparent px-3 py-2 text-sm text-muted-foreground shadow-none hover:text-foreground">Cancel</button>
-                                </div>
-                            </form>
+                            </div>
                         )}
 
                         {/* Line items table */}

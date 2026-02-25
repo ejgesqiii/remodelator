@@ -14,8 +14,13 @@ OUT_FILE = ROOT / "docs" / "API_ENDPOINTS_GENERATED.md"
 
 
 def auth_for_path(path: str) -> str:
+    admin_read_paths = {"/admin/summary", "/admin/users", "/admin/activity", "/admin/billing-ledger"}
+    if path in admin_read_paths:
+        return "Admin (`x-admin-key` or admin `x-session-token`)"
     if path.startswith("/admin/"):
         return "Admin (`x-admin-key`)"
+    if path in {"/catalog/upsert", "/catalog/import"}:
+        return "Admin user (`x-session-token`)"
     if path == "/billing/webhook":
         return "Public (Stripe signature)"
     if path in {"/db/migrate", "/db/seed"}:

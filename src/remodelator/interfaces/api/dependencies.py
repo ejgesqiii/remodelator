@@ -77,3 +77,21 @@ def require_admin_read_access(
         raise HTTPException(status_code=403, detail=str(exc)) from exc
 
     return user_id
+
+
+def require_admin_user_id(x_session_token: str | None = Header(default=None)) -> str:
+    if not x_session_token:
+        raise HTTPException(status_code=401, detail="Missing x-session-token header")
+
+    try:
+        user_id = service.resolve_user_id_from_session_token(x_session_token)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
+    try:
+        with session_scope() as session:
+            service.require_admin_user_access(session, user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+
+    return user_id
