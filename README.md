@@ -165,6 +165,9 @@ python3 -m pip install -r requirements.txt
 remodelator db migrate
 remodelator db seed
 ```
+Notes:
+- API startup now runs a safe schema init/backfill automatically for SQLite local DBs.
+- Keep `remodelator db migrate` in CI/automation to make schema intent explicit.
 
 3. Run tests:
 ```bash
@@ -224,6 +227,7 @@ Run the consolidated Stripe release gate:
 ```bash
 ./scripts/run_api.sh
 ```
+On startup, the API now ensures local SQLite schema compatibility before serving requests.
 
 API docs and health:
 - `http://127.0.0.1:8000/docs`

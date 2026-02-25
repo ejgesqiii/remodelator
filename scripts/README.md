@@ -24,6 +24,7 @@ This directory contains the authoritative local/CI automation entrypoints.
   - Use `--skip-web` for backend-only setup.
 - `run_api.sh`
   - Starts FastAPI (`remodelator-api`) with `REMODELATOR_API_HOST/PORT`.
+  - API startup performs safe local SQLite schema init/backfill before serving requests.
 - `run_web.sh`
   - Starts Vite web app on `127.0.0.1:5173`.
   - Runs `npm ci` only when `apps/web/node_modules` is missing.

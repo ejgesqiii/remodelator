@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
+from remodelator.application import service
 from remodelator.config import get_settings
 from remodelator.infra.db import engine
 from remodelator.infra.rate_limiter import RateLimitDecision
@@ -161,11 +162,18 @@ def create_api_app() -> FastAPI:
 
     @asynccontextmanager
     async def _lifespan(app: FastAPI):  # type: ignore[unused-argument]
-        yield
         try:
-            engine.dispose()
+            service.init_db()
         except Exception:
-            logger.exception("Failed to dispose database engine during shutdown")
+            logger.exception("Failed to initialize database schema during startup")
+            raise
+        try:
+            yield
+        finally:
+            try:
+                engine.dispose()
+            except Exception:
+                logger.exception("Failed to dispose database engine during shutdown")
 
     app = FastAPI(title="Remodelator vNext API", version="0.1.0", lifespan=_lifespan)
     limiter = (

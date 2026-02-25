@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 
+from fastapi.testclient import TestClient
 from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 
@@ -36,3 +37,18 @@ def test_main_app_matches_factory_endpoint_surface() -> None:
     factory_pairs = _endpoint_pairs(create_api_app())
     main_pairs = _endpoint_pairs(main_app)
     assert factory_pairs == main_pairs
+
+
+def test_create_api_app_runs_db_init_on_startup(monkeypatch) -> None:
+    calls: list[bool] = []
+
+    def _mock_init_db() -> dict[str, str]:
+        calls.append(True)
+        return {"status": "ok", "timestamp": "test"}
+
+    monkeypatch.setattr("remodelator.interfaces.api.app_factory.service.init_db", _mock_init_db)
+
+    with TestClient(create_api_app()) as client:
+        assert client.get("/health").status_code == 200
+
+    assert len(calls) == 1
