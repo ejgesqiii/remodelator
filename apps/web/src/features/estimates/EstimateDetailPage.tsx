@@ -38,6 +38,7 @@ export function EstimateDetailPage() {
     });
 
     const [addingItem, setAddingItem] = useState(false);
+    const [addItemMode, setAddItemMode] = useState<'catalog' | 'manual'>('catalog');
     const [itemForm, setItemForm] = useState({
         item_name: '', quantity: '', unit_price: '', labor_hours: '0',
         item_markup_pct: '0', discount_value: '0', group_name: '',
@@ -76,6 +77,7 @@ export function EstimateDetailPage() {
 
     const resetAddItemPanel = () => {
         setAddingItem(false);
+        setAddItemMode('catalog');
         setCatalogSearch('');
         setCatalogSelectedCategory(null);
         setCatalogExpandedNodes(new Set());
@@ -333,6 +335,7 @@ export function EstimateDetailPage() {
                                             resetAddItemPanel();
                                             return;
                                         }
+                                        setAddItemMode('catalog');
                                         setAddingItem(true);
                                     }}
                                     className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-md hover:bg-primary-hover"
@@ -342,59 +345,78 @@ export function EstimateDetailPage() {
                             </div>
                         </div>
 
-                        {/* Add item form + catalog picker */}
+                        {/* Add item panel */}
                         {addingItem && (
-                            <div className="mb-4 grid gap-4 rounded-xl border border-primary/20 bg-background/50 p-4 lg:grid-cols-2">
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        addItemMutation.mutate(
-                                            {
-                                                item_name: itemForm.item_name,
-                                                quantity: parseFloat(itemForm.quantity) || 1,
-                                                unit_price: parseFloat(itemForm.unit_price) || 0,
-                                                labor_hours: parseFloat(itemForm.labor_hours) || 0,
-                                                item_markup_pct: parseFloat(itemForm.item_markup_pct) || 0,
-                                                discount_value: parseFloat(itemForm.discount_value) || 0,
-                                                group_name: itemForm.group_name || undefined,
-                                            },
-                                            {
-                                                onSuccess: () => {
-                                                    resetAddItemPanel();
-                                                },
-                                            }
-                                        );
-                                    }}
-                                    className="space-y-3 rounded-xl border border-border bg-surface/60 p-4"
-                                >
-                                    <h3 className="font-heading text-sm font-semibold">Manual Line Item</h3>
-                                    <div className="grid gap-3 sm:grid-cols-2">
-                                        <input value={itemForm.item_name} onChange={(e) => setItemForm({ ...itemForm, item_name: e.target.value })} placeholder="Item name *" required className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                        <input value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} placeholder="Quantity" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                        <input value={itemForm.unit_price} onChange={(e) => setItemForm({ ...itemForm, unit_price: e.target.value })} placeholder="Unit price" type="number" step="0.01" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                        <input value={itemForm.labor_hours} onChange={(e) => setItemForm({ ...itemForm, labor_hours: e.target.value })} placeholder="Labor hours" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                        <input value={itemForm.item_markup_pct} onChange={(e) => setItemForm({ ...itemForm, item_markup_pct: e.target.value })} placeholder="Markup %" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                        <input value={itemForm.group_name} onChange={(e) => setItemForm({ ...itemForm, group_name: e.target.value })} placeholder="Group" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
-                                    </div>
-                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                                        <input
-                                            type="checkbox"
-                                            checked={closeCatalogAfterAdd}
-                                            onChange={(e) => setCloseCatalogAfterAdd(e.target.checked)}
-                                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
-                                        />
-                                        Close catalog after adding an item
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <button type="submit" disabled={addItemMutation.isPending} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary-hover disabled:opacity-50">
-                                            {addItemMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Plus size={14} />}
-                                            Add
-                                        </button>
-                                        <button type="button" onClick={resetAddItemPanel} className="rounded-xl bg-transparent px-3 py-2 text-sm text-muted-foreground shadow-none hover:text-foreground">Cancel</button>
-                                    </div>
-                                </form>
+                            <div className="mb-4 space-y-3 rounded-xl border border-primary/20 bg-background/50 p-4">
+                                <div className="flex items-center gap-2 rounded-xl border border-border bg-surface/60 p-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setAddItemMode('catalog')}
+                                        className={cn(
+                                            'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                                            addItemMode === 'catalog'
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        Catalog
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setAddItemMode('manual')}
+                                        className={cn(
+                                            'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                                            addItemMode === 'manual'
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        Manual
+                                    </button>
+                                </div>
 
-                                <div className="rounded-xl border border-border bg-surface/60 p-4">
+                                {addItemMode === 'manual' ? (
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            addItemMutation.mutate(
+                                                {
+                                                    item_name: itemForm.item_name,
+                                                    quantity: parseFloat(itemForm.quantity) || 1,
+                                                    unit_price: parseFloat(itemForm.unit_price) || 0,
+                                                    labor_hours: parseFloat(itemForm.labor_hours) || 0,
+                                                    item_markup_pct: parseFloat(itemForm.item_markup_pct) || 0,
+                                                    discount_value: parseFloat(itemForm.discount_value) || 0,
+                                                    group_name: itemForm.group_name || undefined,
+                                                },
+                                                {
+                                                    onSuccess: () => {
+                                                        resetAddItemPanel();
+                                                    },
+                                                }
+                                            );
+                                        }}
+                                        className="space-y-3 rounded-xl border border-border bg-surface/60 p-4"
+                                    >
+                                        <h3 className="font-heading text-sm font-semibold">Manual Line Item</h3>
+                                        <div className="grid gap-3 sm:grid-cols-2">
+                                            <input value={itemForm.item_name} onChange={(e) => setItemForm({ ...itemForm, item_name: e.target.value })} placeholder="Item name *" required className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                            <input value={itemForm.quantity} onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })} placeholder="Quantity" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                            <input value={itemForm.unit_price} onChange={(e) => setItemForm({ ...itemForm, unit_price: e.target.value })} placeholder="Unit price" type="number" step="0.01" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                            <input value={itemForm.labor_hours} onChange={(e) => setItemForm({ ...itemForm, labor_hours: e.target.value })} placeholder="Labor hours" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                            <input value={itemForm.item_markup_pct} onChange={(e) => setItemForm({ ...itemForm, item_markup_pct: e.target.value })} placeholder="Markup %" type="number" step="any" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                            <input value={itemForm.group_name} onChange={(e) => setItemForm({ ...itemForm, group_name: e.target.value })} placeholder="Group" className="w-full rounded-xl border border-input-border bg-input px-3 py-2.5 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button type="submit" disabled={addItemMutation.isPending} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary-hover disabled:opacity-50">
+                                                {addItemMutation.isPending ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" /> : <Plus size={14} />}
+                                                Add
+                                            </button>
+                                            <button type="button" onClick={resetAddItemPanel} className="rounded-xl bg-transparent px-3 py-2 text-sm text-muted-foreground shadow-none hover:text-foreground">Cancel</button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <div className="rounded-xl border border-border bg-surface/60 p-4">
                                     <h3 className="mb-3 flex items-center gap-2 font-heading text-sm font-semibold">
                                         <Package size={15} />
                                         Catalog Picker
@@ -480,7 +502,19 @@ export function EstimateDetailPage() {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                    </div>
+                                )}
+                                {addItemMode === 'catalog' && (
+                                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <input
+                                            type="checkbox"
+                                            checked={closeCatalogAfterAdd}
+                                            onChange={(e) => setCloseCatalogAfterAdd(e.target.checked)}
+                                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+                                        />
+                                        Close catalog after adding an item
+                                    </label>
+                                )}
                             </div>
                         )}
 

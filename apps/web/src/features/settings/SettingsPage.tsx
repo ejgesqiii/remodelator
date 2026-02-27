@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Settings, Save, AlertCircle } from 'lucide-react';
+import { Settings, Save, AlertCircle, Moon, Sun } from 'lucide-react';
 import * as profileApi from '@/api/profile';
+import { getStoredTheme, setTheme, type AppTheme } from '@/lib/theme';
 import { toast } from 'sonner';
 import { BackupSection } from './BackupSection';
 
@@ -20,6 +22,7 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function SettingsPage() {
     const queryClient = useQueryClient();
+    const [theme, setThemeState] = useState<AppTheme>(() => getStoredTheme());
 
     const { data: profile, isLoading } = useQuery({
         queryKey: ['profile'],
@@ -56,6 +59,12 @@ export function SettingsPage() {
         updateMutation.mutate(data);
     };
 
+    const handleThemeToggle = () => {
+        const nextTheme: AppTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(nextTheme);
+        setThemeState(nextTheme);
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-6">
@@ -70,6 +79,26 @@ export function SettingsPage() {
             <PageHeader title="Settings" description="Manage your profile and defaults" icon={Settings} />
 
             <div className="max-w-2xl">
+                <div className="mb-6 rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur-sm">
+                    <h2 className="mb-2 font-heading text-base font-semibold">Appearance</h2>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                        Light mode is the default. Switch to dark mode anytime.
+                    </p>
+                    <div className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-4 py-3">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                            {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                            <span>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleThemeToggle}
+                            className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-md hover:bg-primary-hover"
+                        >
+                            {theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+                        </button>
+                    </div>
+                </div>
+
                 <div className="rounded-2xl border border-border bg-surface/80 p-6 backdrop-blur-sm">
                     <h2 className="mb-4 font-heading text-base font-semibold">Profile & Defaults</h2>
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

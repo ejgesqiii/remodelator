@@ -1,8 +1,9 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { queryClient } from '@/lib/queryClient';
+import { getStoredTheme } from '@/lib/theme';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { AuthGuard } from '@/features/auth/AuthGuard';
 import { AdminGuard } from '@/features/auth/AdminGuard';
@@ -37,6 +38,19 @@ function RouteFallback() {
 }
 
 export function App() {
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => getStoredTheme());
+
+    useEffect(() => {
+        const listener = (event: Event) => {
+            const customEvent = event as CustomEvent<'light' | 'dark'>;
+            if (customEvent.detail === 'light' || customEvent.detail === 'dark') {
+                setTheme(customEvent.detail);
+            }
+        };
+        window.addEventListener('remodelator-theme-change', listener);
+        return () => window.removeEventListener('remodelator-theme-change', listener);
+    }, []);
+
     return (
         <QueryClientProvider client={queryClient}>
             <ErrorBoundary>
@@ -82,14 +96,7 @@ export function App() {
 
             <Toaster
                 position="bottom-right"
-                theme="dark"
-                toastOptions={{
-                    style: {
-                        background: 'hsl(224 18% 13%)',
-                        border: '1px solid hsl(224 15% 20%)',
-                        color: 'hsl(210 40% 98%)',
-                    },
-                }}
+                theme={theme}
             />
         </QueryClientProvider>
     );
