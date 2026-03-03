@@ -12,6 +12,7 @@ Requires-Dist: sqlalchemy<3.0,>=2.0
 Requires-Dist: pydantic<3.0,>=2.7
 Requires-Dist: httpx<1.0,>=0.27
 Requires-Dist: reportlab<5.0,>=4.2
+Requires-Dist: stripe<11.0,>=10.12
 Provides-Extra: dev
 Requires-Dist: pytest<9.0,>=8.0; extra == "dev"
 Requires-Dist: ruff<1.0,>=0.12; extra == "dev"
@@ -19,6 +20,18 @@ Requires-Dist: ruff<1.0,>=0.12; extra == "dev"
 # Remodelator vNext
 
 API-first rebuild of Remodelator focused on a full local functional demo first, then production hardening.
+
+## Verified Status (February 25, 2026)
+
+- backend regression suite is green (`pytest -q`).
+- Stripe-focused regression suites are green: `tests/test_billing_runtime.py`, `tests/test_api_flow.py`, `tests/test_cli_flow.py`
+- frontend type/build gate is green: `cd apps/web && npm run build`
+- Stripe sandbox hardening now includes:
+  - idempotent SQLite schema upgrades for new Stripe columns/indexes
+  - Stripe command compatibility across API/CLI/runtime paths
+  - webhook persistence path for subscription/refund/cancel flows
+  - per-user billing idempotency storage (bounded key format + backward-compatible lookup)
+  - normalized billing money serialization (`.2f`) for stable API/CLI contracts
 
 ## Product Direction
 
@@ -47,7 +60,7 @@ UI quality standard:
 Backend quality standard:
 - deterministic Decimal pricing logic in domain layer,
 - API-first contracts with typed frontend integration,
-- simulation-first billing adapter plus OpenRouter-required LLM with fail-loud behavior,
+- provider-driven billing runtime (`simulation` and `stripe`) plus OpenRouter-required LLM with fail-loud behavior,
 - structured request tracing (`X-Request-ID`) and config-driven API rate limiting.
 
 ## Repository Map
@@ -69,19 +82,19 @@ Project support:
 - `scripts/bootstrap_local.sh`: one-command local dependency bootstrap
 - `scripts/README.md`: canonical script index and quickstart command map
 - `ARCHITECTURE.md`: exhaustive technical architecture and API/UI reference
-- `UI_REFACTOR_PLAN.md`: high-level UX rebuild blueprint and page/user-flow targets
 - `docs/README.md`: documentation index and maintenance commands
 - `docs/TECH_DECISIONS.md`: explicit architecture/auth/integration decision records
 - `docs/API_REFERENCE.md`: maintained request/response and integration notes
 - `docs/API_ENDPOINTS_GENERATED.md`: generated source-of-truth endpoint list
-- `docs/UI_UX_INTERACTIONS.md`: panel-level UX flows and demo script
-- `docs/BLOCKERS_AND_ROADMAP.md`: blocker matrix and roadmap tracker
-- `docs/NON_BLOCKER_COMPLETION.md`: objective non-blocker completion scorecard
+- `docs/LAUNCH_EVIDENCE_CHECKLIST.md`: launch-operability verification checklist
+- `archive/docs/UI_UX_INTERACTIONS.md`: historical panel-level UX flow notes
+- `archive/docs/BLOCKERS_AND_ROADMAP.md`: historical blocker matrix snapshot
+- `archive/docs/NON_BLOCKER_COMPLETION.md`: historical completion scorecard
 - `ACTION_PLAN.md`: exhaustive phased roadmap
-- `CLIENT_UNBLOCKER_LETTER.md`: non-technical client unblocker letter template
 
 Archive artifacts (non-authoritative, historical only):
-- `notes/*` is retained for background context and does not define current build scope/spec.
+- `_notes_/*` is retained for background context and does not define current build scope/spec.
+- superseded planning/handover docs are retained under `archive/docs/*`
 
 ## Current Functional Coverage
 
@@ -91,20 +104,22 @@ Backend/CLI/API currently supports:
 - estimate quick-start from catalog room (`/estimates/{estimate_id}/quickstart`)
 - line-item operations: add/edit/remove/reorder/group
 - deterministic Decimal-based recalculation
-- catalog tree/search/upsert/import and seed data
+- catalog tree/search (user-facing) plus admin-only upsert/import and seed data
 - template save/apply
 - proposal text render and PDF generation
 - billing simulation and ledger
 - billing idempotency replay via key
 - Stripe-like billing lifecycle simulation (`payment_method_attached`, `checkout_completed`, `usage_charge`, `invoice_*`, `subscription_canceled`)
 - billing lifecycle transition validation to prevent invalid event ordering
-- provider-driven billing runtime (simulation provider active; stripe provider fail-loud until live adapter enablement)
+- live Stripe integration via `StripeBillingAdapter` and `StripeService`
+- production billing webhook listener with signature verification
+- provider-driven billing runtime (simulation or stripe provider active)
 - OpenRouter-backed LLM pricing suggestions (no local fallback path)
 - LLM provider status endpoint (`/pricing/llm/status`)
 - audit/activity reporting
 - user backup export/restore APIs
 - admin summary/users/activity/billing ledger
-- admin demo reset endpoint and CLI command
+- admin demo reset endpoint and CLI command (UI requires explicit `x-admin-key` entry for destructive actions)
 - migration dry-run SQL analyzer with row/column validation and JSON report output
 - snapshot reconciliation diff tooling for migration verification
 - secure password hashing (PBKDF2) with automatic legacy SHA-256 hash upgrade on successful login
@@ -120,8 +135,8 @@ Web currently supports:
 - estimate create/select/detail update (customer fields, markup, tax)
 - estimate quick-start from room category (Bathroom/Kitchen/etc) to seed starter items
 - line-item add/edit/remove/reorder/group with advanced pricing fields
-- catalog search + add-to-estimate
-- catalog upsert/import (JSON) from web
+- estimate add-item panel with inline catalog picker (category tree + search + one-click add)
+- catalog management (upsert/import JSON) from web for admin-role sessions only
 - estimate actions: recalc/status/duplicate/version/unlock
 - template save/apply/list
 - proposal render
@@ -135,6 +150,7 @@ Web currently supports:
 - structured LLM suggestion cards (price/mode/provider/model/confidence/rationale) in UI
 - global dependency blocker banners for LLM readiness and Stripe live-billing readiness
 - admin summary/users/activity/billing/demo reset controls
+- admin audit prune supports both preview (`dry_run`) and execute from UI
 - full Playwright golden-path demo scenario (register -> estimate workflow -> template -> billing replay -> admin reset)
 
 ## Quickstart (Backend)
@@ -168,10 +184,14 @@ python3 -m pip install -r requirements.txt
 remodelator db migrate
 remodelator db seed
 ```
+Notes:
+- API startup now runs a safe schema init/backfill automatically for SQLite local DBs.
+- Keep `remodelator db migrate` in CI/automation to make schema intent explicit.
 
 3. Run tests:
 ```bash
 python3 scripts/generate_api_endpoints_doc.py --check
+python3 scripts/check_markdown_links.py --check --include-archive
 pytest -q
 ```
 
@@ -179,7 +199,7 @@ Or run the full local quality gate:
 ```bash
 ./scripts/quality_gate.sh
 ```
-GitHub CI (`.github/workflows/ci.yml`) runs this same command to keep local and CI gates aligned.
+Use this same command in CI to keep local and pipeline gates aligned.
 Run dead/unused-code checks directly:
 ```bash
 ./scripts/dead_code_check.sh
@@ -209,11 +229,24 @@ REMODELATOR_CI_SQLITE_DATA_DIR=/tmp/remodelator_ci_data \
 REMODELATOR_CI_OUTPUT_DIR=/tmp/remodelator_ci_outputs \
 ./scripts/ci_sqlite_probes.sh
 ```
+Run a live Stripe sandbox probe and capture sanitized raw API responses:
+```bash
+python3 scripts/stripe_sandbox_probe.py --output data/stripe_probe/latest.json
+```
+Run a full signed Stripe webhook golden path against a running API:
+```bash
+python3 scripts/stripe_webhook_golden_path.py --api-base-url http://127.0.0.1:8000 --output data/stripe_webhook_golden_path/latest.json
+```
+Run the consolidated Stripe release gate:
+```bash
+./scripts/stripe_release_gate.sh --env-file .env --api-port 8010 --output data/stripe_release_gate/latest.json
+```
 
 4. Start API:
 ```bash
 ./scripts/run_api.sh
 ```
+On startup, the API now ensures local SQLite schema compatibility before serving requests.
 
 API docs and health:
 - `http://127.0.0.1:8000/docs`
@@ -261,6 +294,7 @@ export REMODELATOR_API_RATE_LIMIT_ENABLED='true'
 export REMODELATOR_API_RATE_LIMIT_WINDOW_SECONDS='60'
 export REMODELATOR_API_RATE_LIMIT_PUBLIC_MAX='120'
 export REMODELATOR_API_RATE_LIMIT_AUTHENTICATED_MAX='240'
+export REMODELATOR_API_INCLUDE_TRACEBACK='false'
 export REMODELATOR_AUDIT_RETENTION_DAYS='365'
 export REMODELATOR_SQLITE_JOURNAL_MODE='WAL'
 export REMODELATOR_SQLITE_SYNCHRONOUS='NORMAL'
@@ -270,6 +304,10 @@ export REMODELATOR_BILLING_ANNUAL_SUBSCRIPTION_AMOUNT='1200.00'
 export REMODELATOR_BILLING_REALTIME_PRICING_AMOUNT='10.00'
 export REMODELATOR_BILLING_CURRENCY='USD'
 export REMODELATOR_BILLING_PROVIDER='simulation'
+export STRIPE_SECRET_KEY='sk_test_...'
+export STRIPE_WEBHOOK_SECRET='whsec_...'
+export STRIPE_API_VERSION='2026-01-28.clover'
+export STRIPE_PAYMENT_RETURN_URL='https://app.example.com/billing/return'
 ```
 
 Request tracing + throttling behavior:
@@ -277,6 +315,7 @@ Request tracing + throttling behavior:
 - API rate limiting is enforced for non-static API paths when enabled,
 - rate-limited responses return `429` with `Retry-After`, `X-RateLimit-Limit`, and `X-RateLimit-Remaining`.
 - non-2xx responses include a consistent error envelope: `detail` + `error{code,message,status}` + `request_id`.
+- unhandled `500` responses include full traceback details in local/dev by default; production hides tracebacks unless `REMODELATOR_API_INCLUDE_TRACEBACK=true`.
 
 ## Quickstart (React Web)
 
@@ -303,6 +342,7 @@ Notes:
 - web dev server proxies `/api/*` to backend `127.0.0.1:8000`.
 - admin key default is `local-admin-key` unless overridden.
 - `scripts/run_web.sh` installs dependencies with `npm ci` only when `apps/web/node_modules` is missing.
+- `scripts/run_web.sh` enforces port `5173` (`--strictPort`) to avoid CORS drift.
 
 ## Admin and Demo Reset
 
@@ -310,6 +350,7 @@ Admin access model:
 - Admin read endpoints (`/admin/summary`, `/admin/users`, `/admin/activity`, `/admin/billing-ledger`) accept either:
   - valid `x-admin-key`, or
   - admin-role `x-session-token` (email in `REMODELATOR_ADMIN_USER_EMAILS`).
+- Catalog mutation endpoints (`/catalog/upsert`, `/catalog/import`) require an admin-role `x-session-token`.
 - Demo reset (`/admin/demo-reset`) requires valid `x-admin-key`.
 
 Local default key:
@@ -364,6 +405,8 @@ Billing simulation behavior:
 - `/billing/subscription-state`: current subscription lifecycle summary (active/past_due/canceled + last event).
 - `/billing/simulate-estimate-charge`: defaults to configured real-time pricing amount if amount omitted.
 - `/billing/simulate-subscription`: defaults to configured annual subscription amount if amount omitted.
+- `/billing/simulate-refund`: defaults to configured real-time pricing amount if amount omitted.
+- live Stripe usage charges include a `return_url` for PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` with CORS/local fallback).
 - `/billing/simulate-event`: Stripe-like lifecycle/webhook simulation endpoint (`payment_method_attached`, `checkout_completed`, `usage_charge`, `invoice_paid`, `invoice_payment_failed`, `subscription_canceled`).
 - `/admin/audit-prune`: deletes audit rows older than configured retention window (`REMODELATOR_AUDIT_RETENTION_DAYS`, optional per-call override, supports `dry_run=true` preview mode).
 
@@ -387,8 +430,7 @@ What remains externally provided by client for production-final signoff:
 6. written confirmation on legacy credential rotation status (if legacy environments still active).
 
 Authoritative tracker for these inputs:
-- `CLIENT_UNBLOCKER_LETTER.md`
-- `docs/BLOCKERS_AND_ROADMAP.md`
+- `ACTION_PLAN.md` sections "Open Questions (Real External Blockers Only)" and "Client Input Package (Exact Needed Artifacts)"
 
 ## Security Notes
 

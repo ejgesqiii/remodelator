@@ -352,6 +352,11 @@ def profile_show(as_json: bool = typer.Option(False, "--json", help="Output JSON
 def profile_update(
     name: str | None = typer.Option(None, "--name"),
     labor_rate: float | None = typer.Option(None, "--labor-rate"),
+    remodeler_labor_rate: float | None = typer.Option(None, "--remodeler-labor-rate"),
+    plumber_labor_rate: float | None = typer.Option(None, "--plumber-labor-rate"),
+    tinner_labor_rate: float | None = typer.Option(None, "--tinner-labor-rate"),
+    electrician_labor_rate: float | None = typer.Option(None, "--electrician-labor-rate"),
+    designer_labor_rate: float | None = typer.Option(None, "--designer-labor-rate"),
     item_markup_pct: float | None = typer.Option(None, "--item-markup-pct"),
     estimate_markup_pct: float | None = typer.Option(None, "--estimate-markup-pct"),
     tax_rate_pct: float | None = typer.Option(None, "--tax-rate-pct"),
@@ -365,6 +370,11 @@ def profile_update(
                 user_id=user_id,
                 full_name=name,
                 labor_rate=_to_decimal(labor_rate),
+                remodeler_labor_rate=_to_decimal(remodeler_labor_rate),
+                plumber_labor_rate=_to_decimal(plumber_labor_rate),
+                tinner_labor_rate=_to_decimal(tinner_labor_rate),
+                electrician_labor_rate=_to_decimal(electrician_labor_rate),
+                designer_labor_rate=_to_decimal(designer_labor_rate),
                 item_markup_pct=_to_decimal(item_markup_pct),
                 estimate_markup_pct=_to_decimal(estimate_markup_pct),
                 tax_rate_pct=_to_decimal(tax_rate_pct),
@@ -431,6 +441,11 @@ def estimate_update(
     job_address: str | None = typer.Option(None, "--job-address"),
     estimate_markup_pct: float | None = typer.Option(None, "--estimate-markup-pct"),
     tax_rate_pct: float | None = typer.Option(None, "--tax-rate-pct"),
+    remodeler_labor_rate: float | None = typer.Option(None, "--remodeler-labor-rate"),
+    plumber_labor_rate: float | None = typer.Option(None, "--plumber-labor-rate"),
+    tinner_labor_rate: float | None = typer.Option(None, "--tinner-labor-rate"),
+    electrician_labor_rate: float | None = typer.Option(None, "--electrician-labor-rate"),
+    designer_labor_rate: float | None = typer.Option(None, "--designer-labor-rate"),
     as_json: bool = typer.Option(False, "--json", help="Output JSON"),
 ) -> None:
     def action() -> dict[str, Any]:
@@ -447,6 +462,11 @@ def estimate_update(
                 job_address,
                 _to_decimal(estimate_markup_pct),
                 _to_decimal(tax_rate_pct),
+                _to_decimal(remodeler_labor_rate),
+                _to_decimal(plumber_labor_rate),
+                _to_decimal(tinner_labor_rate),
+                _to_decimal(electrician_labor_rate),
+                _to_decimal(designer_labor_rate),
             )
 
     _run(action, as_json)
@@ -549,6 +569,12 @@ def line_item_add(
     unit_price: float = typer.Option(0.0, "--unit-price"),
     item_markup_pct: float | None = typer.Option(None, "--item-markup-pct"),
     labor_hours: float = typer.Option(0.0, "--labor-hours"),
+    labor_trade: str = typer.Option("remodeler", "--labor-trade"),
+    remodeler_labor_hours: float | None = typer.Option(None, "--remodeler-labor-hours"),
+    plumber_labor_hours: float | None = typer.Option(None, "--plumber-labor-hours"),
+    tinner_labor_hours: float | None = typer.Option(None, "--tinner-labor-hours"),
+    electrician_labor_hours: float | None = typer.Option(None, "--electrician-labor-hours"),
+    designer_labor_hours: float | None = typer.Option(None, "--designer-labor-hours"),
     discount_value: float = typer.Option(0.0, "--discount-value"),
     discount_is_percent: bool = typer.Option(False, "--discount-is-percent"),
     group_name: str = typer.Option("General", "--group"),
@@ -569,6 +595,12 @@ def line_item_add(
                 _to_decimal(discount_value) or Decimal("0"),
                 discount_is_percent,
                 group_name,
+                labor_trade,
+                _to_decimal(remodeler_labor_hours),
+                _to_decimal(plumber_labor_hours),
+                _to_decimal(tinner_labor_hours),
+                _to_decimal(electrician_labor_hours),
+                _to_decimal(designer_labor_hours),
             )
 
     _run(action, as_json)
@@ -582,6 +614,12 @@ def line_item_edit(
     unit_price: float | None = typer.Option(None, "--unit-price"),
     item_markup_pct: float | None = typer.Option(None, "--item-markup-pct"),
     labor_hours: float | None = typer.Option(None, "--labor-hours"),
+    labor_trade: str | None = typer.Option(None, "--labor-trade"),
+    remodeler_labor_hours: float | None = typer.Option(None, "--remodeler-labor-hours"),
+    plumber_labor_hours: float | None = typer.Option(None, "--plumber-labor-hours"),
+    tinner_labor_hours: float | None = typer.Option(None, "--tinner-labor-hours"),
+    electrician_labor_hours: float | None = typer.Option(None, "--electrician-labor-hours"),
+    designer_labor_hours: float | None = typer.Option(None, "--designer-labor-hours"),
     discount_value: float | None = typer.Option(None, "--discount-value"),
     discount_is_percent: bool | None = typer.Option(None, "--discount-is-percent"),
     group_name: str | None = typer.Option(None, "--group"),
@@ -602,6 +640,12 @@ def line_item_edit(
                 _to_decimal(discount_value),
                 discount_is_percent,
                 group_name,
+                labor_trade,
+                _to_decimal(remodeler_labor_hours),
+                _to_decimal(plumber_labor_hours),
+                _to_decimal(tinner_labor_hours),
+                _to_decimal(electrician_labor_hours),
+                _to_decimal(designer_labor_hours),
             )
 
     _run(action, as_json)
@@ -678,6 +722,7 @@ def catalog_item_upsert(
     name: str = typer.Option(..., "--name"),
     unit_price: float = typer.Option(..., "--unit-price"),
     labor_hours: float = typer.Option(0.0, "--labor-hours"),
+    labor_trade: str = typer.Option("remodeler", "--labor-trade"),
     description: str = typer.Option("", "--description"),
     as_json: bool = typer.Option(False, "--json", help="Output JSON"),
 ) -> None:
@@ -690,6 +735,7 @@ def catalog_item_upsert(
                 name,
                 _to_decimal(unit_price) or Decimal("0"),
                 _to_decimal(labor_hours) or Decimal("0"),
+                labor_trade,
                 description,
             )
 

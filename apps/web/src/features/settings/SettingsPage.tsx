@@ -13,6 +13,11 @@ import { BackupSection } from './BackupSection';
 const profileSchema = z.object({
     full_name: z.string().min(1, 'Name is required'),
     labor_rate: z.number().min(0).optional(),
+    remodeler_labor_rate: z.number().min(0).optional(),
+    plumber_labor_rate: z.number().min(0).optional(),
+    tinner_labor_rate: z.number().min(0).optional(),
+    electrician_labor_rate: z.number().min(0).optional(),
+    designer_labor_rate: z.number().min(0).optional(),
     item_markup_pct: z.number().min(0).optional(),
     estimate_markup_pct: z.number().min(0).optional(),
     tax_rate_pct: z.number().min(0).optional(),
@@ -48,6 +53,11 @@ export function SettingsPage() {
             ? {
                 full_name: profile.full_name,
                 labor_rate: parseFloat(profile.labor_rate) || 0,
+                remodeler_labor_rate: parseFloat(profile.remodeler_labor_rate) || 0,
+                plumber_labor_rate: parseFloat(profile.plumber_labor_rate) || 0,
+                tinner_labor_rate: parseFloat(profile.tinner_labor_rate) || 0,
+                electrician_labor_rate: parseFloat(profile.electrician_labor_rate) || 0,
+                designer_labor_rate: parseFloat(profile.designer_labor_rate) || 0,
                 item_markup_pct: parseFloat(profile.default_item_markup_pct) || 0,
                 estimate_markup_pct: parseFloat(profile.default_estimate_markup_pct) || 0,
                 tax_rate_pct: parseFloat(profile.tax_rate_pct) || 0,
@@ -115,6 +125,26 @@ export function SettingsPage() {
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Default Labor Rate ($/hr)</label>
                                 <input type="number" step="0.01" {...register('labor_rate', { valueAsNumber: true })} className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Remodeler Rate ($/hr)</label>
+                                <input type="number" step="0.01" {...register('remodeler_labor_rate', { valueAsNumber: true })} className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Plumber Rate ($/hr)</label>
+                                <input type="number" step="0.01" {...register('plumber_labor_rate', { valueAsNumber: true })} className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Tinner Rate ($/hr)</label>
+                                <input type="number" step="0.01" {...register('tinner_labor_rate', { valueAsNumber: true })} className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Electrician Rate ($/hr)</label>
+                                <input type="number" step="0.01" {...register('electrician_labor_rate', { valueAsNumber: true })} className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Designer Rate ($/hr)</label>
+                                <input type="number" step="0.01" {...register('designer_labor_rate', { valueAsNumber: true })} className="w-full rounded-xl border border-input-border bg-input px-4 py-3 text-sm placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Default Item Markup %</label>

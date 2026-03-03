@@ -50,6 +50,7 @@ def catalog_upsert(payload: CatalogUpsertRequest, user_id: str = Depends(require
                 name=payload.name,
                 unit_price=payload.unit_price,
                 labor_hours=payload.labor_hours,
+                labor_trade=payload.labor_trade,
                 description=payload.description,
                 node_id=payload.node_id,
             )

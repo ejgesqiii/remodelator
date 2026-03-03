@@ -7,6 +7,7 @@ import {
     Package, Search, Plus, ChevronRight, ChevronDown, Pencil, X, Save,
 } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { formatDecimal } from '@/lib/formatters';
 import { useDebounce } from '@/hooks/useDebounce';
 import * as catalogApi from '@/api/catalog';
 import { useAuthStore } from '@/stores/authStore';
@@ -23,7 +24,7 @@ export function CatalogPage() {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [showUpsert, setShowUpsert] = useState(false);
     const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
-    const [upsertForm, setUpsertForm] = useState({ name: '', unit_price: '', labor_hours: '', category: '' });
+    const [upsertForm, setUpsertForm] = useState({ name: '', unit_price: '', labor_hours: '', labor_trade: 'remodeler', category: '' });
 
     const { data: tree = [], isLoading } = useQuery({
         queryKey: ['catalog-tree'],
@@ -37,7 +38,7 @@ export function CatalogPage() {
     });
 
     const upsertMutation = useMutation({
-        mutationFn: (data: { name: string; unit_price: number; labor_hours: number; category?: string }) =>
+        mutationFn: (data: { name: string; unit_price: number; labor_hours: number; labor_trade: string; category?: string }) =>
             catalogApi.upsertCatalogItem(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['catalog-tree'] });
@@ -51,12 +52,18 @@ export function CatalogPage() {
     const resetUpsert = () => {
         setShowUpsert(false);
         setEditingItem(null);
-        setUpsertForm({ name: '', unit_price: '', labor_hours: '', category: '' });
+        setUpsertForm({ name: '', unit_price: '', labor_hours: '', labor_trade: 'remodeler', category: '' });
     };
 
     const openEdit = (item: CatalogItem) => {
         setEditingItem(item);
-        setUpsertForm({ name: item.name, unit_price: item.unit_price, labor_hours: item.labor_hours, category: '' });
+        setUpsertForm({
+            name: item.name,
+            unit_price: item.unit_price,
+            labor_hours: item.labor_hours,
+            labor_trade: item.labor_trade || 'remodeler',
+            category: '',
+        });
         setShowUpsert(true);
     };
 
@@ -127,6 +134,7 @@ export function CatalogPage() {
                                     name: upsertForm.name,
                                     unit_price: parseFloat(upsertForm.unit_price) || 0,
                                     labor_hours: parseFloat(upsertForm.labor_hours) || 0,
+                                    labor_trade: upsertForm.labor_trade,
                                     category: upsertForm.category || undefined,
                                 });
                             }}
@@ -144,6 +152,16 @@ export function CatalogPage() {
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-medium text-muted-foreground">Labor Hours</label>
                                     <input type="number" step="0.25" value={upsertForm.labor_hours} onChange={(e) => setUpsertForm({ ...upsertForm, labor_hours: e.target.value })} className={inputClass} />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-medium text-muted-foreground">Labor Trade</label>
+                                    <select value={upsertForm.labor_trade} onChange={(e) => setUpsertForm({ ...upsertForm, labor_trade: e.target.value })} className={inputClass}>
+                                        <option value="remodeler">Remodeler</option>
+                                        <option value="plumber">Plumber</option>
+                                        <option value="tinner">Tinner</option>
+                                        <option value="electrician">Electrician</option>
+                                        <option value="designer">Designer</option>
+                                    </select>
                                 </div>
                             </div>
                             <div className="space-y-1.5">
@@ -231,7 +249,7 @@ export function CatalogPage() {
                                     <div className="min-w-0">
                                         <p className="text-sm font-medium">{item.name}</p>
                                         {'labor_hours' in item && (
-                                            <p className="text-xs text-muted-foreground">{item.labor_hours}h labor</p>
+                                            <p className="text-xs text-muted-foreground">{formatDecimal(item.labor_hours)}h {(item.labor_trade || 'remodeler')} labor</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-3">

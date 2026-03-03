@@ -29,6 +29,11 @@ class ProfileResponse(BaseModel):
     role: str
     full_name: str
     labor_rate: str
+    remodeler_labor_rate: str
+    plumber_labor_rate: str
+    tinner_labor_rate: str
+    electrician_labor_rate: str
+    designer_labor_rate: str
     default_item_markup_pct: str
     default_estimate_markup_pct: str
     tax_rate_pct: str
@@ -128,6 +133,11 @@ class LoginRequest(StrictRequestModel):
 class ProfileUpdateRequest(StrictRequestModel):
     full_name: str | None = None
     labor_rate: Decimal | None = None
+    remodeler_labor_rate: Decimal | None = None
+    plumber_labor_rate: Decimal | None = None
+    tinner_labor_rate: Decimal | None = None
+    electrician_labor_rate: Decimal | None = None
+    designer_labor_rate: Decimal | None = None
     item_markup_pct: Decimal | None = None
     estimate_markup_pct: Decimal | None = None
     tax_rate_pct: Decimal | None = None
@@ -149,6 +159,11 @@ class EstimateUpdateRequest(StrictRequestModel):
     job_address: str | None = None
     estimate_markup_pct: Decimal | None = None
     tax_rate_pct: Decimal | None = None
+    remodeler_labor_rate: Decimal | None = None
+    plumber_labor_rate: Decimal | None = None
+    tinner_labor_rate: Decimal | None = None
+    electrician_labor_rate: Decimal | None = None
+    designer_labor_rate: Decimal | None = None
 
 
 class EstimateQuickstartRequest(StrictRequestModel):
@@ -162,20 +177,32 @@ class StatusRequest(StrictRequestModel):
 
 class LineItemCreateRequest(StrictRequestModel):
     item_name: str
-    quantity: Decimal = Decimal("1")
+    quantity: int = 1
     unit_price: Decimal = Decimal("0")
     item_markup_pct: Decimal | None = None
     labor_hours: Decimal = Decimal("0")
+    labor_trade: str = "remodeler"
+    remodeler_labor_hours: Decimal | None = None
+    plumber_labor_hours: Decimal | None = None
+    tinner_labor_hours: Decimal | None = None
+    electrician_labor_hours: Decimal | None = None
+    designer_labor_hours: Decimal | None = None
     discount_value: Decimal = Decimal("0")
     discount_is_percent: bool = False
     group_name: str = "General"
 
 
 class LineItemUpdateRequest(StrictRequestModel):
-    quantity: Decimal | None = None
+    quantity: int | None = None
     unit_price: Decimal | None = None
     item_markup_pct: Decimal | None = None
     labor_hours: Decimal | None = None
+    labor_trade: str | None = None
+    remodeler_labor_hours: Decimal | None = None
+    plumber_labor_hours: Decimal | None = None
+    tinner_labor_hours: Decimal | None = None
+    electrician_labor_hours: Decimal | None = None
+    designer_labor_hours: Decimal | None = None
     discount_value: Decimal | None = None
     discount_is_percent: bool | None = None
     group_name: str | None = None
@@ -195,6 +222,7 @@ class CatalogUpsertRequest(StrictRequestModel):
     name: str
     unit_price: Decimal = Decimal("0")
     labor_hours: Decimal = Decimal("0")
+    labor_trade: str = "remodeler"
     description: str = ""
     node_id: str | None = None
 

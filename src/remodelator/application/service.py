@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+from html import escape
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from uuid import uuid4
 
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
@@ -66,6 +71,155 @@ def _now_iso() -> str:
 
 def _format_money(value: Decimal) -> str:
     return f"{value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):.2f}"
+
+
+def _normalize_whole_quantity(quantity: Decimal) -> Decimal:
+    q = d(quantity)
+    if q % Decimal("1") != 0:
+        raise ValueError("Quantity must be a whole number.")
+    return q
+
+
+LABOR_TRADES = {"remodeler", "plumber", "tinner", "electrician", "designer"}
+
+
+def _normalize_labor_trade(labor_trade: str | None) -> str:
+    trade = (labor_trade or "remodeler").strip().lower()
+    if trade not in LABOR_TRADES:
+        raise ValueError(f"Unsupported labor trade `{trade}`.")
+    return trade
+
+
+def _normalize_labor_hours(value: Decimal | None, field_name: str) -> Decimal:
+    if value is None:
+        return Decimal("0")
+    normalized = d(value)
+    if normalized < Decimal("0"):
+        raise ValueError(f"{field_name} must be 0 or greater.")
+    return normalized
+
+
+def _positive_rate(value: Decimal | None) -> Decimal | None:
+    if value is None:
+        return None
+    normalized = d(value)
+    if normalized <= Decimal("0"):
+        return None
+    return normalized
+
+
+def _default_labor_rate_for_estimate(est: Estimate, user: User | None = None) -> Decimal:
+    estimate_default = _positive_rate(est.remodeler_labor_rate)
+    if estimate_default is not None:
+        return estimate_default
+    if user is not None:
+        user_trade_default = _positive_rate(getattr(user, "remodeler_labor_rate", None))
+        if user_trade_default is not None:
+            return user_trade_default
+        user_fallback = _positive_rate(getattr(user, "labor_rate", None))
+        if user_fallback is not None:
+            return user_fallback
+    return Decimal("0")
+
+
+def _user_trade_rate_or_default(user: User, trade: str) -> Decimal:
+    trade_rate = _positive_rate(getattr(user, f"{trade}_labor_rate", None))
+    if trade_rate is not None:
+        return trade_rate
+    fallback = _positive_rate(user.labor_rate)
+    if fallback is not None:
+        return fallback
+    return Decimal("0")
+
+
+def _estimate_labor_rate_by_trade(est: Estimate, labor_trade: str, default_rate: Decimal | None = None) -> Decimal:
+    selected: Decimal
+    if labor_trade == "plumber":
+        selected = d(est.plumber_labor_rate)
+    elif labor_trade == "tinner":
+        selected = d(est.tinner_labor_rate)
+    elif labor_trade == "electrician":
+        selected = d(est.electrician_labor_rate)
+    elif labor_trade == "designer":
+        selected = d(est.designer_labor_rate)
+    else:
+        selected = d(est.remodeler_labor_rate)
+
+    selected_positive = _positive_rate(selected)
+    if selected_positive is not None:
+        return selected_positive
+    if default_rate is not None:
+        default_positive = _positive_rate(default_rate)
+        if default_positive is not None:
+            return default_positive
+    fallback_estimate_default = _positive_rate(est.remodeler_labor_rate)
+    if fallback_estimate_default is not None:
+        return fallback_estimate_default
+    return Decimal("0")
+
+
+def _trade_hours_from_line(line: EstimateLineItem) -> dict[str, Decimal]:
+    hours = {
+        "remodeler": _normalize_labor_hours(getattr(line, "remodeler_labor_hours", Decimal("0")), "remodeler_labor_hours"),
+        "plumber": _normalize_labor_hours(getattr(line, "plumber_labor_hours", Decimal("0")), "plumber_labor_hours"),
+        "tinner": _normalize_labor_hours(getattr(line, "tinner_labor_hours", Decimal("0")), "tinner_labor_hours"),
+        "electrician": _normalize_labor_hours(getattr(line, "electrician_labor_hours", Decimal("0")), "electrician_labor_hours"),
+        "designer": _normalize_labor_hours(getattr(line, "designer_labor_hours", Decimal("0")), "designer_labor_hours"),
+    }
+    if sum(hours.values(), Decimal("0")) == Decimal("0"):
+        legacy_hours = _normalize_labor_hours(getattr(line, "labor_hours", Decimal("0")), "labor_hours")
+        if legacy_hours > Decimal("0"):
+            hours[_normalize_labor_trade(getattr(line, "labor_trade", "remodeler"))] = legacy_hours
+    return hours
+
+
+def _trade_hours_from_payload(
+    *,
+    labor_hours: Decimal | None,
+    labor_trade: str | None,
+    remodeler_labor_hours: Decimal | None,
+    plumber_labor_hours: Decimal | None,
+    tinner_labor_hours: Decimal | None,
+    electrician_labor_hours: Decimal | None,
+    designer_labor_hours: Decimal | None,
+) -> dict[str, Decimal]:
+    explicit_hours = {
+        "remodeler": remodeler_labor_hours,
+        "plumber": plumber_labor_hours,
+        "tinner": tinner_labor_hours,
+        "electrician": electrician_labor_hours,
+        "designer": designer_labor_hours,
+    }
+    if any(value is not None for value in explicit_hours.values()):
+        return {
+            trade: _normalize_labor_hours(value, f"{trade}_labor_hours")
+            for trade, value in explicit_hours.items()
+        }
+
+    target_trade = _normalize_labor_trade(labor_trade)
+    legacy_hours = _normalize_labor_hours(labor_hours, "labor_hours")
+    return {
+        "remodeler": legacy_hours if target_trade == "remodeler" else Decimal("0"),
+        "plumber": legacy_hours if target_trade == "plumber" else Decimal("0"),
+        "tinner": legacy_hours if target_trade == "tinner" else Decimal("0"),
+        "electrician": legacy_hours if target_trade == "electrician" else Decimal("0"),
+        "designer": legacy_hours if target_trade == "designer" else Decimal("0"),
+    }
+
+
+def _apply_trade_hours(line: EstimateLineItem, hours_by_trade: dict[str, Decimal]) -> None:
+    line.remodeler_labor_hours = _normalize_labor_hours(hours_by_trade.get("remodeler"), "remodeler_labor_hours")
+    line.plumber_labor_hours = _normalize_labor_hours(hours_by_trade.get("plumber"), "plumber_labor_hours")
+    line.tinner_labor_hours = _normalize_labor_hours(hours_by_trade.get("tinner"), "tinner_labor_hours")
+    line.electrician_labor_hours = _normalize_labor_hours(hours_by_trade.get("electrician"), "electrician_labor_hours")
+    line.designer_labor_hours = _normalize_labor_hours(hours_by_trade.get("designer"), "designer_labor_hours")
+    line.labor_hours = (
+        line.remodeler_labor_hours
+        + line.plumber_labor_hours
+        + line.tinner_labor_hours
+        + line.electrician_labor_hours
+        + line.designer_labor_hours
+    )
 
 
 def _resolve_output_path(output_path: Path | None, default_filename: str) -> Path:
@@ -188,6 +342,11 @@ def register_user(session: Session, email: str, password: str, full_name: str = 
         password_hash=_hash_password(password_clean),
         full_name=full_name,
         labor_rate=Decimal("75.00"),
+        remodeler_labor_rate=Decimal("75.00"),
+        plumber_labor_rate=Decimal("75.00"),
+        tinner_labor_rate=Decimal("75.00"),
+        electrician_labor_rate=Decimal("75.00"),
+        designer_labor_rate=Decimal("75.00"),
         default_item_markup_pct=Decimal("10.00"),
         default_estimate_markup_pct=Decimal("5.00"),
         tax_rate_pct=Decimal("8.25"),
@@ -228,6 +387,11 @@ def get_profile(session: Session, user_id: str) -> dict[str, object]:
         "role": role_for_email(user.email),
         "full_name": user.full_name,
         "labor_rate": str(user.labor_rate),
+        "remodeler_labor_rate": str(user.remodeler_labor_rate),
+        "plumber_labor_rate": str(user.plumber_labor_rate),
+        "tinner_labor_rate": str(user.tinner_labor_rate),
+        "electrician_labor_rate": str(user.electrician_labor_rate),
+        "designer_labor_rate": str(user.designer_labor_rate),
         "default_item_markup_pct": str(user.default_item_markup_pct),
         "default_estimate_markup_pct": str(user.default_estimate_markup_pct),
         "tax_rate_pct": str(user.tax_rate_pct),
@@ -239,6 +403,11 @@ def update_profile(
     user_id: str,
     full_name: str | None,
     labor_rate: Decimal | None,
+    remodeler_labor_rate: Decimal | None,
+    plumber_labor_rate: Decimal | None,
+    tinner_labor_rate: Decimal | None,
+    electrician_labor_rate: Decimal | None,
+    designer_labor_rate: Decimal | None,
     item_markup_pct: Decimal | None,
     estimate_markup_pct: Decimal | None,
     tax_rate_pct: Decimal | None,
@@ -249,6 +418,27 @@ def update_profile(
         user.full_name = full_name
     if labor_rate is not None:
         user.labor_rate = labor_rate
+        # Backward compatibility: older clients only update one labor rate.
+        if remodeler_labor_rate is None:
+            user.remodeler_labor_rate = labor_rate
+        if plumber_labor_rate is None:
+            user.plumber_labor_rate = labor_rate
+        if tinner_labor_rate is None:
+            user.tinner_labor_rate = labor_rate
+        if electrician_labor_rate is None:
+            user.electrician_labor_rate = labor_rate
+        if designer_labor_rate is None:
+            user.designer_labor_rate = labor_rate
+    if remodeler_labor_rate is not None:
+        user.remodeler_labor_rate = remodeler_labor_rate
+    if plumber_labor_rate is not None:
+        user.plumber_labor_rate = plumber_labor_rate
+    if tinner_labor_rate is not None:
+        user.tinner_labor_rate = tinner_labor_rate
+    if electrician_labor_rate is not None:
+        user.electrician_labor_rate = electrician_labor_rate
+    if designer_labor_rate is not None:
+        user.designer_labor_rate = designer_labor_rate
     if item_markup_pct is not None:
         user.default_item_markup_pct = item_markup_pct
     if estimate_markup_pct is not None:
@@ -281,6 +471,11 @@ def create_estimate(
         status="draft",
         estimate_markup_pct=user.default_estimate_markup_pct,
         tax_rate_pct=user.tax_rate_pct,
+        remodeler_labor_rate=_user_trade_rate_or_default(user, "remodeler"),
+        plumber_labor_rate=_user_trade_rate_or_default(user, "plumber"),
+        tinner_labor_rate=_user_trade_rate_or_default(user, "tinner"),
+        electrician_labor_rate=_user_trade_rate_or_default(user, "electrician"),
+        designer_labor_rate=_user_trade_rate_or_default(user, "designer"),
         subtotal=Decimal("0"),
         tax=Decimal("0"),
         total=Decimal("0"),
@@ -329,6 +524,8 @@ def quickstart_estimate_from_catalog(
         select(func.count()).select_from(EstimateLineItem).where(EstimateLineItem.estimate_id == estimate_id)
     ).scalar_one()
     for offset, item in enumerate(items):
+        item_trade = _normalize_labor_trade(getattr(item, "labor_trade", "remodeler"))
+        item_labor_hours = d(item.labor_hours)
         session.add(
             EstimateLineItem(
                 id=_uid(),
@@ -339,8 +536,14 @@ def quickstart_estimate_from_catalog(
                 quantity=Decimal("1"),
                 unit_price=d(item.unit_price),
                 item_markup_pct=d(user.default_item_markup_pct),
-                labor_hours=d(item.labor_hours),
-                labor_rate=d(user.labor_rate),
+                labor_hours=item_labor_hours,
+                remodeler_labor_hours=item_labor_hours if item_trade == "remodeler" else Decimal("0"),
+                plumber_labor_hours=item_labor_hours if item_trade == "plumber" else Decimal("0"),
+                tinner_labor_hours=item_labor_hours if item_trade == "tinner" else Decimal("0"),
+                electrician_labor_hours=item_labor_hours if item_trade == "electrician" else Decimal("0"),
+                designer_labor_hours=item_labor_hours if item_trade == "designer" else Decimal("0"),
+                labor_trade=item_trade,
+                labor_rate=_estimate_labor_rate_by_trade(est, item_trade),
                 discount_value=Decimal("0"),
                 discount_is_percent=False,
                 total_price=Decimal("0"),
@@ -387,8 +590,13 @@ def update_estimate(
     job_address: str | None,
     estimate_markup_pct: Decimal | None,
     tax_rate_pct: Decimal | None,
+    remodeler_labor_rate: Decimal | None,
+    plumber_labor_rate: Decimal | None,
+    tinner_labor_rate: Decimal | None,
+    electrician_labor_rate: Decimal | None,
+    designer_labor_rate: Decimal | None,
 ) -> dict[str, object]:
-    _require_user(session, user_id)
+    user = _require_user(session, user_id)
     est = session.get(Estimate, estimate_id)
     if not est or est.user_id != user_id:
         raise ValueError("Estimate not found.")
@@ -409,11 +617,50 @@ def update_estimate(
         est.estimate_markup_pct = estimate_markup_pct
     if tax_rate_pct is not None:
         est.tax_rate_pct = tax_rate_pct
+    if remodeler_labor_rate is not None:
+        est.remodeler_labor_rate = remodeler_labor_rate
+    if plumber_labor_rate is not None:
+        est.plumber_labor_rate = plumber_labor_rate
+    if tinner_labor_rate is not None:
+        est.tinner_labor_rate = tinner_labor_rate
+    if electrician_labor_rate is not None:
+        est.electrician_labor_rate = electrician_labor_rate
+    if designer_labor_rate is not None:
+        est.designer_labor_rate = designer_labor_rate
+
+    default_labor_rate = _default_labor_rate_for_estimate(est, user)
+    if _positive_rate(est.remodeler_labor_rate) is None:
+        est.remodeler_labor_rate = default_labor_rate
+    if _positive_rate(est.plumber_labor_rate) is None:
+        est.plumber_labor_rate = default_labor_rate
+    if _positive_rate(est.tinner_labor_rate) is None:
+        est.tinner_labor_rate = default_labor_rate
+    if _positive_rate(est.electrician_labor_rate) is None:
+        est.electrician_labor_rate = default_labor_rate
+    if _positive_rate(est.designer_labor_rate) is None:
+        est.designer_labor_rate = default_labor_rate
+    for li in session.execute(_line_select(estimate_id)).scalars().all():
+        li.labor_rate = _estimate_labor_rate_by_trade(
+            est,
+            _normalize_labor_trade(getattr(li, "labor_trade", "remodeler")),
+            default_labor_rate,
+        )
 
     est.version += 1
     recalc_estimate(session, user_id, est.id)
     _audit(session, user_id, "estimate.update", "estimate", est.id)
     return estimate_to_dict(est)
+
+
+def delete_estimate(session: Session, user_id: str, estimate_id: str) -> dict[str, str]:
+    _require_user(session, user_id)
+    est = session.get(Estimate, estimate_id)
+    if not est or est.user_id != user_id:
+        raise ValueError("Estimate not found.")
+
+    session.delete(est)
+    _audit(session, user_id, "estimate.delete", "estimate", estimate_id)
+    return {"status": "deleted", "estimate_id": estimate_id}
 
 
 def change_estimate_status(session: Session, user_id: str, estimate_id: str, new_status: str) -> dict[str, object]:
@@ -462,6 +709,12 @@ def add_line_item(
     discount_value: Decimal,
     discount_is_percent: bool,
     group_name: str,
+    labor_trade: str | None = None,
+    remodeler_labor_hours: Decimal | None = None,
+    plumber_labor_hours: Decimal | None = None,
+    tinner_labor_hours: Decimal | None = None,
+    electrician_labor_hours: Decimal | None = None,
+    designer_labor_hours: Decimal | None = None,
 ) -> dict[str, object]:
     user = _require_user(session, user_id)
     est = session.get(Estimate, estimate_id)
@@ -473,21 +726,34 @@ def add_line_item(
     existing_count = session.execute(select(func.count()).select_from(EstimateLineItem).where(EstimateLineItem.estimate_id == estimate_id)).scalar_one()
     markup = item_markup_pct if item_markup_pct is not None else d(user.default_item_markup_pct)
 
+    normalized_quantity = _normalize_whole_quantity(quantity)
+    normalized_labor_trade = _normalize_labor_trade(labor_trade)
+    trade_hours = _trade_hours_from_payload(
+        labor_hours=labor_hours,
+        labor_trade=normalized_labor_trade,
+        remodeler_labor_hours=remodeler_labor_hours,
+        plumber_labor_hours=plumber_labor_hours,
+        tinner_labor_hours=tinner_labor_hours,
+        electrician_labor_hours=electrician_labor_hours,
+        designer_labor_hours=designer_labor_hours,
+    )
+
     li = EstimateLineItem(
         id=_uid(),
         estimate_id=estimate_id,
         sort_order=int(existing_count),
         group_name=group_name,
         item_name=item_name,
-        quantity=quantity,
+        quantity=normalized_quantity,
         unit_price=unit_price,
         item_markup_pct=markup,
-        labor_hours=labor_hours,
-        labor_rate=d(user.labor_rate),
+        labor_trade=normalized_labor_trade,
+        labor_rate=_estimate_labor_rate_by_trade(est, normalized_labor_trade),
         discount_value=discount_value,
         discount_is_percent=discount_is_percent,
         total_price=Decimal("0"),
     )
+    _apply_trade_hours(li, trade_hours)
     session.add(li)
     recalc_estimate(session, user_id, estimate_id)
     _audit(session, user_id, "line_item.add", "estimate_line_item", li.id)
@@ -507,6 +773,12 @@ def edit_line_item(
     discount_value: Decimal | None,
     discount_is_percent: bool | None,
     group_name: str | None,
+    labor_trade: str | None,
+    remodeler_labor_hours: Decimal | None = None,
+    plumber_labor_hours: Decimal | None = None,
+    tinner_labor_hours: Decimal | None = None,
+    electrician_labor_hours: Decimal | None = None,
+    designer_labor_hours: Decimal | None = None,
 ) -> dict[str, object]:
     _require_user(session, user_id)
     est = session.get(Estimate, estimate_id)
@@ -520,19 +792,51 @@ def edit_line_item(
         raise ValueError("Line item not found.")
 
     if quantity is not None:
-        li.quantity = quantity
+        li.quantity = _normalize_whole_quantity(quantity)
     if unit_price is not None:
         li.unit_price = unit_price
     if item_markup_pct is not None:
         li.item_markup_pct = item_markup_pct
-    if labor_hours is not None:
-        li.labor_hours = labor_hours
+    current_trade_hours = _trade_hours_from_line(li)
+    has_explicit_trade_hours = any(
+        value is not None
+        for value in (
+            remodeler_labor_hours,
+            plumber_labor_hours,
+            tinner_labor_hours,
+            electrician_labor_hours,
+            designer_labor_hours,
+        )
+    )
+    normalized_trade = _normalize_labor_trade(labor_trade or getattr(li, "labor_trade", "remodeler"))
+    if has_explicit_trade_hours:
+        if remodeler_labor_hours is not None:
+            current_trade_hours["remodeler"] = _normalize_labor_hours(remodeler_labor_hours, "remodeler_labor_hours")
+        if plumber_labor_hours is not None:
+            current_trade_hours["plumber"] = _normalize_labor_hours(plumber_labor_hours, "plumber_labor_hours")
+        if tinner_labor_hours is not None:
+            current_trade_hours["tinner"] = _normalize_labor_hours(tinner_labor_hours, "tinner_labor_hours")
+        if electrician_labor_hours is not None:
+            current_trade_hours["electrician"] = _normalize_labor_hours(electrician_labor_hours, "electrician_labor_hours")
+        if designer_labor_hours is not None:
+            current_trade_hours["designer"] = _normalize_labor_hours(designer_labor_hours, "designer_labor_hours")
+    elif labor_hours is not None:
+        normalized_hours = _normalize_labor_hours(labor_hours, "labor_hours")
+        current_trade_hours = {trade: Decimal("0") for trade in LABOR_TRADES}
+        current_trade_hours[normalized_trade] = normalized_hours
+    elif labor_trade is not None:
+        total_hours = sum(current_trade_hours.values(), Decimal("0"))
+        current_trade_hours = {trade: Decimal("0") for trade in LABOR_TRADES}
+        current_trade_hours[normalized_trade] = total_hours
     if discount_value is not None:
         li.discount_value = discount_value
     if discount_is_percent is not None:
         li.discount_is_percent = discount_is_percent
     if group_name is not None:
         li.group_name = group_name
+    li.labor_trade = normalized_trade
+    _apply_trade_hours(li, current_trade_hours)
+    li.labor_rate = _estimate_labor_rate_by_trade(est, normalized_trade)
 
     recalc_estimate(session, user_id, estimate_id)
     _audit(session, user_id, "line_item.edit", "estimate_line_item", li.id)
@@ -659,7 +963,7 @@ def group_line_item(
 
 
 def recalc_estimate(session: Session, user_id: str, estimate_id: str) -> dict[str, object]:
-    _require_user(session, user_id)
+    user = _require_user(session, user_id)
     est = session.get(Estimate, estimate_id)
     if not est or est.user_id != user_id:
         raise ValueError("Estimate not found.")
@@ -670,7 +974,36 @@ def recalc_estimate(session: Session, user_id: str, estimate_id: str) -> dict[st
     total_tax = Decimal("0")
     total = Decimal("0")
 
+    default_labor_rate = _default_labor_rate_for_estimate(est, user)
+    if _positive_rate(est.remodeler_labor_rate) is None:
+        est.remodeler_labor_rate = default_labor_rate
+    if _positive_rate(est.plumber_labor_rate) is None:
+        est.plumber_labor_rate = default_labor_rate
+    if _positive_rate(est.tinner_labor_rate) is None:
+        est.tinner_labor_rate = default_labor_rate
+    if _positive_rate(est.electrician_labor_rate) is None:
+        est.electrician_labor_rate = default_labor_rate
+    if _positive_rate(est.designer_labor_rate) is None:
+        est.designer_labor_rate = default_labor_rate
     for li in session.execute(_line_select(estimate_id)).scalars().all():
+        trade_hours = _trade_hours_from_line(li)
+        _apply_trade_hours(li, trade_hours)
+        labor_trade = _normalize_labor_trade(getattr(li, "labor_trade", "remodeler"))
+        if trade_hours.get(labor_trade, Decimal("0")) <= Decimal("0"):
+            labor_trade = next((trade for trade, hours in trade_hours.items() if hours > Decimal("0")), "remodeler")
+            li.labor_trade = labor_trade
+
+        labor_amount = Decimal("0")
+        for trade, hours in trade_hours.items():
+            if hours <= Decimal("0"):
+                continue
+            labor_amount += hours * _estimate_labor_rate_by_trade(est, trade, default_labor_rate)
+
+        total_labor_hours = sum(trade_hours.values(), Decimal("0"))
+        if total_labor_hours > Decimal("0"):
+            li.labor_rate = labor_amount / total_labor_hours
+        else:
+            li.labor_rate = _estimate_labor_rate_by_trade(est, labor_trade, default_labor_rate)
         calc = calculate_line_total(
             PricingInput(
                 quantity=d(li.quantity),
@@ -680,7 +1013,7 @@ def recalc_estimate(session: Session, user_id: str, estimate_id: str) -> dict[st
                 discount_value=d(li.discount_value),
                 discount_is_percent=bool(li.discount_is_percent),
                 tax_rate_pct=d(est.tax_rate_pct),
-                labor_hours=d(li.labor_hours),
+                labor_hours=total_labor_hours,
                 labor_rate=d(li.labor_rate),
             )
         )
@@ -713,6 +1046,11 @@ def duplicate_estimate(session: Session, user_id: str, estimate_id: str) -> dict
         status="draft",
         estimate_markup_pct=source.estimate_markup_pct,
         tax_rate_pct=source.tax_rate_pct,
+        remodeler_labor_rate=source.remodeler_labor_rate,
+        plumber_labor_rate=source.plumber_labor_rate,
+        tinner_labor_rate=source.tinner_labor_rate,
+        electrician_labor_rate=source.electrician_labor_rate,
+        designer_labor_rate=source.designer_labor_rate,
         subtotal=Decimal("0"),
         tax=Decimal("0"),
         total=Decimal("0"),
@@ -735,6 +1073,12 @@ def duplicate_estimate(session: Session, user_id: str, estimate_id: str) -> dict
                 discount_value=line.discount_value,
                 discount_is_percent=line.discount_is_percent,
                 labor_hours=line.labor_hours,
+                remodeler_labor_hours=getattr(line, "remodeler_labor_hours", Decimal("0")),
+                plumber_labor_hours=getattr(line, "plumber_labor_hours", Decimal("0")),
+                tinner_labor_hours=getattr(line, "tinner_labor_hours", Decimal("0")),
+                electrician_labor_hours=getattr(line, "electrician_labor_hours", Decimal("0")),
+                designer_labor_hours=getattr(line, "designer_labor_hours", Decimal("0")),
+                labor_trade=getattr(line, "labor_trade", "remodeler"),
                 labor_rate=line.labor_rate,
                 total_price=Decimal("0"),
             )
@@ -839,6 +1183,8 @@ def apply_template_to_estimate(session: Session, user_id: str, template_id: str,
 
     lines = session.execute(select(TemplateLineItem).where(TemplateLineItem.template_id == template_id).order_by(TemplateLineItem.sort_order.asc())).scalars().all()
     for idx, line in enumerate(lines):
+        line_trade = _normalize_labor_trade(getattr(line, "labor_trade", "remodeler"))
+        line_hours = d(line.labor_hours)
         session.add(
             EstimateLineItem(
                 id=_uid(),
@@ -849,8 +1195,14 @@ def apply_template_to_estimate(session: Session, user_id: str, template_id: str,
                 quantity=line.quantity,
                 unit_price=line.unit_price,
                 item_markup_pct=line.item_markup_pct,
-                labor_hours=line.labor_hours,
-                labor_rate=user.labor_rate,
+                labor_hours=line_hours,
+                remodeler_labor_hours=line_hours if line_trade == "remodeler" else Decimal("0"),
+                plumber_labor_hours=line_hours if line_trade == "plumber" else Decimal("0"),
+                tinner_labor_hours=line_hours if line_trade == "tinner" else Decimal("0"),
+                electrician_labor_hours=line_hours if line_trade == "electrician" else Decimal("0"),
+                designer_labor_hours=line_hours if line_trade == "designer" else Decimal("0"),
+                labor_trade=line_trade,
+                labor_rate=_estimate_labor_rate_by_trade(est, line_trade),
                 discount_value=Decimal("0"),
                 discount_is_percent=False,
                 total_price=Decimal("0"),
@@ -868,6 +1220,7 @@ def upsert_catalog_item(
     name: str,
     unit_price: Decimal,
     labor_hours: Decimal,
+    labor_trade: str,
     description: str,
     node_id: str | None = None,
 ) -> dict[str, str]:
@@ -876,6 +1229,7 @@ def upsert_catalog_item(
     clean_name = name.strip()
     if not clean_name:
         raise ValueError("Catalog item name is required.")
+    normalized_labor_trade = _normalize_labor_trade(labor_trade)
 
     item = session.execute(select(CatalogItem).where(CatalogItem.name == clean_name)).scalar_one_or_none()
     if item is None:
@@ -885,6 +1239,7 @@ def upsert_catalog_item(
             name=clean_name,
             unit_price=unit_price,
             labor_hours=labor_hours,
+            labor_trade=normalized_labor_trade,
             description=description,
         )
         session.add(item)
@@ -893,6 +1248,7 @@ def upsert_catalog_item(
         item.node_id = node_id
         item.unit_price = unit_price
         item.labor_hours = labor_hours
+        item.labor_trade = normalized_labor_trade
         item.description = description
         action = "catalog.item.update"
 
@@ -909,6 +1265,7 @@ def search_catalog_items(session: Session, query: str, limit: int = 20) -> list[
             "name": row.name,
             "unit_price": str(row.unit_price),
             "labor_hours": str(row.labor_hours),
+            "labor_trade": _normalize_labor_trade(getattr(row, "labor_trade", "remodeler")),
         }
         for row in rows
     ]
@@ -932,6 +1289,7 @@ def import_catalog_items(session: Session, user_id: str, items: list[dict[str, o
             name=str(item.get("name", "")),
             unit_price=d(item.get("unit_price", 0)),
             labor_hours=d(item.get("labor_hours", 0)),
+            labor_trade=str(item.get("labor_trade", "remodeler")),
             description=str(item.get("description", "")),
             node_id=str(item.get("node_id")) if item.get("node_id") else None,
         )
@@ -957,6 +1315,7 @@ def show_catalog_tree(session: Session) -> list[dict[str, object]]:
                 "name": item.name,
                 "unit_price": str(item.unit_price),
                 "labor_hours": str(item.labor_hours),
+                "labor_trade": _normalize_labor_trade(getattr(item, "labor_trade", "remodeler")),
             }
         )
 
@@ -1003,22 +1362,264 @@ def render_proposal_text(session: Session, user_id: str, estimate_id: str) -> st
     return "\n".join(lines)
 
 
-def generate_proposal_pdf(session: Session, user_id: str, estimate_id: str, output_path: Path | None = None) -> dict[str, str]:
-    proposal_text = render_proposal_text(session, user_id, estimate_id)
-    output = _resolve_output_path(output_path, f"proposal_{estimate_id}.pdf")
+def _proposal_data_from_estimate(est_data: dict[str, object]) -> dict[str, object]:
+    line_items = list(est_data.get("line_items", []))
+    return {
+        "id": str(est_data["id"]),
+        "title": str(est_data["title"]),
+        "status": str(est_data["status"]),
+        "customer_name": str(est_data.get("customer_name", "") or "Client"),
+        "customer_email": str(est_data.get("customer_email", "") or "—"),
+        "customer_phone": str(est_data.get("customer_phone", "") or "—"),
+        "job_address": str(est_data.get("job_address", "") or "—"),
+        "estimate_markup_pct": _format_money(d(est_data.get("estimate_markup_pct", 0))).rstrip("0").rstrip("."),
+        "tax_rate_pct": _format_money(d(est_data.get("tax_rate_pct", 0))).rstrip("0").rstrip("."),
+        "subtotal": _format_money(d(est_data.get("subtotal", 0))),
+        "tax": _format_money(d(est_data.get("tax", 0))),
+        "total": _format_money(d(est_data.get("total", 0))),
+        "line_items": [
+            {
+                "item_name": str(li.get("item_name", "Item")),
+                "quantity": str(li.get("quantity", "0")),
+                "unit_price": _format_money(d(li.get("unit_price", 0))),
+                "total_price": _format_money(d(li.get("total_price", 0))),
+            }
+            for li in line_items
+        ],
+    }
 
-    c = canvas.Canvas(str(output), pagesize=letter)
-    y = 760
-    for line in proposal_text.splitlines():
-        c.drawString(50, y, line[:95])
-        y -= 16
-        if y < 50:
-            c.showPage()
-            y = 760
-    c.save()
+
+def _render_proposal_html_from_data(data: dict[str, object]) -> str:
+    rows = "".join(
+        f"""
+        <tr>
+            <td>{escape(str(item["item_name"]))}</td>
+            <td class="num">{escape(str(item["quantity"]))}</td>
+            <td class="num">${escape(str(item["unit_price"]))}</td>
+            <td class="num strong">${escape(str(item["total_price"]))}</td>
+        </tr>
+        """
+        for item in data["line_items"]
+    )
+    if not rows:
+        rows = '<tr><td colspan="4" class="empty">No line items</td></tr>'
+
+    return f"""
+    <div class="proposal-doc">
+      <div class="proposal-head">
+        <div>
+          <h1>{escape(str(data["title"]))}</h1>
+          <p class="sub">Estimate #{escape(str(data["id"]))} · Status: {escape(str(data["status"]).replace("_", " ").title())}</p>
+        </div>
+      </div>
+
+      <div class="proposal-section two-col">
+        <div>
+          <h3>Client</h3>
+          <p><strong>{escape(str(data["customer_name"]))}</strong></p>
+          <p>{escape(str(data["customer_email"]))}</p>
+          <p>{escape(str(data["customer_phone"]))}</p>
+          <p>{escape(str(data["job_address"]))}</p>
+        </div>
+        <div>
+          <h3>Pricing</h3>
+          <p>Markup: {escape(str(data["estimate_markup_pct"]))}%</p>
+          <p>Tax Rate: {escape(str(data["tax_rate_pct"]))}%</p>
+        </div>
+      </div>
+
+      <div class="proposal-section">
+        <h3>Scope & Pricing</h3>
+        <table class="proposal-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th class="num">Qty</th>
+              <th class="num">Unit Price</th>
+              <th class="num">Line Total</th>
+            </tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </table>
+      </div>
+
+      <div class="proposal-section totals">
+        <div class="line"><span>Subtotal</span><strong>${escape(str(data["subtotal"]))}</strong></div>
+        <div class="line"><span>Tax</span><strong>${escape(str(data["tax"]))}</strong></div>
+        <div class="line grand"><span>Total</span><strong>${escape(str(data["total"]))}</strong></div>
+      </div>
+
+      <div class="proposal-section terms">
+        <h3>Terms</h3>
+        <p>Pricing includes labor and materials for listed items unless noted otherwise.</p>
+        <p>Any changes in scope, unforeseen conditions, or owner-requested revisions may change final price.</p>
+      </div>
+    </div>
+    """
+
+
+def render_proposal_html(session: Session, user_id: str, estimate_id: str) -> str:
+    est_data = get_estimate(session, user_id, estimate_id)
+    proposal_data = _proposal_data_from_estimate(est_data)
+    _audit(session, user_id, "proposal.render", "estimate", estimate_id)
+    return _render_proposal_html_from_data(proposal_data)
+
+
+def _generate_proposal_pdf_bytes(data: dict[str, object]) -> bytes:
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=0.75 * inch,
+        rightMargin=0.75 * inch,
+        topMargin=0.75 * inch,
+        bottomMargin=0.75 * inch,
+    )
+    styles = getSampleStyleSheet()
+    story: list[object] = []
+
+    story.append(Paragraph(escape(str(data["title"])), styles["Title"]))
+    story.append(Paragraph(
+        f'Estimate #{escape(str(data["id"]))} - Status: {escape(str(data["status"]).replace("_", " ").title())}',
+        styles["Normal"],
+    ))
+    story.append(Spacer(1, 12))
+
+    client_table = Table(
+        [
+            ["Client", "Pricing"],
+            [
+                f'{data["customer_name"]}\n{data["customer_email"]}\n{data["customer_phone"]}\n{data["job_address"]}',
+                f'Markup: {data["estimate_markup_pct"]}%\nTax Rate: {data["tax_rate_pct"]}%',
+            ],
+        ],
+        colWidths=[3.4 * inch, 3.4 * inch],
+    )
+    client_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eef3ff")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#d9e0ec")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#e5eaf3")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("LEADING", (0, 1), (-1, -1), 13),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.append(client_table)
+    story.append(Spacer(1, 14))
+
+    table_rows = [["Item", "Qty", "Unit Price", "Line Total"]]
+    line_items = list(data.get("line_items", []))
+    for item in line_items:
+        table_rows.append(
+            [
+                str(item["item_name"]),
+                str(item["quantity"]),
+                f'${item["unit_price"]}',
+                f'${item["total_price"]}',
+            ]
+        )
+    if len(table_rows) == 1:
+        table_rows.append(["No line items", "-", "-", "-"])
+
+    line_table = Table(table_rows, colWidths=[3.4 * inch, 0.7 * inch, 1.4 * inch, 1.3 * inch])
+    line_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#edf2f7")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#d9e0ec")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#e5eaf3")),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.append(line_table)
+    story.append(Spacer(1, 14))
+
+    totals_table = Table(
+        [
+            ["Subtotal", f'${data["subtotal"]}'],
+            ["Tax", f'${data["tax"]}'],
+            ["Total", f'${data["total"]}'],
+        ],
+        colWidths=[5.5 * inch, 1.3 * inch],
+    )
+    totals_table.setStyle(TableStyle([
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("FONTNAME", (0, 2), (-1, 2), "Helvetica-Bold"),
+        ("LINEABOVE", (0, 2), (-1, 2), 0.5, colors.HexColor("#c9d2e3")),
+        ("FONTSIZE", (0, 0), (-1, -1), 11),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(totals_table)
+    story.append(Spacer(1, 16))
+    story.append(Paragraph("Terms", styles["Heading3"]))
+    story.append(Paragraph("Pricing includes labor and materials for listed items unless noted otherwise.", styles["Normal"]))
+    story.append(Paragraph("Any changes in scope, unforeseen conditions, or owner-requested revisions may change final price.", styles["Normal"]))
+
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def generate_proposal_pdf(session: Session, user_id: str, estimate_id: str, output_path: Path | None = None) -> dict[str, str]:
+    est_data = get_estimate(session, user_id, estimate_id)
+    proposal_data = _proposal_data_from_estimate(est_data)
+    pdf_bytes = _generate_proposal_pdf_bytes(proposal_data)
+    output = _resolve_output_path(output_path, f"proposal_{estimate_id}.pdf")
+    output.write_bytes(pdf_bytes)
 
     _audit(session, user_id, "proposal.pdf", "estimate", estimate_id, details=str(output))
     return {"path": str(output)}
+
+
+def proposal_pdf_bytes(session: Session, user_id: str, estimate_id: str) -> bytes:
+    est_data = get_estimate(session, user_id, estimate_id)
+    proposal_data = _proposal_data_from_estimate(est_data)
+    _audit(session, user_id, "proposal.pdf.bytes", "estimate", estimate_id)
+    return _generate_proposal_pdf_bytes(proposal_data)
+
+
+def create_public_proposal_token(session: Session, user_id: str, estimate_id: str) -> dict[str, str]:
+    _require_user(session, user_id)
+    est = session.get(Estimate, estimate_id)
+    if not est or est.user_id != user_id:
+        raise ValueError("Estimate not found.")
+    token = _issue_session_token(f"proposal:{estimate_id}:{user_id}")
+    _audit(session, user_id, "proposal.share.create", "estimate", estimate_id)
+    return {"token": token, "path": f"/proposal/public/{token}"}
+
+
+def _resolve_public_proposal_token(session: Session, token: str) -> tuple[str, str]:
+    principal = resolve_user_id_from_session_token(token)
+    if not principal.startswith("proposal:"):
+        raise ValueError("Invalid public proposal token.")
+    parts = principal.split(":")
+    if len(parts) != 3:
+        raise ValueError("Invalid public proposal token.")
+    _, estimate_id, user_id = parts
+    est = session.get(Estimate, estimate_id)
+    if not est or est.user_id != user_id:
+        raise ValueError("Proposal not found.")
+    return estimate_id, user_id
+
+
+def render_public_proposal_html(session: Session, token: str) -> str:
+    estimate_id, user_id = _resolve_public_proposal_token(session, token)
+    est_data = get_estimate(session, user_id, estimate_id)
+    return _render_proposal_html_from_data(_proposal_data_from_estimate(est_data))
+
+
+def public_proposal_pdf_bytes(session: Session, token: str) -> bytes:
+    estimate_id, user_id = _resolve_public_proposal_token(session, token)
+    est_data = get_estimate(session, user_id, estimate_id)
+    return _generate_proposal_pdf_bytes(_proposal_data_from_estimate(est_data))
 
 
 def list_audit_events(session: Session, user_id: str, limit: int = 50) -> list[dict[str, str]]:
@@ -1366,6 +1967,11 @@ def restore_user_backup(session: Session, user_id: str, payload: dict[str, objec
             status="draft",
             estimate_markup_pct=d(estimate_data.get("estimate_markup_pct", 0)),
             tax_rate_pct=d(estimate_data.get("tax_rate_pct", 0)),
+            remodeler_labor_rate=d(estimate_data.get("remodeler_labor_rate", 0)),
+            plumber_labor_rate=d(estimate_data.get("plumber_labor_rate", 0)),
+            tinner_labor_rate=d(estimate_data.get("tinner_labor_rate", 0)),
+            electrician_labor_rate=d(estimate_data.get("electrician_labor_rate", 0)),
+            designer_labor_rate=d(estimate_data.get("designer_labor_rate", 0)),
             subtotal=Decimal("0"),
             tax=Decimal("0"),
             total=Decimal("0"),
@@ -1389,6 +1995,12 @@ def restore_user_backup(session: Session, user_id: str, payload: dict[str, objec
                     discount_value=d(line.get("discount_value", 0)),
                     discount_is_percent=bool(line.get("discount_is_percent", False)),
                     labor_hours=d(line.get("labor_hours", 0)),
+                    remodeler_labor_hours=d(line.get("remodeler_labor_hours", 0)),
+                    plumber_labor_hours=d(line.get("plumber_labor_hours", 0)),
+                    tinner_labor_hours=d(line.get("tinner_labor_hours", 0)),
+                    electrician_labor_hours=d(line.get("electrician_labor_hours", 0)),
+                    designer_labor_hours=d(line.get("designer_labor_hours", 0)),
+                    labor_trade=_normalize_labor_trade(str(line.get("labor_trade", "remodeler"))),
                     labor_rate=d(line.get("labor_rate", 0)),
                     total_price=Decimal("0"),
                 )

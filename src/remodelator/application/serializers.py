@@ -16,6 +16,11 @@ def estimate_to_dict(est: Estimate, include_lines: bool = True) -> dict[str, obj
         "job_address": est.job_address,
         "estimate_markup_pct": str(est.estimate_markup_pct),
         "tax_rate_pct": str(est.tax_rate_pct),
+        "remodeler_labor_rate": str(est.remodeler_labor_rate),
+        "plumber_labor_rate": str(est.plumber_labor_rate),
+        "tinner_labor_rate": str(est.tinner_labor_rate),
+        "electrician_labor_rate": str(est.electrician_labor_rate),
+        "designer_labor_rate": str(est.designer_labor_rate),
         "subtotal": str(est.subtotal),
         "tax": str(est.tax),
         "total": str(est.total),
@@ -27,6 +32,11 @@ def estimate_to_dict(est: Estimate, include_lines: bool = True) -> dict[str, obj
 
 
 def line_item_to_dict(li: EstimateLineItem) -> dict[str, object]:
+    remodeler_hours = str(getattr(li, "remodeler_labor_hours", 0))
+    plumber_hours = str(getattr(li, "plumber_labor_hours", 0))
+    tinner_hours = str(getattr(li, "tinner_labor_hours", 0))
+    electrician_hours = str(getattr(li, "electrician_labor_hours", 0))
+    designer_hours = str(getattr(li, "designer_labor_hours", 0))
     return {
         "id": li.id,
         "estimate_id": li.estimate_id,
@@ -39,6 +49,12 @@ def line_item_to_dict(li: EstimateLineItem) -> dict[str, object]:
         "discount_value": str(li.discount_value),
         "discount_is_percent": bool(li.discount_is_percent),
         "labor_hours": str(li.labor_hours),
+        "remodeler_labor_hours": remodeler_hours,
+        "plumber_labor_hours": plumber_hours,
+        "tinner_labor_hours": tinner_hours,
+        "electrician_labor_hours": electrician_hours,
+        "designer_labor_hours": designer_hours,
+        "labor_trade": li.labor_trade,
         "labor_rate": str(li.labor_rate),
         "total_price": str(li.total_price),
     }

@@ -21,6 +21,10 @@ export function updateEstimate(id: string, data: UpdateEstimateRequest): Promise
     return put<Estimate>(`/estimates/${id}`, data);
 }
 
+export function deleteEstimate(id: string): Promise<void> {
+    return del<void>(`/estimates/${id}`);
+}
+
 export function setEstimateStatus(id: string, status: string): Promise<Estimate> {
     return post<Estimate>(`/estimates/${id}/status`, { status });
 }

@@ -1,7 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { FileText, ArrowLeft, Download } from 'lucide-react';
+import { FileText, ArrowLeft, Download, Link2 } from 'lucide-react';
 import * as proposalsApi from '@/api/proposals';
 import { toast } from 'sonner';
 
@@ -14,12 +14,27 @@ export function ProposalPage() {
         enabled: !!id,
     });
 
+    const shareMutation = useMutation({
+        mutationFn: async () => proposalsApi.createProposalShareLink(id!),
+        onSuccess: async (result) => {
+            const fullUrl = `${window.location.origin}${result.path}`;
+            try {
+                await navigator.clipboard.writeText(fullUrl);
+                toast.success('Public proposal link copied');
+            } catch {
+                toast.success(`Public proposal link: ${fullUrl}`);
+            }
+        },
+        onError: (err) => {
+            toast.error(err instanceof Error ? err.message : 'Failed to create public link');
+        },
+    });
+
     const handleExportPdf = async () => {
         try {
-            const result = await proposalsApi.generateProposalPdf(id!, `exports/proposal_${id}.pdf`);
-            toast.success(`PDF generated: ${result.path}`);
+            await proposalsApi.downloadProposalPdf(id!);
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'PDF generation failed');
+            toast.error(err instanceof Error ? err.message : 'PDF download failed');
         }
     };
 
@@ -33,12 +48,20 @@ export function ProposalPage() {
                     title="Proposal"
                     icon={FileText}
                     actions={
-                        <button
-                            onClick={handleExportPdf}
-                            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover"
-                        >
-                            <Download size={16} /> Export PDF
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => shareMutation.mutate()}
+                                className="flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-surface-hover"
+                            >
+                                <Link2 size={15} /> Copy Public Link
+                            </button>
+                            <button
+                                onClick={handleExportPdf}
+                                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:bg-primary-hover"
+                            >
+                                <Download size={16} /> Download PDF
+                            </button>
+                        </div>
                     }
                 />
             </div>
@@ -50,12 +73,16 @@ export function ProposalPage() {
                     </div>
                 ) : data?.rendered ? (
                     <div
-                        className="prose prose-invert max-w-none text-foreground [&_p]:leading-relaxed [&_h1]:font-heading [&_h2]:font-heading [&_h3]:font-heading"
+                        className="max-w-none text-foreground"
                         dangerouslySetInnerHTML={{ __html: data.rendered }}
                     />
                 ) : (
                     <p className="text-center text-muted-foreground">No proposal content available</p>
                 )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface px-5 py-4 text-sm text-muted-foreground">
+                Client view is available via a secure public link from <span className="font-medium text-foreground">Copy Public Link</span>. The same layout is used for both browser and PDF.
             </div>
         </div>
     );

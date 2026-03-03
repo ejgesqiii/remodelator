@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, X } from 'lucide-react';
 import * as estimatesApi from '@/api/estimates';
 import type { LineItem } from '@/api/types';
-import { formatMoney } from '@/lib/formatters';
+import { formatDecimal, formatMoney } from '@/lib/formatters';
 import { toast } from 'sonner';
 
 interface LineItemEditorProps {
@@ -14,13 +14,22 @@ interface LineItemEditorProps {
 
 export function LineItemEditor({ estimateId, lineItem, onClose }: LineItemEditorProps) {
     const queryClient = useQueryClient();
+    const initialQuantity = Number.isFinite(Number(lineItem.quantity))
+        ? String(Math.trunc(Number(lineItem.quantity)))
+        : lineItem.quantity;
     const [form, setForm] = useState({
-        quantity: lineItem.quantity,
-        unit_price: lineItem.unit_price,
-        item_markup_pct: lineItem.item_markup_pct,
-        labor_hours: lineItem.labor_hours,
-        labor_rate: lineItem.labor_rate,
-        discount_value: lineItem.discount_value,
+        quantity: initialQuantity,
+        unit_price: formatDecimal(lineItem.unit_price),
+        item_markup_pct: formatDecimal(lineItem.item_markup_pct),
+        labor_hours: formatDecimal(lineItem.labor_hours),
+        labor_trade: lineItem.labor_trade || 'remodeler',
+        remodeler_labor_hours: formatDecimal(lineItem.remodeler_labor_hours ?? ((lineItem.labor_trade || 'remodeler') === 'remodeler' ? lineItem.labor_hours : '0')),
+        plumber_labor_hours: formatDecimal(lineItem.plumber_labor_hours ?? ((lineItem.labor_trade || 'remodeler') === 'plumber' ? lineItem.labor_hours : '0')),
+        tinner_labor_hours: formatDecimal(lineItem.tinner_labor_hours ?? ((lineItem.labor_trade || 'remodeler') === 'tinner' ? lineItem.labor_hours : '0')),
+        electrician_labor_hours: formatDecimal(lineItem.electrician_labor_hours ?? ((lineItem.labor_trade || 'remodeler') === 'electrician' ? lineItem.labor_hours : '0')),
+        designer_labor_hours: formatDecimal(lineItem.designer_labor_hours ?? ((lineItem.labor_trade || 'remodeler') === 'designer' ? lineItem.labor_hours : '0')),
+        labor_rate: formatDecimal(lineItem.labor_rate),
+        discount_value: formatDecimal(lineItem.discount_value),
         discount_is_percent: lineItem.discount_is_percent,
         group_name: lineItem.group_name,
     });
@@ -28,11 +37,22 @@ export function LineItemEditor({ estimateId, lineItem, onClose }: LineItemEditor
     const mutation = useMutation({
         mutationFn: () =>
             estimatesApi.updateLineItem(estimateId, lineItem.id, {
-                quantity: parseFloat(form.quantity) || undefined,
-                unit_price: parseFloat(form.unit_price) || undefined,
-                item_markup_pct: parseFloat(form.item_markup_pct) || undefined,
-                labor_hours: parseFloat(form.labor_hours) || undefined,
-                discount_value: parseFloat(form.discount_value) || undefined,
+                quantity: parseIntegerOrUndefined(form.quantity),
+                unit_price: parseDecimalOrUndefined(form.unit_price),
+                item_markup_pct: parseDecimalOrUndefined(form.item_markup_pct),
+                labor_hours:
+                    (parseDecimalOrUndefined(form.remodeler_labor_hours) ?? 0)
+                    + (parseDecimalOrUndefined(form.plumber_labor_hours) ?? 0)
+                    + (parseDecimalOrUndefined(form.tinner_labor_hours) ?? 0)
+                    + (parseDecimalOrUndefined(form.electrician_labor_hours) ?? 0)
+                    + (parseDecimalOrUndefined(form.designer_labor_hours) ?? 0),
+                labor_trade: form.labor_trade || undefined,
+                remodeler_labor_hours: parseDecimalOrUndefined(form.remodeler_labor_hours),
+                plumber_labor_hours: parseDecimalOrUndefined(form.plumber_labor_hours),
+                tinner_labor_hours: parseDecimalOrUndefined(form.tinner_labor_hours),
+                electrician_labor_hours: parseDecimalOrUndefined(form.electrician_labor_hours),
+                designer_labor_hours: parseDecimalOrUndefined(form.designer_labor_hours),
+                discount_value: parseDecimalOrUndefined(form.discount_value),
                 discount_is_percent: form.discount_is_percent,
                 group_name: form.group_name || undefined,
             }),
@@ -47,6 +67,20 @@ export function LineItemEditor({ estimateId, lineItem, onClose }: LineItemEditor
 
     const update = (key: string, value: string | boolean) => {
         setForm((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const parseDecimalOrUndefined = (value: string): number | undefined => {
+        const parsed = Number.parseFloat(value);
+        return Number.isNaN(parsed) ? undefined : parsed;
+    };
+
+    const parseIntegerOrUndefined = (value: string): number | undefined => {
+        if (value.trim() === '') return undefined;
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || !Number.isInteger(parsed)) {
+            return undefined;
+        }
+        return parsed;
     };
 
     const inputClass =
@@ -73,6 +107,10 @@ export function LineItemEditor({ estimateId, lineItem, onClose }: LineItemEditor
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
+                        if (form.quantity !== '' && parseIntegerOrUndefined(form.quantity) === undefined) {
+                            toast.error('Quantity must be a whole number');
+                            return;
+                        }
                         mutation.mutate();
                     }}
                     className="space-y-4"
@@ -80,7 +118,7 @@ export function LineItemEditor({ estimateId, lineItem, onClose }: LineItemEditor
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <label className="text-xs font-medium text-muted-foreground">Quantity</label>
-                            <input type="number" step="any" value={form.quantity} onChange={(e) => update('quantity', e.target.value)} className={inputClass} />
+                            <input type="number" step="1" min="1" value={form.quantity} onChange={(e) => update('quantity', e.target.value)} className={inputClass} />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-xs font-medium text-muted-foreground">Unit Price ($)</label>
@@ -91,9 +129,36 @@ export function LineItemEditor({ estimateId, lineItem, onClose }: LineItemEditor
                             <input type="number" step="any" value={form.item_markup_pct} onChange={(e) => update('item_markup_pct', e.target.value)} className={inputClass} />
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-muted-foreground">Labor Hours</label>
-                            <input type="number" step="any" value={form.labor_hours} onChange={(e) => update('labor_hours', e.target.value)} className={inputClass} />
+                            <label className="text-xs font-medium text-muted-foreground">Labor Hours Total</label>
+                            <input type="number" value={(
+                                (parseDecimalOrUndefined(form.remodeler_labor_hours) ?? 0)
+                                + (parseDecimalOrUndefined(form.plumber_labor_hours) ?? 0)
+                                + (parseDecimalOrUndefined(form.tinner_labor_hours) ?? 0)
+                                + (parseDecimalOrUndefined(form.electrician_labor_hours) ?? 0)
+                                + (parseDecimalOrUndefined(form.designer_labor_hours) ?? 0)
+                            ).toFixed(2)} readOnly className={`${inputClass} bg-surface/60 text-muted-foreground`} />
                         </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-muted-foreground">Remodeler Hours</label>
+                            <input type="number" min="0" step="0.01" value={form.remodeler_labor_hours} onChange={(e) => update('remodeler_labor_hours', e.target.value)} className={inputClass} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-muted-foreground">Plumber Hours</label>
+                            <input type="number" min="0" step="0.01" value={form.plumber_labor_hours} onChange={(e) => update('plumber_labor_hours', e.target.value)} className={inputClass} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-muted-foreground">Tinner Hours</label>
+                            <input type="number" min="0" step="0.01" value={form.tinner_labor_hours} onChange={(e) => update('tinner_labor_hours', e.target.value)} className={inputClass} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-muted-foreground">Electrician Hours</label>
+                            <input type="number" min="0" step="0.01" value={form.electrician_labor_hours} onChange={(e) => update('electrician_labor_hours', e.target.value)} className={inputClass} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-medium text-muted-foreground">Designer Hours</label>
+                            <input type="number" min="0" step="0.01" value={form.designer_labor_hours} onChange={(e) => update('designer_labor_hours', e.target.value)} className={inputClass} />
+                        </div>
+                        <div />
                         <div className="space-y-1.5">
                             <label className="text-xs font-medium text-muted-foreground">Discount</label>
                             <input type="number" step="any" value={form.discount_value} onChange={(e) => update('discount_value', e.target.value)} className={inputClass} />

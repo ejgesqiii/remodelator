@@ -62,7 +62,7 @@ def create_schema() -> None:
     _run_sqlite_schema_migrations()
 
 
-SQLITE_SCHEMA_VERSION = 2
+SQLITE_SCHEMA_VERSION = 3
 
 
 def _sqlite_table_columns(connection: Connection, table_name: str) -> set[str]:
@@ -143,6 +143,42 @@ def _run_sqlite_schema_migrations() -> None:
             (
                 ("stripe_customer_id", "VARCHAR(255)"),
                 ("stripe_subscription_id", "VARCHAR(255)"),
+                ("remodeler_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("plumber_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("tinner_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("electrician_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("designer_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+            ),
+        )
+
+        _ensure_sqlite_columns(
+            connection,
+            "estimates",
+            (
+                ("remodeler_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("plumber_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("tinner_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("electrician_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+                ("designer_labor_rate", "NUMERIC(12, 4) DEFAULT 0"),
+            ),
+        )
+        _ensure_sqlite_columns(
+            connection,
+            "estimate_line_items",
+            (
+                ("labor_trade", "VARCHAR(32) DEFAULT 'remodeler'"),
+                ("remodeler_labor_hours", "NUMERIC(12, 4) DEFAULT 0"),
+                ("plumber_labor_hours", "NUMERIC(12, 4) DEFAULT 0"),
+                ("tinner_labor_hours", "NUMERIC(12, 4) DEFAULT 0"),
+                ("electrician_labor_hours", "NUMERIC(12, 4) DEFAULT 0"),
+                ("designer_labor_hours", "NUMERIC(12, 4) DEFAULT 0"),
+            ),
+        )
+        _ensure_sqlite_columns(
+            connection,
+            "catalog_items",
+            (
+                ("labor_trade", "VARCHAR(32) DEFAULT 'remodeler'"),
             ),
         )
 

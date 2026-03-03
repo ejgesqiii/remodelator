@@ -17,10 +17,10 @@ export function formatMoney(value: string | number | undefined | null): string {
  * Format a decimal string as a percentage display.
  */
 export function formatPercent(value: string | number | undefined | null): string {
-    if (value === undefined || value === null || value === '') return '0%';
+    if (value === undefined || value === null || value === '') return '0.00%';
     const num = typeof value === 'string' ? parseFloat(value) : value;
-    if (isNaN(num)) return '0%';
-    return `${num}%`;
+    if (isNaN(num)) return '0.00%';
+    return `${num.toFixed(2)}%`;
 }
 
 /**
@@ -76,4 +76,24 @@ export function capitalize(str: string): string {
  */
 export function formatStatus(status: string): string {
     return status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Format a quantity as whole-number display.
+ */
+export function formatQuantity(value: string | number | undefined | null): string {
+    if (value === undefined || value === null || value === '') return '0';
+    const num = typeof value === 'string' ? Number.parseFloat(value) : value;
+    if (Number.isNaN(num)) return '0';
+    return String(Math.trunc(num));
+}
+
+/**
+ * Format a plain numeric value to a fixed 2-decimal string.
+ */
+export function formatDecimal(value: string | number | undefined | null): string {
+    if (value === undefined || value === null || value === '') return '0.00';
+    const num = typeof value === 'string' ? Number.parseFloat(value) : value;
+    if (Number.isNaN(num)) return '0.00';
+    return num.toFixed(2);
 }

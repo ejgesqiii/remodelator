@@ -72,7 +72,21 @@ def estimate_update(
                 job_address=payload.job_address,
                 estimate_markup_pct=payload.estimate_markup_pct,
                 tax_rate_pct=payload.tax_rate_pct,
+                remodeler_labor_rate=payload.remodeler_labor_rate,
+                plumber_labor_rate=payload.plumber_labor_rate,
+                tinner_labor_rate=payload.tinner_labor_rate,
+                electrician_labor_rate=payload.electrician_labor_rate,
+                designer_labor_rate=payload.designer_labor_rate,
             )
+
+    return handle(action)
+
+
+@router.delete("/estimates/{estimate_id}")
+def estimate_delete(estimate_id: str, user_id: str = Depends(require_user_id)) -> dict[str, str]:
+    def action() -> dict[str, str]:
+        with session_scope() as session:
+            return service.delete_estimate(session, user_id, estimate_id)
 
     return handle(action)
 

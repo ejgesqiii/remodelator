@@ -19,6 +19,9 @@ const EstimateDetailPage = lazy(() =>
     import('@/features/estimates/EstimateDetailPage').then((m) => ({ default: m.EstimateDetailPage }))
 );
 const ProposalPage = lazy(() => import('@/features/proposals/ProposalPage').then((m) => ({ default: m.ProposalPage })));
+const PublicProposalPage = lazy(() =>
+    import('@/features/proposals/PublicProposalPage').then((m) => ({ default: m.PublicProposalPage }))
+);
 const CatalogPage = lazy(() => import('@/features/catalog/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const TemplateListPage = lazy(() =>
     import('@/features/templates/TemplateListPage').then((m) => ({ default: m.TemplateListPage }))
@@ -60,6 +63,7 @@ export function App() {
                             {/* Public routes */}
                             <Route path="/login" element={<LoginPage />} />
                             <Route path="/register" element={<RegisterPage />} />
+                            <Route path="/proposal/public/:token" element={<PublicProposalPage />} />
 
                             {/* Authenticated routes */}
                             <Route

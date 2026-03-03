@@ -10,6 +10,11 @@ export type UserProfile = {
     role: string;
     full_name: string;
     labor_rate: string;
+    remodeler_labor_rate: string;
+    plumber_labor_rate: string;
+    tinner_labor_rate: string;
+    electrician_labor_rate: string;
+    designer_labor_rate: string;
     default_item_markup_pct: string;
     default_estimate_markup_pct: string;
     tax_rate_pct: string;
@@ -17,6 +22,11 @@ export type UserProfile = {
 export type UpdateProfileRequest = {
     full_name?: string;
     labor_rate?: number;
+    remodeler_labor_rate?: number;
+    plumber_labor_rate?: number;
+    tinner_labor_rate?: number;
+    electrician_labor_rate?: number;
+    designer_labor_rate?: number;
     item_markup_pct?: number;
     estimate_markup_pct?: number;
     tax_rate_pct?: number;
@@ -34,6 +44,11 @@ export type Estimate = {
     job_address: string;
     estimate_markup_pct: string;
     tax_rate_pct: string;
+    remodeler_labor_rate: string;
+    plumber_labor_rate: string;
+    tinner_labor_rate: string;
+    electrician_labor_rate: string;
+    designer_labor_rate: string;
     subtotal: string;
     tax: string;
     total: string;
@@ -58,6 +73,11 @@ export type UpdateEstimateRequest = {
     job_address?: string;
     estimate_markup_pct?: number;
     tax_rate_pct?: number;
+    remodeler_labor_rate?: number;
+    plumber_labor_rate?: number;
+    tinner_labor_rate?: number;
+    electrician_labor_rate?: number;
+    designer_labor_rate?: number;
 };
 
 // ─── Line Items ───
@@ -73,6 +93,12 @@ export type LineItem = {
     discount_value: string;
     discount_is_percent: boolean;
     labor_hours: string;
+    remodeler_labor_hours: string;
+    plumber_labor_hours: string;
+    tinner_labor_hours: string;
+    electrician_labor_hours: string;
+    designer_labor_hours: string;
+    labor_trade: string;
     labor_rate: string;
     total_price: string;
 };
@@ -83,6 +109,12 @@ export type AddLineItemRequest = {
     unit_price: number;
     item_markup_pct?: number;
     labor_hours?: number;
+    labor_trade?: string;
+    remodeler_labor_hours?: number;
+    plumber_labor_hours?: number;
+    tinner_labor_hours?: number;
+    electrician_labor_hours?: number;
+    designer_labor_hours?: number;
     discount_value?: number;
     discount_is_percent?: boolean;
     group_name?: string;
@@ -93,6 +125,12 @@ export type UpdateLineItemRequest = {
     unit_price?: number;
     item_markup_pct?: number;
     labor_hours?: number;
+    labor_trade?: string;
+    remodeler_labor_hours?: number;
+    plumber_labor_hours?: number;
+    tinner_labor_hours?: number;
+    electrician_labor_hours?: number;
+    designer_labor_hours?: number;
     discount_value?: number;
     discount_is_percent?: boolean;
     group_name?: string;
@@ -102,7 +140,7 @@ export type UpdateLineItemRequest = {
 export type CatalogTreeNode = {
     node_id: string | null;
     name: string;
-    items: Array<{ id: string; name: string; unit_price?: string; labor_hours?: string }>;
+    items: Array<{ id: string; name: string; unit_price?: string; labor_hours?: string; labor_trade?: string }>;
 };
 
 export type CatalogItem = {
@@ -110,6 +148,7 @@ export type CatalogItem = {
     name: string;
     unit_price: string;
     labor_hours: string;
+    labor_trade?: string;
 };
 
 // ─── Templates ───

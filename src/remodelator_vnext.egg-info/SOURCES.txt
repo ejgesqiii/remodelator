@@ -12,6 +12,7 @@ src/remodelator/application/llm_policy.py
 src/remodelator/application/migration_reconcile.py
 src/remodelator/application/serializers.py
 src/remodelator/application/service.py
+src/remodelator/application/stripe_service.py
 src/remodelator/domain/__init__.py
 src/remodelator/domain/pricing.py
 src/remodelator/infra/__init__.py
@@ -74,9 +75,12 @@ tests/test_cli_flow.py
 tests/test_db_sqlite_runtime.py
 tests/test_llm_policy.py
 tests/test_llm_service.py
+tests/test_markdown_links_script.py
 tests/test_migration_tools.py
 tests/test_openrouter_parser.py
 tests/test_operation_lock.py
 tests/test_pricing.py
 tests/test_router_utils.py
+tests/test_stripe_scripts.py
+tests/test_stripe_service.py
 tests/test_web_shell.py
