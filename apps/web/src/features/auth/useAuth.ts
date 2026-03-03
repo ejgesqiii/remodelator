@@ -29,6 +29,19 @@ export function useAuth() {
         },
     });
 
+    const requestPasswordResetMutation = useMutation({
+        mutationFn: (email: string) => authApi.requestPasswordReset({ email }),
+    });
+
+    const confirmPasswordResetMutation = useMutation({
+        mutationFn: (payload: { token: string; new_password: string }) => authApi.confirmPasswordReset(payload),
+        onSuccess: (res) => {
+            setAuth(res);
+            clearAdminApiKey();
+            navigate('/');
+        },
+    });
+
     const logout = useCallback(() => {
         clearAuth();
         clearAdminApiKey();
@@ -40,6 +53,8 @@ export function useAuth() {
         user: token ? { userId, email, role } : null,
         login: loginMutation,
         register: registerMutation,
+        requestPasswordReset: requestPasswordResetMutation,
+        confirmPasswordReset: confirmPasswordResetMutation,
         logout,
     };
 }

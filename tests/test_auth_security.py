@@ -76,3 +76,31 @@ def test_foreign_key_enforced_for_estimate_user() -> None:
         with session_scope() as session:
             session.add(Estimate(id=str(uuid4()), user_id=str(uuid4()), title="Orphan Estimate"))
             session.flush()
+
+
+def test_password_reset_flow_updates_password_and_invalidates_token() -> None:
+    email = f"reset-{uuid4()}@example.com"
+    old_password = "oldpw123"
+    new_password = "newpw123"
+
+    with session_scope() as session:
+        service.register_user(session, email=email, password=old_password, full_name="Reset User")
+        request_result = service.request_password_reset(session, email=email)
+        reset_token = request_result["reset_token"]
+        assert reset_token
+
+    with session_scope() as session:
+        auth = service.reset_password_with_token(session, token=reset_token or "", new_password=new_password)
+        assert auth["email"] == email
+
+    with session_scope() as session:
+        login = service.login_user(session, email=email, password=new_password)
+        assert login["email"] == email
+        with pytest.raises(ValueError, match="invalid or expired"):
+            service.reset_password_with_token(session, token=reset_token or "", new_password="another123")
+
+
+def test_password_reset_request_does_not_fail_for_unknown_email() -> None:
+    with session_scope() as session:
+        payload = service.request_password_reset(session, email=f"unknown-{uuid4()}@example.com")
+        assert payload["message"].startswith("If an account exists")

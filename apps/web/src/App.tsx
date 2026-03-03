@@ -11,6 +11,12 @@ import { AdminGuard } from '@/features/auth/AdminGuard';
 const AppShell = lazy(() => import('@/components/layout/AppShell').then((m) => ({ default: m.AppShell })));
 const LoginPage = lazy(() => import('@/features/auth/LoginPage').then((m) => ({ default: m.LoginPage })));
 const RegisterPage = lazy(() => import('@/features/auth/RegisterPage').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() =>
+    import('@/features/auth/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage }))
+);
+const ResetPasswordPage = lazy(() =>
+    import('@/features/auth/ResetPasswordPage').then((m) => ({ default: m.ResetPasswordPage }))
+);
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
 const EstimateListPage = lazy(() =>
     import('@/features/estimates/EstimateListPage').then((m) => ({ default: m.EstimateListPage }))
@@ -63,6 +69,8 @@ export function App() {
                             {/* Public routes */}
                             <Route path="/login" element={<LoginPage />} />
                             <Route path="/register" element={<RegisterPage />} />
+                            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                            <Route path="/reset-password" element={<ResetPasswordPage />} />
                             <Route path="/proposal/public/:token" element={<PublicProposalPage />} />
 
                             {/* Authenticated routes */}

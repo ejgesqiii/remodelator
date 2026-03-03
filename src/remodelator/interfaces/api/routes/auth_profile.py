@@ -12,6 +12,9 @@ from remodelator.interfaces.api.schemas import LoginRequest
 from remodelator.interfaces.api.schemas import AuthResponse
 from remodelator.interfaces.api.schemas import ProfileResponse
 from remodelator.interfaces.api.schemas import ProfileUpdateRequest
+from remodelator.interfaces.api.schemas import PasswordResetRequest
+from remodelator.interfaces.api.schemas import PasswordResetConfirmRequest
+from remodelator.interfaces.api.schemas import PasswordResetRequestResponse
 from remodelator.interfaces.api.schemas import RegisterRequest
 
 router = APIRouter()
@@ -31,6 +34,24 @@ def auth_login(payload: LoginRequest) -> AuthResponse:
     def action() -> dict[str, str]:
         with session_scope() as session:
             return service.login_user(session, payload.email, payload.password)
+
+    return handle(action)
+
+
+@router.post("/auth/password-reset/request", response_model=PasswordResetRequestResponse)
+def auth_password_reset_request(payload: PasswordResetRequest) -> PasswordResetRequestResponse:
+    def action() -> dict[str, str | None]:
+        with session_scope() as session:
+            return service.request_password_reset(session, payload.email)
+
+    return handle(action)
+
+
+@router.post("/auth/password-reset/confirm", response_model=AuthResponse)
+def auth_password_reset_confirm(payload: PasswordResetConfirmRequest) -> AuthResponse:
+    def action() -> dict[str, str]:
+        with session_scope() as session:
+            return service.reset_password_with_token(session, payload.token, payload.new_password)
 
     return handle(action)
 

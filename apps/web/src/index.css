@@ -378,6 +378,10 @@ body {
   color: var(--color-muted-foreground);
 }
 
+.proposal-section .proposal-subclause {
+  margin-left: 18px;
+}
+
 @media (max-width: 840px) {
   .proposal-section.two-col {
     grid-template-columns: 1fr;

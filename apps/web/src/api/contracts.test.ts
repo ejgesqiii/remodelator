@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { simulateRefund } from './billing';
 import * as client from './client';
+import { confirmPasswordReset, requestPasswordReset } from './auth';
 import { exportEstimate, reorderLineItem } from './estimates';
 import { generateProposalPdf } from './proposals';
 
@@ -46,6 +47,21 @@ describe('api contract payloads', () => {
         expect(postMock).toHaveBeenCalledWith('/billing/simulate-refund', {
             amount: 10,
             details: 'test-refund',
+        });
+    });
+
+    it('sends email when requesting password reset', async () => {
+        await requestPasswordReset({ email: 'reset@example.com' });
+        expect(postMock).toHaveBeenCalledWith('/auth/password-reset/request', {
+            email: 'reset@example.com',
+        });
+    });
+
+    it('sends token and new password when confirming password reset', async () => {
+        await confirmPasswordReset({ token: 'abc123tokenvalue', new_password: 'pw123456' });
+        expect(postMock).toHaveBeenCalledWith('/auth/password-reset/confirm', {
+            token: 'abc123tokenvalue',
+            new_password: 'pw123456',
         });
     });
 });

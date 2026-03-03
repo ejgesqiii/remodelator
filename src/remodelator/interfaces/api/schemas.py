@@ -130,6 +130,21 @@ class LoginRequest(StrictRequestModel):
     password: str = Field(..., min_length=1, max_length=128)
 
 
+class PasswordResetRequest(StrictRequestModel):
+    email: str = Field(..., min_length=5, max_length=255)
+
+
+class PasswordResetConfirmRequest(StrictRequestModel):
+    token: str = Field(..., min_length=10, max_length=512)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class PasswordResetRequestResponse(BaseModel):
+    message: str
+    reset_token: str | None = None
+    reset_path: str | None = None
+
+
 class ProfileUpdateRequest(StrictRequestModel):
     full_name: str | None = None
     labor_rate: Decimal | None = None

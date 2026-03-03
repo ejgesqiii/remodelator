@@ -8,12 +8,11 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { SkeletonCard } from '@/components/feedback/LoadingSkeleton';
 import {
     LayoutDashboard, ClipboardList, Package, CreditCard,
-    Plus, ArrowRight, Clock, AlertCircle,
+    Plus, ArrowRight, Clock,
 } from 'lucide-react';
 import { formatDate } from '@/lib/formatters';
 import * as estimatesApi from '@/api/estimates';
 import * as billingApi from '@/api/billing';
-import * as llmApi from '@/api/llm';
 
 export function DashboardPage() {
     const { data: estimates = [], isLoading: estimatesLoading } = useQuery({
@@ -24,12 +23,6 @@ export function DashboardPage() {
     const { data: subscription } = useQuery({
         queryKey: ['billing-subscription'],
         queryFn: billingApi.getSubscriptionState,
-    });
-
-    const { data: llmStatus } = useQuery({
-        queryKey: ['llm-status'],
-        queryFn: llmApi.getLlmStatus,
-        staleTime: 60_000,
     });
 
     const recentEstimates = estimates.slice(0, 5);
@@ -59,21 +52,6 @@ export function DashboardPage() {
                         value={subscription?.active ? 'Active' : 'Inactive'}
                         icon={CreditCard}
                     />
-                </div>
-            )}
-
-            {/* System status */}
-            {(llmStatus?.blocker_reason || (subscription && !subscription.active)) && (
-                <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning-muted px-4 py-3 text-sm">
-                    <AlertCircle size={18} className="mt-0.5 shrink-0 text-warning" />
-                    <div className="space-y-1">
-                        {llmStatus?.blocker_reason && (
-                            <p className="text-warning">LLM: {llmStatus.blocker_reason}</p>
-                        )}
-                        {subscription && !subscription.active && (
-                            <p className="text-warning">Subscription: {subscription.status}</p>
-                        )}
-                    </div>
                 </div>
             )}
 

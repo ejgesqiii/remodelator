@@ -2,6 +2,9 @@
 export type LoginRequest = { email: string; password: string };
 export type RegisterRequest = { email: string; password: string; full_name: string };
 export type AuthResponse = { user_id: string; email: string; role: string; session_token: string };
+export type PasswordResetRequest = { email: string };
+export type PasswordResetConfirmRequest = { token: string; new_password: string };
+export type PasswordResetRequestResponse = { message: string; reset_token?: string | null; reset_path?: string | null };
 
 // ─── Profile ───
 export type UserProfile = {

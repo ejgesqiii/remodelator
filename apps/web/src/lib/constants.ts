@@ -3,6 +3,8 @@ export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 export const ROUTES = {
     login: '/login',
     register: '/register',
+    forgotPassword: '/forgot-password',
+    resetPassword: '/reset-password',
     dashboard: '/',
     estimates: '/estimates',
     estimateNew: '/estimates/new',

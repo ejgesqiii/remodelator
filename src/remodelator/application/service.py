@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import secrets
 from html import escape
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_UP
@@ -53,6 +54,7 @@ from remodelator.infra.models import (
     Estimate,
     EstimateLineItem,
     IdempotencyRecord,
+    PasswordResetToken,
     Template,
     TemplateLineItem,
     User,
@@ -81,6 +83,7 @@ def _normalize_whole_quantity(quantity: Decimal) -> Decimal:
 
 
 LABOR_TRADES = {"remodeler", "plumber", "tinner", "electrician", "designer"}
+PASSWORD_RESET_TTL_MINUTES = 60
 
 
 def _normalize_labor_trade(labor_trade: str | None) -> str:
@@ -371,6 +374,88 @@ def login_user(session: Session, email: str, password: str) -> dict[str, str]:
     if _is_legacy_sha256_hash(user.password_hash):
         user.password_hash = _hash_password(password_clean)
     _audit(session, user.id, "login", "user", user.id)
+    return {
+        "user_id": user.id,
+        "email": user.email,
+        "role": role_for_email(user.email),
+        "session_token": _issue_session_token(user.id),
+    }
+
+
+def request_password_reset(session: Session, email: str) -> dict[str, str | None]:
+    email_clean = email.strip().lower()
+    user = session.execute(select(User).where(User.email == email_clean)).scalar_one_or_none()
+    payload: dict[str, str | None] = {
+        "message": "If an account exists for that email, a reset link has been generated.",
+        "reset_token": None,
+        "reset_path": None,
+    }
+    if not user:
+        return payload
+
+    now = datetime.now(timezone.utc)
+    active_tokens = session.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.expires_at > now,
+        )
+    ).scalars().all()
+    for row in active_tokens:
+        row.used_at = now
+
+    raw_token = secrets.token_urlsafe(32)
+    hashed = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+    reset_row = PasswordResetToken(
+        id=_uid(),
+        user_id=user.id,
+        token_hash=hashed,
+        expires_at=now + timedelta(minutes=PASSWORD_RESET_TTL_MINUTES),
+    )
+    session.add(reset_row)
+    _audit(session, user.id, "password.reset.request", "user", user.id)
+
+    if get_settings().app_env in {"local", "dev", "development", "test"}:
+        payload["reset_token"] = raw_token
+        payload["reset_path"] = f"/reset-password?token={raw_token}"
+    return payload
+
+
+def reset_password_with_token(session: Session, token: str, new_password: str) -> dict[str, str]:
+    raw = token.strip()
+    if not raw:
+        raise ValueError("Reset token is required.")
+    password_clean = _normalize_password(new_password)
+    hashed = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    now = datetime.now(timezone.utc)
+    row = session.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == hashed,
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.expires_at > now,
+        )
+    ).scalar_one_or_none()
+    if not row:
+        raise ValueError("Reset token is invalid or expired.")
+
+    user = session.get(User, row.user_id)
+    if not user:
+        raise ValueError("Reset token is invalid or expired.")
+
+    user.password_hash = _hash_password(password_clean)
+    row.used_at = now
+
+    other_tokens = session.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.id != row.id,
+        )
+    ).scalars().all()
+    for other in other_tokens:
+        other.used_at = now
+
+    _audit(session, user.id, "password.reset.complete", "user", user.id)
     return {
         "user_id": user.id,
         "email": user.email,
@@ -1404,6 +1489,39 @@ def _render_proposal_html_from_data(data: dict[str, object]) -> str:
     if not rows:
         rows = '<tr><td colspan="4" class="empty">No line items</td></tr>'
 
+    legacy_disclaimers = """
+      <div class="proposal-section terms">
+        <h3>General Conditions and Disclaimers</h3>
+        <p>The following items are included to describe general conditions and disclaimers for typical construction projects.</p>
+        <p>1. This proposal includes all items listed in this proposal, but does not include any items unforeseen or not visible during site inspection (items behind walls, under floors, below grade or otherwise not known at time of inspection).</p>
+        <p>2. This proposal includes items listed. The prices include labor and materials and are based on site visit. Prices may change for the following reasons:</p>
+        <p class="proposal-subclause">a. Owner changes in scope or selections.</p>
+        <p class="proposal-subclause">b. Inspection and permitting process (Historical Society approvals are not included) and scope created by building inspectors.</p>
+        <p class="proposal-subclause">c. Unforeseen conditions, not found at the time of proposal inspection.</p>
+        <p class="proposal-subclause">d. Raw materials price escalations if past 30 days of proposal.</p>
+        <p>3. Any agreed upon additional work will proceed with the signed consent of the owner with a known amount in the form of a change order with 50% of the change order as a deposit, with the balance upon completion. Or, approval based on time and materials may be required if the work involves unknown scope.</p>
+        <p>4. If changes in the contract involves money or scope disputes, the work will stop until the dispute is resolved.</p>
+        <p>5. Remodeling projects are dusty by nature. Kain Construction LLC will take all necessary precautions to control dust, but is not responsible for migrating dust as part of the work. The owner should cover furniture, computers and other valuable items to avoid dust.</p>
+        <p>6. Kain Construction LLC will work with subcontractors recommended by the owner, or self performed work. We cannot, however, commit to schedules or quality of the subcontractors. Self-performed work requires the owner to pull permits and get liability insurance to cover the project.</p>
+        <p>7. Items shown on proposal with "allow" are allowances. These numbers are subject to change based on choices, field conditions, and market pricing.</p>
+        <p>8. We have liability insurance to cover items over which we have "care, custody and control." We cannot allow children or pets in the work area, as we cannot predict what they will do. This also applies to people not directly involved in the construction process, or non-owners.</p>
+        <p>9. When the construction project starts, all items such as jewelry or other valuable items that the owner perceives could be at risk should be stored in a locked area, and not available to construction personnel. Kain Construction will not accept responsibility for stolen items that cannot be proven and prosecuted.</p>
+        <p>10. Kain Construction will not assume responsibility for, or insure, people not under contract with the homeowner.</p>
+        <p>11. These measures are for the protection of the homeowner, and Kain Construction.</p>
+        <p>Understanding the general conditions and disclaimers mentioned above, I agree to have Kain Construction LLC furnish and install the items in this proposal with a one year warranty against materials and workmanship. Normal wear and tear will be repaired at time and materials billing.</p>
+      </div>
+      <div class="proposal-section">
+        <p><strong>Terms:</strong> ________________________________</p>
+      </div>
+      <div class="proposal-section">
+        <p><strong>This proposal submitted by:</strong> ____________________________   <strong>Date:</strong> ____________</p>
+      </div>
+      <div class="proposal-section">
+        <p><strong>This proposal accepted by:</strong> _____________________________   <strong>Date:</strong> ____________</p>
+        <p><strong>Name:</strong> _________________________________   <strong>Date:</strong> ____________</p>
+      </div>
+    """
+
     return f"""
     <div class="proposal-doc">
       <div class="proposal-head">
@@ -1449,11 +1567,7 @@ def _render_proposal_html_from_data(data: dict[str, object]) -> str:
         <div class="line grand"><span>Total</span><strong>${escape(str(data["total"]))}</strong></div>
       </div>
 
-      <div class="proposal-section terms">
-        <h3>Terms</h3>
-        <p>Pricing includes labor and materials for listed items unless noted otherwise.</p>
-        <p>Any changes in scope, unforeseen conditions, or owner-requested revisions may change final price.</p>
-      </div>
+      {legacy_disclaimers}
     </div>
     """
 
@@ -1560,9 +1674,73 @@ def _generate_proposal_pdf_bytes(data: dict[str, object]) -> bytes:
     ]))
     story.append(totals_table)
     story.append(Spacer(1, 16))
-    story.append(Paragraph("Terms", styles["Heading3"]))
-    story.append(Paragraph("Pricing includes labor and materials for listed items unless noted otherwise.", styles["Normal"]))
-    story.append(Paragraph("Any changes in scope, unforeseen conditions, or owner-requested revisions may change final price.", styles["Normal"]))
+    story.append(Paragraph("General Conditions and Disclaimers", styles["Heading3"]))
+    story.append(Paragraph(
+        "The following items are included to describe general conditions and disclaimers for typical construction projects.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "1. This proposal includes all items listed in this proposal, but does not include any items unforeseen or not visible during site inspection (items behind walls, under floors, below grade or otherwise not known at time of inspection).",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "2. This proposal includes items listed. The prices include labor and materials and are based on site visit. Prices may change for the following reasons:",
+        styles["Normal"],
+    ))
+    story.append(Paragraph("a. Owner changes in scope or selections.", styles["Normal"]))
+    story.append(Paragraph(
+        "b. Inspection and permitting process (Historical Society approvals are not included) and scope created by building inspectors.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph("c. Unforeseen conditions, not found at the time of proposal inspection.", styles["Normal"]))
+    story.append(Paragraph("d. Raw materials price escalations if past 30 days of proposal.", styles["Normal"]))
+    story.append(Paragraph(
+        "3. Any agreed upon additional work will proceed with the signed consent of the owner with a known amount in the form of a change order with 50% of the change order as a deposit, with the balance upon completion. Or, approval based on time and materials may be required if the work involves unknown scope.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "4. If changes in the contract involves money or scope disputes, the work will stop until the dispute is resolved.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "5. Remodeling projects are dusty by nature. Kain Construction LLC will take all necessary precautions to control dust, but is not responsible for migrating dust as part of the work. The owner should cover furniture, computers and other valuable items to avoid dust.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "6. Kain Construction LLC will work with subcontractors recommended by the owner, or self performed work. We cannot, however, commit to schedules or quality of the subcontractors. Self-performed work requires the owner to pull permits and get liability insurance to cover the project.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        '7. Items shown on proposal with "allow" are allowances. These numbers are subject to change based on choices, field conditions, and market pricing.',
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        '8. We have liability insurance to cover items over which we have "care, custody and control." We cannot allow children or pets in the work area, as we cannot predict what they will do. This also applies to people not directly involved in the construction process, or non-owners.',
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "9. When the construction project starts, all items such as jewelry or other valuable items that the owner perceives could be at risk should be stored in a locked area, and not available to construction personnel. Kain Construction will not accept responsibility for stolen items that cannot be proven and prosecuted.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "10. Kain Construction will not assume responsibility for, or insure, people not under contract with the homeowner.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "11. These measures are for the protection of the homeowner, and Kain Construction.",
+        styles["Normal"],
+    ))
+    story.append(Paragraph(
+        "Understanding the general conditions and disclaimers mentioned above, I agree to have Kain Construction LLC furnish and install the items in this proposal with a one year warranty against materials and workmanship. Normal wear and tear will be repaired at time and materials billing.",
+        styles["Normal"],
+    ))
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("Terms: ________________________________", styles["Normal"]))
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("This proposal submitted by: ____________________________   Date: ____________", styles["Normal"]))
+    story.append(Spacer(1, 8))
+    story.append(Paragraph("This proposal accepted by: _____________________________   Date: ____________", styles["Normal"]))
+    story.append(Paragraph("Name: _________________________________   Date: ____________", styles["Normal"]))
 
     doc.build(story)
     return buffer.getvalue()
