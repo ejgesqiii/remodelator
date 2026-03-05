@@ -2,7 +2,7 @@
 
 API-first rebuild of Remodelator focused on a full local functional demo first, then production hardening.
 
-## Verified Status (February 25, 2026)
+## Verified Status (March 5, 2026)
 
 - backend regression suite is green (`pytest -q`).
 - Stripe-focused regression suites are green: `tests/test_billing_runtime.py`, `tests/test_api_flow.py`, `tests/test_cli_flow.py`
@@ -72,6 +72,7 @@ Project support:
 - `archive/docs/BLOCKERS_AND_ROADMAP.md`: historical blocker matrix snapshot
 - `archive/docs/NON_BLOCKER_COMPLETION.md`: historical completion scorecard
 - `ACTION_PLAN.md`: exhaustive phased roadmap
+- `DEPLOYMENT_PLAN.md`: practical production deployment blueprint (Firebase web + Hetzner API)
 
 Archive artifacts (non-authoritative, historical only):
 - `_notes_/*` is retained for background context and does not define current build scope/spec.
@@ -267,6 +268,7 @@ Production-safe settings:
 export REMODELATOR_ENV='production'
 export REMODELATOR_SESSION_SECRET='<strong-random-secret>'
 export REMODELATOR_SESSION_TTL_SECONDS='43200'
+export REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS='3600'
 export REMODELATOR_ALLOW_LEGACY_USER_HEADER='false'
 export REMODELATOR_ADMIN_USER_EMAILS='owner@example.com,ops@example.com'
 export REMODELATOR_API_LIMIT_MAX='500'
@@ -390,6 +392,7 @@ Billing simulation behavior:
 - live Stripe usage charges include a `return_url` for PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` with CORS/local fallback).
 - `/billing/simulate-event`: Stripe-like lifecycle/webhook simulation endpoint (`payment_method_attached`, `checkout_completed`, `usage_charge`, `invoice_paid`, `invoice_payment_failed`, `subscription_canceled`).
 - `/admin/audit-prune`: deletes audit rows older than configured retention window (`REMODELATOR_AUDIT_RETENTION_DAYS`, optional per-call override, supports `dry_run=true` preview mode).
+- public proposal share tokens use signed TTL-limited tokens (`REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS`, default `3600`, minimum `300`).
 
 ## Feasibility and External Inputs
 

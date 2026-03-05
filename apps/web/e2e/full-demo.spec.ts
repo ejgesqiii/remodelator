@@ -38,12 +38,14 @@ test("full local demo workflow", async ({ page }) => {
   await expect(page.getByText("Line item added")).toBeVisible();
 
   // Recalculate totals and verify item is visible.
+  await page.getByRole("button", { name: "Actions" }).click();
   await page.getByRole("button", { name: "Recalculate" }).click();
   await expect(page.getByText("Totals recalculated")).toBeVisible();
   await expect(page.getByRole("button", { name: "Countertop Install", exact: true })).toBeVisible();
 
   // Proposal view.
-  await page.getByRole("link", { name: "View Proposal" }).click();
+  await page.getByRole("button", { name: "Actions" }).click();
+  await page.getByRole("button", { name: "View Proposal" }).click();
   await expect(page.getByRole("heading", { name: "Proposal" })).toBeVisible();
 
   // Billing actions.

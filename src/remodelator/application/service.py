@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import secrets
 from html import escape
 from datetime import datetime, timedelta, timezone
@@ -84,6 +85,8 @@ def _normalize_whole_quantity(quantity: Decimal) -> Decimal:
 
 LABOR_TRADES = {"remodeler", "plumber", "tinner", "electrician", "designer"}
 PASSWORD_RESET_TTL_MINUTES = 60
+PUBLIC_PROPOSAL_DEFAULT_TTL_SECONDS = 3600
+PUBLIC_PROPOSAL_MIN_TTL_SECONDS = 300
 
 
 def _normalize_labor_trade(labor_trade: str | None) -> str:
@@ -91,6 +94,15 @@ def _normalize_labor_trade(labor_trade: str | None) -> str:
     if trade not in LABOR_TRADES:
         raise ValueError(f"Unsupported labor trade `{trade}`.")
     return trade
+
+
+def _public_proposal_ttl_seconds() -> int:
+    raw = os.getenv("REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS", str(PUBLIC_PROPOSAL_DEFAULT_TTL_SECONDS)).strip()
+    try:
+        ttl = int(raw)
+    except Exception:
+        ttl = PUBLIC_PROPOSAL_DEFAULT_TTL_SECONDS
+    return max(PUBLIC_PROPOSAL_MIN_TTL_SECONDS, ttl)
 
 
 def _normalize_labor_hours(value: Decimal | None, field_name: str) -> Decimal:
@@ -1256,7 +1268,7 @@ def list_templates(session: Session, user_id: str, limit: int = 100) -> list[dic
 
 
 def apply_template_to_estimate(session: Session, user_id: str, template_id: str, estimate_id: str) -> dict[str, object]:
-    user = _require_user(session, user_id)
+    _require_user(session, user_id)
     template = session.get(Template, template_id)
     est = session.get(Estimate, estimate_id)
     if not template or template.user_id != user_id:
@@ -1769,7 +1781,7 @@ def create_public_proposal_token(session: Session, user_id: str, estimate_id: st
     est = session.get(Estimate, estimate_id)
     if not est or est.user_id != user_id:
         raise ValueError("Estimate not found.")
-    token = _issue_session_token(f"proposal:{estimate_id}:{user_id}")
+    token = _issue_session_token(f"proposal:{estimate_id}:{user_id}", ttl_seconds=_public_proposal_ttl_seconds())
     _audit(session, user_id, "proposal.share.create", "estimate", estimate_id)
     return {"token": token, "path": f"/proposal/public/{token}"}
 

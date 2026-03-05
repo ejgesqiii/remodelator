@@ -1,6 +1,6 @@
 # Remodelator vNext Architecture
 
-Last updated: February 25, 2026
+Last updated: March 5, 2026
 Audience: technical founder, lead engineer, implementation team
 Spec authority: current implementation + active docs in root/docs (`notes/*` treated as historical archive only)
 
@@ -192,6 +192,7 @@ Important env vars:
 - Auth
   - `REMODELATOR_SESSION_SECRET`
   - `REMODELATOR_SESSION_TTL_SECONDS`
+  - `REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS` (signed share-link TTL in seconds; default `3600`, minimum `300`)
   - `REMODELATOR_ALLOW_LEGACY_USER_HEADER`
   - `REMODELATOR_ADMIN_API_KEY`
   - `REMODELATOR_ADMIN_USER_EMAILS`
@@ -223,7 +224,9 @@ Important env vars:
   - `OPENROUTER_RETRY_BACKOFF_SECONDS`
   - `REMODELATOR_LLM_PRICE_CHANGE_MAX_PCT`
 
-## 10) API Reference (Exhaustive)
+## 10) API Reference (Key Flows)
+
+For the authoritative exhaustive endpoint inventory, use `docs/API_ENDPOINTS_GENERATED.md` (generated from FastAPI route registry).
 
 Auth requirement legend:
 - `Public`: no user token needed
@@ -244,6 +247,8 @@ Auth requirement legend:
 |---|---|---|---|
 | POST | `/auth/register` | Public | Create user + return session token |
 | POST | `/auth/login` | Public | Login + return session token |
+| POST | `/auth/password-reset/request` | Public | Request reset token (delivery currently deferred for production) |
+| POST | `/auth/password-reset/confirm` | Public | Complete password reset with valid token |
 | GET | `/profile` | User | Read profile defaults |
 | PUT | `/profile` | User | Update profile defaults |
 
@@ -296,6 +301,9 @@ Auth requirement legend:
 |---|---|---|---|
 | GET | `/proposals/{estimate_id}/render` | User | Render proposal text |
 | POST | `/proposals/{estimate_id}/pdf` | User | Generate proposal PDF (data-dir constrained path) |
+| POST | `/proposals/{estimate_id}/share` | User | Generate signed public proposal token/link |
+| GET | `/proposals/public/{token}/render` | Public | Render proposal from signed token |
+| GET | `/proposals/public/{token}/pdf` | Public | Return proposal PDF from signed token |
 
 ### Billing simulation
 

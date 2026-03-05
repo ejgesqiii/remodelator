@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import hashlib
+import json
 from decimal import Decimal
 from uuid import uuid4
 
@@ -11,6 +13,11 @@ from remodelator.application import service
 from remodelator.infra.db import session_scope
 from remodelator.infra.models import Estimate
 from remodelator.infra.models import User
+
+
+@pytest.fixture(autouse=True)
+def _init_db_for_auth_security_tests() -> None:
+    service.init_db()
 
 
 def test_register_uses_strong_password_hash() -> None:
@@ -104,3 +111,36 @@ def test_password_reset_request_does_not_fail_for_unknown_email() -> None:
     with session_scope() as session:
         payload = service.request_password_reset(session, email=f"unknown-{uuid4()}@example.com")
         assert payload["message"].startswith("If an account exists")
+
+
+def _decode_session_payload(token: str) -> dict[str, object]:
+    payload_b64 = token.split(".", 1)[0]
+    padding = "=" * ((4 - len(payload_b64) % 4) % 4)
+    return json.loads(base64.urlsafe_b64decode(payload_b64 + padding).decode("utf-8"))
+
+
+def test_public_proposal_token_uses_configurable_ttl(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REMODELATOR_ENV", "local")
+    monkeypatch.setenv("REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS", "600")
+    email = f"proposal-{uuid4()}@example.com"
+
+    with session_scope() as session:
+        auth = service.register_user(session, email=email, password="pw123456", full_name="Proposal User")
+        estimate = service.create_estimate(session, auth["user_id"], title="Proposal TTL Estimate")
+        share = service.create_public_proposal_token(session, auth["user_id"], estimate["id"])
+        payload = _decode_session_payload(share["token"])
+        assert payload["uid"] == f"proposal:{estimate['id']}:{auth['user_id']}"
+        assert int(payload["exp"]) - int(payload["iat"]) == 600
+
+
+def test_public_proposal_token_ttl_has_safe_minimum(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REMODELATOR_ENV", "local")
+    monkeypatch.setenv("REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS", "1")
+    email = f"proposal-min-{uuid4()}@example.com"
+
+    with session_scope() as session:
+        auth = service.register_user(session, email=email, password="pw123456", full_name="Proposal Min User")
+        estimate = service.create_estimate(session, auth["user_id"], title="Proposal Min TTL Estimate")
+        share = service.create_public_proposal_token(session, auth["user_id"], estimate["id"])
+        payload = _decode_session_payload(share["token"])
+        assert int(payload["exp"]) - int(payload["iat"]) == 300

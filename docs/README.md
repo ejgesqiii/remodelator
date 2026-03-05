@@ -30,6 +30,7 @@ npm ci --prefix apps/web
 - [SQLite Operations Runbook](SQLITE_OPERATIONS_RUNBOOK.md)
 - [Launch Evidence Checklist](LAUNCH_EVIDENCE_CHECKLIST.md)
 - [Deployment Hardening Checklist](DEPLOYMENT_HARDENING_CHECKLIST.md)
+- [Deployment Plan (High-Level)](../DEPLOYMENT_PLAN.md)
 
 ## Historical Execution Logs (Reference Only)
 

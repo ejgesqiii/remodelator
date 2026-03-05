@@ -25,7 +25,18 @@ def auth_for_path(path: str) -> str:
         return "Public (Stripe signature)"
     if path in {"/db/migrate", "/db/seed"}:
         return "Public (local/dev only)"
-    if path in {"/health", "/auth/register", "/auth/login", "/pricing/llm/status", "/catalog/tree", "/catalog/search"}:
+    if path.startswith("/proposals/public/"):
+        return "Public"
+    if path in {
+        "/health",
+        "/auth/register",
+        "/auth/login",
+        "/auth/password-reset/request",
+        "/auth/password-reset/confirm",
+        "/pricing/llm/status",
+        "/catalog/tree",
+        "/catalog/search",
+    }:
         return "Public"
     return "User (`x-session-token`)"
 

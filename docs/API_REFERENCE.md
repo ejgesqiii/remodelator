@@ -1,6 +1,6 @@
 # API Reference (Human Maintained)
 
-Last updated: February 25, 2026
+Last updated: March 5, 2026
 
 This document covers request/response behavior and integration guidance.
 For an always-current endpoint list generated from source, see [API_ENDPOINTS_GENERATED.md](API_ENDPOINTS_GENERATED.md).
@@ -46,11 +46,37 @@ For an always-current endpoint list generated from source, see [API_ENDPOINTS_GE
   - `role`
   - `session_token`
 
+### Password reset
+- `POST /auth/password-reset/request`
+- Request:
+  - `email` string
+- Response:
+  - `message`
+  - `reset_token` (local/dev/test only)
+  - `reset_path` (local/dev/test only)
+
+- `POST /auth/password-reset/confirm`
+- Request:
+  - `token` string
+  - `new_password` string (8-128)
+- Response:
+  - `user_id`
+  - `email`
+  - `role`
+  - `session_token`
+- Production note:
+  - token delivery infrastructure is deferred; production does not return `reset_token`/`reset_path` payload values.
+
 ### Profile update
 - `PUT /profile`
 - Request fields (all optional):
   - `full_name`
   - `labor_rate`
+  - `remodeler_labor_rate`
+  - `plumber_labor_rate`
+  - `tinner_labor_rate`
+  - `electrician_labor_rate`
+  - `designer_labor_rate`
   - `item_markup_pct`
   - `estimate_markup_pct`
   - `tax_rate_pct`
@@ -85,6 +111,17 @@ For an always-current endpoint list generated from source, see [API_ENDPOINTS_GE
   - `discount_value`
   - `discount_is_percent`
   - `group_name`
+
+### Proposals
+- `GET /proposals/{estimate_id}/render` (user session)
+- `POST /proposals/{estimate_id}/share` (user session)
+  - returns signed public token and app path
+- `POST /proposals/{estimate_id}/pdf` (user session)
+- `GET /proposals/{estimate_id}/pdf/download` (user session)
+- `GET /proposals/public/{token}/render` (public)
+- `GET /proposals/public/{token}/pdf` (public)
+- Share-token behavior:
+  - signed token is TTL-limited via `REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS` (default `3600`, minimum `300`).
 
 ### Catalog browse + admin mutations
 - `GET /catalog/tree` (public read)
@@ -219,6 +256,7 @@ Common success payload patterns:
    - `stripe` provider executes live billing flows and fails loud when required credentials are missing or invalid.
    - live Stripe usage charges include `return_url` in PaymentIntent confirmation (`STRIPE_PAYMENT_RETURN_URL` override, otherwise CORS/local fallback).
 12. `POST /admin/demo-reset` uses a shared rebuild path (`service.rebuild_demo_database`) that is also used by CLI reset commands to keep reset/reseed behavior consistent.
+13. Public proposal token TTL is configurable via `REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS`.
 
 ## Endpoint Inventory
 

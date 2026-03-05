@@ -1,6 +1,6 @@
 # Remodelator vNext — Frontend Handoff & Future Roadmap
 
-**Last Updated:** February 25, 2026
+**Last Updated:** March 5, 2026
 
 This document summarizes the current frontend implementation state, how to run and validate it, and what remains for further production hardening.
 
@@ -89,8 +89,8 @@ Current validated state:
 
 Potential next production hardening work:
 
-1. **Forgot Password Flow:** 
-   Currently deferred across both the UI and Backend because an email delivery provider (like SendGrid or AWS SES) has not been integrated yet. Once integrated, the backend requires a password reset token endpoint, and the UI will need the respective views.
+1. **Password Reset Delivery (Deferred):** 
+   Password reset request/confirm endpoints and UI views are implemented. Production delivery of reset links/tokens via email/SMS provider (e.g., SendGrid/SES) is still deferred. Until integrated, keep forgot-password production exposure aligned with this limitation.
    
 2. **Stripe Operational Tooling:** 
    Live Stripe adapter/webhook support is implemented and validated in sandbox. Remaining work is production operations hardening (alerts, runbooks, key rotation cadence, incident handling playbooks).

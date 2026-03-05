@@ -1,6 +1,6 @@
 # Technical Decisions (ADR-lite)
 
-Last updated: February 25, 2026
+Last updated: March 5, 2026
 
 ## D1: API-First Monolith for vNext
 
@@ -263,6 +263,20 @@ Why:
 Implication:
 - Any quality gate change must remain CI-safe.
 - SQLite operational regressions surface early through CI failure rather than late release-stage checks.
+
+## D20: Public Proposal Links Are Signed and TTL-Bounded
+
+Decision:
+- Public proposal share links use signed tokens with configurable TTL.
+- TTL is controlled by `REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS` with a safe minimum floor.
+
+Why:
+- Limits exposure window for bearer link leakage.
+- Keeps share behavior simple without introducing persistent revocation state in this phase.
+
+Implication:
+- Public proposal access is time-bounded by default.
+- If stricter controls are required, add explicit server-side token revocation/rotation in a future phase.
 
 ## Open Decisions (External Input Required)
 

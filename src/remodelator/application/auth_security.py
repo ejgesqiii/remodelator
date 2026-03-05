@@ -51,14 +51,15 @@ def normalize_password(password: str) -> str:
     return trimmed
 
 
-def issue_session_token(user_id: str) -> str:
+def issue_session_token(user_id: str, ttl_seconds: int | None = None) -> str:
     settings = get_settings()
     if settings.app_env in {"production", "prod"} and settings.session_secret == "local-session-secret-change-me":
         raise ValueError("REMODELATOR_SESSION_SECRET must be set in production.")
+    token_ttl_seconds = settings.session_ttl_seconds if ttl_seconds is None else max(1, int(ttl_seconds))
     return create_session_token(
         user_id=user_id,
         secret=settings.session_secret,
-        ttl_seconds=settings.session_ttl_seconds,
+        ttl_seconds=token_ttl_seconds,
     )
 
 

@@ -1,6 +1,6 @@
 # Deployment Hardening Checklist
 
-Last updated: February 25, 2026
+Last updated: March 5, 2026
 Scope: production deployment baseline (Stripe integration validated in sandbox; production cutover remains credential/ops-driven).
 
 ## 1) Environment and Secrets
@@ -8,6 +8,7 @@ Scope: production deployment baseline (Stripe integration validated in sandbox; 
 - [ ] Set `REMODELATOR_ENV=production`.
 - [ ] Set a strong `REMODELATOR_SESSION_SECRET`.
 - [ ] Set a non-default `REMODELATOR_ADMIN_API_KEY`.
+- [ ] Set `REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS` (recommended `900`-`3600`).
 - [ ] Keep `REMODELATOR_ALLOW_LEGACY_USER_HEADER=false`.
 - [ ] Set explicit `REMODELATOR_CORS_ORIGINS`.
 - [ ] Set OpenRouter credentials and model config for required LLM flows.
@@ -56,6 +57,9 @@ Scope: production deployment baseline (Stripe integration validated in sandbox; 
 ## 5) Operational Readiness
 
 - [ ] Ensure structured logs are shipped/retained per org policy.
+- [ ] Password reset decision is explicit for production:
+  - either integrate outbound reset delivery (email/SMS), or
+  - keep forgot-password flow disabled/hidden in production.
 - [ ] Attach latest launch evidence packet:
   - `docs/LAUNCH_EVIDENCE_CHECKLIST.md`
   - `docs/SQLITE_OPERATIONS_RUNBOOK.md`

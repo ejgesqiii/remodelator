@@ -1,6 +1,6 @@
 # Remodelator vNext Action Plan
 
-Last updated: February 25, 2026  
+Last updated: March 5, 2026  
 Mode: API-first product build, polished React UI, full local functional demo first, production readiness second
 Spec authority: current codebase + active docs in root/docs (historical `notes/*` is non-authoritative)
 
@@ -116,9 +116,10 @@ Core runtime knobs:
 Security/auth knobs:
 1. `REMODELATOR_SESSION_SECRET`
 2. `REMODELATOR_SESSION_TTL_SECONDS`
-3. `REMODELATOR_ALLOW_LEGACY_USER_HEADER`
-4. `REMODELATOR_ADMIN_API_KEY`
-5. `REMODELATOR_ADMIN_USER_EMAILS`
+3. `REMODELATOR_PUBLIC_PROPOSAL_TTL_SECONDS`
+4. `REMODELATOR_ALLOW_LEGACY_USER_HEADER`
+5. `REMODELATOR_ADMIN_API_KEY`
+6. `REMODELATOR_ADMIN_USER_EMAILS`
 
 API contract knobs:
 1. `REMODELATOR_API_LIMIT_MAX` (global list endpoint cap)
