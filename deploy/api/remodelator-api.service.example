@@ -1,0 +1,23 @@
+[Unit]
+Description=Remodelator FastAPI service
+After=network.target
+
+[Service]
+Type=simple
+User=remodelator
+Group=remodelator
+WorkingDirectory=/opt/remodelator
+EnvironmentFile=/opt/remodelator/.env.production
+ExecStart=/opt/remodelator/.venv/bin/uvicorn remodelator.interfaces.api.main:app --host 127.0.0.1 --port 8010 --workers 2
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+KillSignal=SIGINT
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/remodelator/data
+
+[Install]
+WantedBy=multi-user.target

@@ -77,6 +77,15 @@ def test_allow_legacy_user_header_defaults_to_false(monkeypatch: pytest.MonkeyPa
     assert settings.allow_legacy_user_header is False
 
 
+def test_production_defaults_to_empty_cors_origins(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REMODELATOR_ENV", "production")
+    monkeypatch.delenv("REMODELATOR_CORS_ORIGINS", raising=False)
+    from remodelator.config import get_settings
+
+    settings = get_settings()
+    assert settings.cors_allowed_origins == ()
+
+
 def test_foreign_key_enforced_for_estimate_user() -> None:
     service.init_db()
     with pytest.raises(IntegrityError):

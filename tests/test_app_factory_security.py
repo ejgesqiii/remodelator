@@ -24,6 +24,19 @@ def test_security_headers_are_added(monkeypatch, tmp_path: Path) -> None:
     assert response.headers["x-frame-options"] == "DENY"
     assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
     assert response.headers["permissions-policy"] == "geolocation=(), microphone=(), camera=()"
+    assert "strict-transport-security" not in response.headers
+
+
+def test_hsts_header_is_added_in_production(monkeypatch, tmp_path: Path) -> None:
+    _set_test_data_dir(monkeypatch, tmp_path)
+    monkeypatch.setenv("REMODELATOR_ENV", "production")
+    monkeypatch.setenv("REMODELATOR_CORS_ORIGINS", "https://app.example.com")
+
+    client = TestClient(create_api_app())
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.headers["strict-transport-security"] == "max-age=31536000; includeSubDomains"
 
 
 def test_cors_allows_configured_origin(monkeypatch, tmp_path: Path) -> None:

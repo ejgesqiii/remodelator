@@ -50,11 +50,14 @@ def _include_traceback_in_response(app_env: str) -> bool:
     return _env_bool("REMODELATOR_API_INCLUDE_TRACEBACK", default_value)
 
 
-def _security_headers(response: Response) -> None:
+def _security_headers(response: Response, app_env: str) -> None:
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    if app_env in {"production", "prod"}:
+        # HSTS is only meaningful over HTTPS and is intended for production deployments.
+        response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 
 
 def _request_id_from_headers(request: Request) -> str:
@@ -219,7 +222,7 @@ def create_api_app() -> FastAPI:
         )
         response = JSONResponse(status_code=exc.status_code, content=payload)
         response.headers["X-Request-ID"] = request_id
-        _security_headers(response)
+        _security_headers(response, settings.app_env)
         return response
 
     @app.exception_handler(RequestValidationError)
@@ -233,7 +236,7 @@ def create_api_app() -> FastAPI:
         )
         response = JSONResponse(status_code=422, content=payload)
         response.headers["X-Request-ID"] = request_id
-        _security_headers(response)
+        _security_headers(response, settings.app_env)
         return response
 
     @app.exception_handler(Exception)
@@ -251,7 +254,7 @@ def create_api_app() -> FastAPI:
             payload["error"]["traceback"] = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
         response = JSONResponse(status_code=500, content=payload)
         response.headers["X-Request-ID"] = request_id
-        _security_headers(response)
+        _security_headers(response, settings.app_env)
         return response
 
     @app.middleware("http")
@@ -279,7 +282,7 @@ def create_api_app() -> FastAPI:
                 response = JSONResponse(status_code=429, content=payload)
                 response.headers["X-Request-ID"] = request_id
                 _attach_rate_limit_headers(response, limit_decision)
-                _security_headers(response)
+                _security_headers(response, settings.app_env)
                 _log_request_event(
                     request_id=request_id,
                     method=request.method,
@@ -296,7 +299,7 @@ def create_api_app() -> FastAPI:
         response.headers.setdefault("X-Request-ID", request_id)
         if limit_decision is not None:
             _attach_rate_limit_headers(response, limit_decision)
-        _security_headers(response)
+        _security_headers(response, settings.app_env)
         _log_request_event(
             request_id=request_id,
             method=request.method,

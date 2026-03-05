@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from decimal import Decimal
 from typing import Any
 
@@ -36,6 +37,7 @@ from remodelator.interfaces.api.schemas import BillingSubscriptionRequest
 from remodelator.interfaces.api.schemas import EstimateChargeRequest
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _coerce_string(value: object) -> str:
@@ -78,8 +80,8 @@ def _coerce_event_dict(event: object, raw_payload: bytes) -> dict[str, Any]:
         parsed = json.loads(raw_payload.decode("utf-8"))
         if isinstance(parsed, dict):
             return parsed
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Webhook payload fallback parse failed: %s", exc)
     return event_dict
 
 

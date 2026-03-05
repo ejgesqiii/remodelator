@@ -11,7 +11,7 @@ Codebase quality is materially improved and currently stable under local/staging
 Current status:
 - Code/test/build/docs quality gates: **PASS**.
 - Stripe sandbox mode: **supported** (config-driven).
-- Production deploy readiness with provided env values: **NO-GO**.
+- Production deploy readiness with provided env values: **NO-GO** (env and deferred reset-delivery blocker).
 
 Primary remaining blockers for production deploy:
 1. Production env hardening values are not yet set (`REMODELATOR_ENV=local`, placeholder webhook secret, localhost return URL).
@@ -40,13 +40,17 @@ Major evolution themes:
 All commands executed in a local `.venv`:
 
 - `./scripts/quality_gate.sh`
-  - backend tests: `134 passed`
+  - backend tests: `136 passed`
   - dead-code checks: pass
   - web unit tests: `12 passed`
   - web build (`tsc --noEmit` + Vite): pass
   - Playwright e2e: `3 passed`
   - docs sync check: pass
   - markdown link check: pass
+
+- Security scans:
+  - `pip-audit -r requirements-dev.txt`: no known vulnerabilities.
+  - `bandit -r src`: only low/low-confidence findings and known false-positive patterns (no high severity).
 
 - SQLite probes:
   - `./scripts/ci_sqlite_probes.sh`
@@ -101,6 +105,32 @@ Interpretation: for the tested local envelope, SQLite config and runtime behavio
 - `tests/test_web_api_compatibility.py`
 - Verifies the canonical `apps/web/src/api` surface is backed by registered FastAPI routes.
 
+9. Production HTTP hardening tightened.
+- `src/remodelator/interfaces/api/app_factory.py`
+- Adds `Strict-Transport-Security` in production env only.
+- `tests/test_app_factory_security.py`
+- Adds production HSTS regression test.
+
+10. Production CORS default made fail-safe.
+- `src/remodelator/config.py`
+- In production, default CORS allowlist is now empty unless explicitly configured.
+- `tests/test_auth_security.py`
+- Adds regression coverage for this default.
+
+11. Dynamic SQL hardening for maintenance/migration paths.
+- `src/remodelator/application/migration_reconcile.py`
+- Adds strict SQLite identifier allowlist and quoted identifier assembly.
+- `src/remodelator/infra/db.py`
+- Replaces dynamic Stripe dedupe SQL with explicit, column-specific queries.
+
+12. Operational deployment artifacts added.
+- `deploy/api/.env.production.example`
+- `deploy/api/remodelator-api.service.example`
+- `deploy/api/Caddyfile.example`
+- `deploy/api/README.md`
+- `DEPLOYMENT_PLAN.md`, `docs/README.md`
+- Standardizes repeatable Hetzner API deployment flow.
+
 ## 5) Remaining Risks and Required Actions
 
 ### Blockers (must resolve before production)
@@ -125,6 +155,7 @@ Interpretation: for the tested local envelope, SQLite config and runtime behavio
 2. Add endpoint-level API integration tests for share/public proposal routes.
 3. Add rate-limit policy review for public proposal endpoints under expected traffic.
 4. Decide if long-lived sessions should differ from public-share TTL strategy further.
+5. If desired, tune/suppress remaining Bandit false positives to keep security CI noise low.
 
 ## 6) SQLite Reliability and “Can It Handle Load?”
 Short answer: **for a single-node SaaS with moderate concurrent traffic, current SQLite posture is strong**; it is not a substitute for horizontally scaled multi-writer architecture.

@@ -1,0 +1,20 @@
+api.example.com {
+    encode zstd gzip
+
+    @api {
+        path /health /docs* /openapi.json /auth/* /profile /estimates* /catalog* /templates* /proposals* /billing* /pricing* /activity /audit /backup* /admin*
+    }
+
+    reverse_proxy @api 127.0.0.1:8010
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    log {
+        output file /var/log/caddy/remodelator-api.log
+        format json
+    }
+}

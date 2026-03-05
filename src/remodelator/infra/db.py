@@ -97,15 +97,26 @@ def _dedupe_users_by_stripe_column(connection: Connection, column_name: str) -> 
     if column_name not in {"stripe_customer_id", "stripe_subscription_id"}:
         return
 
-    rows = connection.exec_driver_sql(
-        f"""
-        SELECT {column_name}, MIN(id) AS keep_id
-        FROM users
-        WHERE {column_name} IS NOT NULL AND TRIM({column_name}) != ''
-        GROUP BY {column_name}
-        HAVING COUNT(*) > 1
-        """
-    ).all()
+    if column_name == "stripe_customer_id":
+        rows = connection.exec_driver_sql(
+            """
+            SELECT stripe_customer_id, MIN(id) AS keep_id
+            FROM users
+            WHERE stripe_customer_id IS NOT NULL AND TRIM(stripe_customer_id) != ''
+            GROUP BY stripe_customer_id
+            HAVING COUNT(*) > 1
+            """
+        ).all()
+    else:
+        rows = connection.exec_driver_sql(
+            """
+            SELECT stripe_subscription_id, MIN(id) AS keep_id
+            FROM users
+            WHERE stripe_subscription_id IS NOT NULL AND TRIM(stripe_subscription_id) != ''
+            GROUP BY stripe_subscription_id
+            HAVING COUNT(*) > 1
+            """
+        ).all()
 
     for value, keep_id in rows:
         if column_name == "stripe_customer_id":

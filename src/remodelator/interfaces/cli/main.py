@@ -225,10 +225,15 @@ def db_sqlite_envelope_test(
                         conn.execute("COMMIT")
                         _record("writes")
                     except sqlite3.OperationalError as exc:
+                        rollback_failed = False
                         try:
                             conn.execute("ROLLBACK")
                         except Exception:
-                            pass
+                            # Best-effort rollback only; connection state is retried on next loop.
+                            rollback_failed = True
+                        if rollback_failed:
+                            _record("errors")
+                            continue
                         if "locked" in str(exc).lower():
                             _record("locked_errors")
                         _record("errors")

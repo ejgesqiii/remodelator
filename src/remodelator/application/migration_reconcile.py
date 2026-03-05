@@ -278,6 +278,15 @@ _RECONCILE_RELATIONSHIPS = [
     ("audit_events", "user_id", "users", "id"),
 ]
 
+_SQLITE_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _safe_sqlite_identifier(raw: str) -> str:
+    candidate = raw.strip()
+    if not _SQLITE_IDENTIFIER_RE.fullmatch(candidate):
+        raise ValueError(f"Unsafe SQLite identifier: {raw}")
+    return f'"{candidate}"'
+
 
 def load_snapshot_file(path: Path) -> dict[str, object]:
     if not path.exists():
@@ -321,7 +330,8 @@ def _sqlite_table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
 def _sqlite_count_rows(conn: sqlite3.Connection, table_name: str) -> int:
     if not _sqlite_table_exists(conn, table_name):
         return 0
-    row = conn.execute(f"SELECT COUNT(*) AS c FROM {table_name}").fetchone()
+    safe_table = _safe_sqlite_identifier(table_name)
+    row = conn.execute(f"SELECT COUNT(*) AS c FROM {safe_table}").fetchone()  # nosec B608
     return int(row["c"] if row else 0)
 
 
@@ -355,12 +365,17 @@ def _sqlite_orphan_counts(conn: sqlite3.Connection) -> dict[str, int]:
     for child_table, child_column, parent_table, parent_column in _RECONCILE_RELATIONSHIPS:
         if not _sqlite_table_exists(conn, child_table) or not _sqlite_table_exists(conn, parent_table):
             continue
+        safe_child_table = _safe_sqlite_identifier(child_table)
+        safe_child_column = _safe_sqlite_identifier(child_column)
+        safe_parent_table = _safe_sqlite_identifier(parent_table)
+        safe_parent_column = _safe_sqlite_identifier(parent_column)
+        # nosec B608
         query = f"""
             SELECT COUNT(*) AS c
-            FROM {child_table} c
-            LEFT JOIN {parent_table} p ON c.{child_column} = p.{parent_column}
-            WHERE c.{child_column} IS NOT NULL
-              AND p.{parent_column} IS NULL
+            FROM {safe_child_table} c
+            LEFT JOIN {safe_parent_table} p ON c.{safe_child_column} = p.{safe_parent_column}
+            WHERE c.{safe_child_column} IS NOT NULL
+              AND p.{safe_parent_column} IS NULL
         """
         row = conn.execute(query).fetchone()
         key = f"{child_table}.{child_column}->{parent_table}.{parent_column}"
@@ -537,5 +552,3 @@ def reconcile_stub(
         "row_count_differences": count_differences,
         "money_total_differences": total_differences,
     }
-
-

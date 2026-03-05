@@ -83,4 +83,5 @@ tests/test_pricing.py
 tests/test_router_utils.py
 tests/test_stripe_scripts.py
 tests/test_stripe_service.py
+tests/test_web_api_compatibility.py
 tests/test_web_shell.py

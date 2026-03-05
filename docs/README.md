@@ -31,6 +31,7 @@ npm ci --prefix apps/web
 - [Launch Evidence Checklist](LAUNCH_EVIDENCE_CHECKLIST.md)
 - [Deployment Hardening Checklist](DEPLOYMENT_HARDENING_CHECKLIST.md)
 - [Deployment Plan (High-Level)](../DEPLOYMENT_PLAN.md)
+- [API Deploy Assets](../deploy/api/README.md)
 
 ## Historical Execution Logs (Reference Only)
 

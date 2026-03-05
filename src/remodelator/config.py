@@ -134,9 +134,14 @@ def get_settings() -> Settings:
     audit_retention_days = _env_int("REMODELATOR_AUDIT_RETENTION_DAYS", 365, minimum=1)
     admin_api_key = os.getenv("REMODELATOR_ADMIN_API_KEY", "local-admin-key")
     admin_user_emails = _env_csv("REMODELATOR_ADMIN_USER_EMAILS", "")
+    default_cors_origins = (
+        ""
+        if app_env in {"production", "prod"}
+        else "http://127.0.0.1:5173,http://localhost:5173"
+    )
     cors_allowed_origins = _env_csv(
         "REMODELATOR_CORS_ORIGINS",
-        "http://127.0.0.1:5173,http://localhost:5173",
+        default_cors_origins,
         lowercase=False,
     )
 

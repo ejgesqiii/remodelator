@@ -92,6 +92,12 @@ For high write concurrency / multi-instance scale, plan PostgreSQL later.
 - allow: `22`, `80`, `443`
 - block direct API app port from internet.
 
+Reference deployment assets in this repo:
+- `deploy/api/remodelator-api.service.example`
+- `deploy/api/Caddyfile.example`
+- `deploy/api/.env.production.example`
+- `deploy/api/README.md`
+
 ## Phase C: Stripe sandbox-to-production readiness
 
 1. Keep Stripe in test mode first.
