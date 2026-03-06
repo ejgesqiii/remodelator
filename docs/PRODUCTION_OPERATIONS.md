@@ -34,16 +34,18 @@ Date deployed: March 6, 2026
 
 - Billing provider is set to `stripe`
 - Test secret key is configured on the server
+- Test webhook signing secret is configured on the server
 - `STRIPE_PAYMENT_RETURN_URL` is set to:
   - `https://remodelator-781c6.web.app/billing?stripe_return=1`
-- `STRIPE_WEBHOOK_SECRET` is intentionally not set yet
-
-Current consequence:
-- provider status reports Stripe as not ready for live test checkout/webhook flow
-- final Stripe sandbox enablement still requires a real webhook signing secret from Stripe for:
+- Stripe test webhook endpoint:
   - `https://remo-api.ppl.contact/billing/webhook`
+- Stripe webhook endpoint id:
+  - `we_1T7yt56uzqK30udTJUDg4pOw`
+- Live provider status was verified after deployment:
+  - `adapter_ready=true`
+  - `ready_for_live=true`
 
-After you have the real Stripe webhook signing secret:
+If you ever rotate the Stripe webhook signing secret:
 ```bash
 sudoedit /etc/remodelator/remo-api.env
 sudo systemctl restart remodelator-api
