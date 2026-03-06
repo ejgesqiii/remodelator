@@ -77,7 +77,7 @@ firebase deploy --only hosting --project remodelator-781c6
 ## Admin Access
 
 - Admin-role login is granted by server-side email allowlist via `REMODELATOR_ADMIN_USER_EMAILS`.
-- Current production allowlist includes `joe@ppl.contact` and `kkain@kainconstruction.com`.
+- Current production allowlist includes `joe@ppl.contact`, `kkain@kainconstruction.com`, and `kkain@construction.com`.
 - Admin read routes work with that admin session token alone.
 - Destructive admin actions still require the separate `REMODELATOR_ADMIN_API_KEY` value entered into the Admin page as `x-admin-key`.
 - To rotate admin access safely:

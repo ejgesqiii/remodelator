@@ -348,7 +348,7 @@ How to create and use an admin account:
 - Destructive admin actions still require the separate `x-admin-key` value from `REMODELATOR_ADMIN_API_KEY`.
 
 Current deployed production admin setup:
-- admin-role email allowlist includes `joe@ppl.contact` and `kkain@kainconstruction.com`
+- admin-role email allowlist includes `joe@ppl.contact`, `kkain@kainconstruction.com`, and `kkain@construction.com`
 - destructive admin actions require the production `REMODELATOR_ADMIN_API_KEY` configured on the server
 
 Web UI includes admin actions for:
