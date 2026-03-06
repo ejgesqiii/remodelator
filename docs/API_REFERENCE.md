@@ -1,6 +1,6 @@
 # API Reference (Human Maintained)
 
-Last updated: March 5, 2026
+Last updated: March 6, 2026
 
 This document covers request/response behavior and integration guidance.
 For an always-current endpoint list generated from source, see [API_ENDPOINTS_GENERATED.md](API_ENDPOINTS_GENERATED.md).

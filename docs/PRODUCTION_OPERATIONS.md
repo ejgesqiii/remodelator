@@ -69,6 +69,7 @@ sudo systemctl restart remodelator-api
 
 Firebase web deploy:
 ```bash
+npm --prefix apps/web ci
 npm --prefix apps/web run build
 firebase deploy --only hosting --project remodelator-781c6
 ```
@@ -127,5 +128,6 @@ ls -lah /var/lib/remodelator
 - A starter catalog seed was applied on first deploy.
 - A temporary GitHub HTTPS credential is stored for the `remodelator` user so `git pull` works on-server.
 - The server venv is intentionally local-only and ignored by Git.
+- `apps/web/.env.production` is the canonical production web target and currently points at `https://remo-api.ppl.contact`.
 - Replace that with a repo-scoped deploy credential or deploy key later if you want tighter credential isolation.
 - Origin HSTS is configured correctly by the app, but Cloudflare is currently overriding the public `Strict-Transport-Security` header. If you want public HSTS enforced, set it in Cloudflare as well.

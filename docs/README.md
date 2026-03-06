@@ -57,6 +57,10 @@ Verify sync (CI-safe):
 ```bash
 python3 scripts/generate_api_endpoints_doc.py --check
 ```
+Rebuild generated endpoint docs after route changes:
+```bash
+python3 scripts/generate_api_endpoints_doc.py
+```
 Verify local markdown links (CI-safe):
 ```bash
 python3 scripts/check_markdown_links.py --check --include-archive
@@ -65,6 +69,11 @@ python3 scripts/check_markdown_links.py --check --include-archive
 Run full local quality gate:
 ```bash
 ./scripts/quality_gate.sh
+```
+Rebuild the production web bundle with the committed Firebase target:
+```bash
+npm --prefix apps/web ci
+npm --prefix apps/web run build
 ```
 
 Run dead/unused-code checks directly:

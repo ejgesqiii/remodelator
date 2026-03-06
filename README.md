@@ -2,7 +2,7 @@
 
 API-first rebuild of Remodelator focused on a full local functional demo first, then production hardening.
 
-## Verified Status (March 5, 2026)
+## Verified Status (March 6, 2026)
 
 - backend regression suite is green (`pytest -q`).
 - Stripe-focused regression suites are green: `tests/test_billing_runtime.py`, `tests/test_api_flow.py`, `tests/test_cli_flow.py`
@@ -169,6 +169,7 @@ remodelator db seed
 Notes:
 - API startup now runs a safe schema init/backfill automatically for SQLite local DBs.
 - Keep `remodelator db migrate` in CI/automation to make schema intent explicit.
+- Production web builds in this repo target `https://remo-api.ppl.contact` via `apps/web/.env.production`.
 
 3. Run tests:
 ```bash

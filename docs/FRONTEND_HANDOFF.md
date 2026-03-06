@@ -1,6 +1,6 @@
 # Remodelator vNext — Frontend Handoff & Future Roadmap
 
-**Last Updated:** March 5, 2026
+**Last Updated:** March 6, 2026
 
 This document summarizes the current frontend implementation state, how to run and validate it, and what remains for further production hardening.
 
@@ -67,9 +67,9 @@ The system provides dual-auth mechanisms for accessing the Admin Dashboard and p
 
 **Method 1: Email Whitelist (Recommended for UI)**
 If a user registers or logs in with an email address that matches the backend `REMODELATOR_ADMIN_USER_EMAILS` environment variable, they are automatically granted the `admin` role in their session.
-- By default, `owner@example.com` and `ops@example.com` are valid admin emails. 
-- You can change this list in your backend environment (or `.env` when deployed).
-- *To test:* Open the UI, register a new account as `owner@example.com`, and navigate to the Admin panel.
+- There is no built-in default whitelist in code. You must set the list explicitly in the backend environment.
+- Current deployed production whitelist contains `joe@ppl.contact`.
+- *To test locally:* set `REMODELATOR_ADMIN_USER_EMAILS` before starting the API, then register/login with one of those addresses and navigate to the Admin panel.
 
 **Method 2: Admin API Key**
 For programmatic access or high-risk destructive actions (like `Demo Reset`), the system requires a direct Admin API Key.

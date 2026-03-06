@@ -1,6 +1,6 @@
 # Deployment Hardening Checklist
 
-Last updated: March 5, 2026
+Last updated: March 6, 2026
 Scope: production deployment baseline (Stripe integration validated in sandbox; production cutover remains credential/ops-driven).
 
 ## 1) Environment and Secrets

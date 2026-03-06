@@ -6,9 +6,9 @@ After=network.target
 Type=simple
 User=remodelator
 Group=remodelator
-WorkingDirectory=/opt/remodelator
-EnvironmentFile=/opt/remodelator/.env.production
-ExecStart=/opt/remodelator/.venv/bin/uvicorn --app-dir /opt/remodelator/src remodelator.interfaces.api.main:app --host 127.0.0.1 --port 8010 --workers 1
+WorkingDirectory=/opt/remodelator/app
+EnvironmentFile=/etc/remodelator/remo-api.env
+ExecStart=/opt/remodelator/app/.venv/bin/uvicorn --app-dir /opt/remodelator/app/src remodelator.interfaces.api.main:app --host 127.0.0.1 --port 8010 --workers 1
 Restart=always
 RestartSec=3
 TimeoutStopSec=30
@@ -17,7 +17,7 @@ PrivateTmp=true
 NoNewPrivileges=true
 ProtectSystem=full
 ProtectHome=true
-ReadWritePaths=/opt/remodelator/data
+ReadWritePaths=/var/lib/remodelator /etc/remodelator
 
 [Install]
 WantedBy=multi-user.target
