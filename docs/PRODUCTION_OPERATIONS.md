@@ -22,6 +22,7 @@ Date deployed: March 6, 2026
 ## Current Runtime Posture
 
 - API is served by `uvicorn` on `127.0.0.1:8010`
+- systemd starts Uvicorn with `--app-dir /opt/remodelator/app/src`, so the live app imports directly from the checked-out source tree
 - Nginx proxies `remo-api.ppl.contact` to `127.0.0.1:8010`
 - TLS certificate is managed by Certbot for `remo-api.ppl.contact`
 - Firebase production builds target `https://remo-api.ppl.contact` via `apps/web/.env.production`

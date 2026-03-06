@@ -84,7 +84,7 @@ For high write concurrency / multi-instance scale, plan PostgreSQL later.
 - `remodelator db seed` (if needed)
 
 7. Run API under process manager
-- systemd service running uvicorn with `--workers 1` for the current SQLite-backed single-node deployment
+- systemd service running uvicorn from the source checkout (`--app-dir .../src`) with `--workers 1` for the current SQLite-backed single-node deployment
 - restart policy: `always`
 - non-root runtime user
 

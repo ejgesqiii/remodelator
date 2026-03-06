@@ -19,6 +19,7 @@ Quick usage:
 
 Notes:
 - The example systemd unit uses `--workers 1` intentionally. For the current single-node SQLite deployment, one worker is the lower-maintenance default and avoids unnecessary write-contention complexity.
+- The example service runs the app from the source checkout via `--app-dir /opt/remodelator/src`. That avoids package-data drift around static assets and keeps routine deploys to `git pull + restart`.
 - Set `VITE_API_URL` when building the web app for production. If you intend to serve the API from the same origin, set it explicitly to an empty string instead of omitting it.
 
 Operational checks:
