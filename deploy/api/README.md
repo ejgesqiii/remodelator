@@ -17,6 +17,10 @@ Quick usage:
 7. Validate:
    - `curl -fsS https://api.example.com/health`
 
+Notes:
+- The example systemd unit uses `--workers 1` intentionally. For the current single-node SQLite deployment, one worker is the lower-maintenance default and avoids unnecessary write-contention complexity.
+- Set `VITE_API_URL` when building the web app for production. If you intend to serve the API from the same origin, set it explicitly to an empty string instead of omitting it.
+
 Operational checks:
 - `./scripts/quality_gate.sh`
 - `./scripts/ci_sqlite_probes.sh`

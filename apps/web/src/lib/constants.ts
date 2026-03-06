@@ -1,4 +1,10 @@
-export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const rawApiBase = import.meta.env.VITE_API_URL;
+
+if (import.meta.env.PROD && rawApiBase === undefined) {
+    throw new Error('VITE_API_URL must be set for production builds. Use an empty string for same-origin deployments.');
+}
+
+export const API_BASE = rawApiBase ?? 'http://localhost:8000';
 
 export const ROUTES = {
     login: '/login',

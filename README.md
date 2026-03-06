@@ -326,6 +326,7 @@ Notes:
 - admin key default is `local-admin-key` unless overridden.
 - `scripts/run_web.sh` installs dependencies with `npm ci` only when `apps/web/node_modules` is missing.
 - `scripts/run_web.sh` enforces port `5173` (`--strictPort`) to avoid CORS drift.
+- production web builds must set `VITE_API_URL` explicitly; omit it only for local dev. Use an empty string when intentionally deploying same-origin web + API.
 
 ## Admin and Demo Reset
 

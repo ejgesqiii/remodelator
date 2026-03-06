@@ -131,6 +131,12 @@ Interpretation: for the tested local envelope, SQLite config and runtime behavio
 - `DEPLOYMENT_PLAN.md`, `docs/README.md`
 - Standardizes repeatable Hetzner API deployment flow.
 
+13. Deployment defaults made safer.
+- `apps/web/src/lib/constants.ts`
+- Production web builds now fail fast if `VITE_API_URL` is omitted, preventing silent `localhost` misrouting after deploy.
+- `deploy/api/remodelator-api.service.example`
+- Example systemd service now defaults to one Uvicorn worker for the current SQLite-backed single-node deployment.
+
 ## 5) Remaining Risks and Required Actions
 
 ### Blockers (must resolve before production)

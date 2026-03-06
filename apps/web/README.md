@@ -45,6 +45,7 @@ Default client base:
 
 Optional override:
 - `VITE_API_URL`
+- production builds must set `VITE_API_URL`; use an empty string for same-origin deployments
 
 Vite dev proxy can still route `/api/*` to a backend target (`VITE_API_PROXY_TARGET`) for ad-hoc calls.
 

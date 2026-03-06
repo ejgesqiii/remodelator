@@ -56,7 +56,9 @@ For high write concurrency / multi-instance scale, plan PostgreSQL later.
 ## Phase A: Firebase web deploy (fast)
 
 1. Create Firebase project (e.g., `remodelator`).
-2. Build web app: `npm --prefix apps/web run build`
+2. Build web app with explicit API target:
+- `VITE_API_URL=https://api.<domain> npm --prefix apps/web run build`
+- if you later serve web + API from the same origin, set `VITE_API_URL=''` explicitly instead of omitting it
 3. Initialize hosting config in repo: `firebase init hosting`
 4. Set public directory to `apps/web/dist`, configure SPA rewrite to `index.html`.
 5. Deploy: `firebase deploy --only hosting`
@@ -82,7 +84,7 @@ For high write concurrency / multi-instance scale, plan PostgreSQL later.
 - `remodelator db seed` (if needed)
 
 7. Run API under process manager
-- systemd service running uvicorn (or gunicorn+uvicorn worker if you prefer)
+- systemd service running uvicorn with `--workers 1` for the current SQLite-backed single-node deployment
 - restart policy: `always`
 - non-root runtime user
 
