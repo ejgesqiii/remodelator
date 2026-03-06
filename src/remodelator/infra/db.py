@@ -140,6 +140,18 @@ def _dedupe_users_by_stripe_column(connection: Connection, column_name: str) -> 
             )
 
 
+def _normalize_stripe_subscription_ids(connection: Connection) -> None:
+    connection.exec_driver_sql(
+        """
+        UPDATE users
+        SET stripe_subscription_id = NULL
+        WHERE stripe_subscription_id IS NOT NULL
+          AND TRIM(stripe_subscription_id) != ''
+          AND stripe_subscription_id NOT LIKE 'sub_%'
+        """
+    )
+
+
 def _run_sqlite_schema_migrations() -> None:
     if not is_sqlite:
         return
@@ -195,6 +207,7 @@ def _run_sqlite_schema_migrations() -> None:
 
         _dedupe_users_by_stripe_column(connection, "stripe_customer_id")
         _dedupe_users_by_stripe_column(connection, "stripe_subscription_id")
+        _normalize_stripe_subscription_ids(connection)
 
         # Align indexes with current ORM metadata for Stripe fields.
         _ensure_sqlite_indexes(

@@ -341,6 +341,16 @@ Admin access model:
 Local default key:
 - `local-admin-key`
 
+How to create and use an admin account:
+- Set `REMODELATOR_ADMIN_USER_EMAILS` to a comma-separated allowlist before starting the API.
+- Register or log in through the UI with one of those email addresses.
+- The session will include `role=admin`, which unlocks the Admin page and admin-only catalog mutations.
+- Destructive admin actions still require the separate `x-admin-key` value from `REMODELATOR_ADMIN_API_KEY`.
+
+Current deployed production admin setup:
+- admin-role email allowlist includes `joe@ppl.contact`
+- destructive admin actions require the production `REMODELATOR_ADMIN_API_KEY` configured on the server
+
 Web UI includes admin actions for:
 - summary
 - users

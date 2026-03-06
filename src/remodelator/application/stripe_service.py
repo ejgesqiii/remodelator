@@ -106,6 +106,10 @@ class StripeService:
                 }
             ],
             "mode": "payment",
+            "payment_intent_data": {
+                # Store the checkout payment method for later off-session usage charges.
+                "setup_future_usage": "off_session",
+            },
             "success_url": success_url,
             "cancel_url": cancel_url,
         }
@@ -135,13 +139,21 @@ class StripeService:
         if amount_cents <= 0:
             raise ValueError("Stripe usage charge amount must be greater than zero.")
 
+        payment_method_id = self._resolve_reusable_payment_method(customer_id)
+        if not payment_method_id:
+            raise ValueError(
+                "No reusable payment method is saved for this Stripe customer. "
+                "Complete Stripe Checkout first, then retry the usage charge."
+            )
+
         kwargs: dict[str, Any] = {
             "amount": amount_cents,
             "currency": currency.lower(),
             "customer": customer_id,
+            "payment_method": payment_method_id,
             "description": description,
             "confirm": True,
-            "automatic_payment_methods": {"enabled": True, "allow_redirects": "never"},
+            "off_session": True,
             "return_url": self._resolve_payment_return_url(),
         }
         if idempotency_key:
@@ -153,8 +165,30 @@ class StripeService:
         except stripe.error.CardError as e:  # type: ignore
             # Expose card errors cleanly
             raise ValueError(f"Payment failed: {e.user_message}") from e
+        except stripe.error.InvalidRequestError as e:  # type: ignore
+            raise ValueError(e.user_message or str(e)) from e
         except stripe.error.StripeError as e:  # type: ignore
             raise RuntimeError(f"Stripe usage charge failed: {e.user_message or str(e)}") from e
+
+    def _resolve_reusable_payment_method(self, customer_id: str) -> str | None:
+        customer = stripe.Customer.retrieve(
+            customer_id,
+            expand=["invoice_settings.default_payment_method"],
+        )
+
+        invoice_settings = getattr(customer, "invoice_settings", None)
+        default_payment_method = getattr(invoice_settings, "default_payment_method", None)
+        if isinstance(default_payment_method, str) and default_payment_method.strip():
+            return default_payment_method.strip()
+        if getattr(default_payment_method, "id", None):
+            return str(default_payment_method.id).strip()
+
+        payment_methods = stripe.PaymentMethod.list(customer=customer_id, type="card", limit=1)
+        if getattr(payment_methods, "data", None):
+            payment_method = payment_methods.data[0]
+            if getattr(payment_method, "id", None):
+                return str(payment_method.id).strip()
+        return None
 
     def verify_webhook_signature(self, payload: bytes, sig_header: str) -> stripe.Event:
         """

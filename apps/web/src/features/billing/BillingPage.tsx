@@ -91,6 +91,7 @@ export function BillingPage() {
         detail: e.details,
         timestamp: e.created_at,
     }));
+    const stripeUsageReady = provider?.provider !== 'stripe' || subscription?.active;
 
     return (
         <div className="space-y-6">
@@ -183,9 +184,14 @@ export function BillingPage() {
                         )}
                         {provider?.provider === 'stripe' ? (
                             <div className="grid grid-cols-1 gap-2">
-                                <button onClick={() => simChargeMutation.mutate()} disabled={simChargeMutation.isPending} className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary shadow-none hover:bg-primary/20 disabled:opacity-50">
+                                <button onClick={() => simChargeMutation.mutate()} disabled={simChargeMutation.isPending || !stripeUsageReady} className="flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2.5 text-xs font-semibold text-primary shadow-none hover:bg-primary/20 disabled:opacity-50">
                                     <Zap size={14} /> Capture Live Usage Charge
                                 </button>
+                                {!stripeUsageReady && (
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Complete Stripe Checkout first so a reusable payment method is saved before live usage charges run.
+                                    </p>
+                                )}
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-2">

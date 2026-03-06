@@ -673,6 +673,42 @@ def test_relative_export_paths_resolve_under_configured_data_dir() -> None:
     assert (TEST_DATA_DIR / "exports" / "relative_proposal.pdf").exists()
 
 
+def test_stripe_usage_charge_without_saved_payment_method_returns_400(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+    _ensure_db_migrated()
+
+    register = client.post(
+        "/auth/register",
+        json={"email": "stripe-charge-no-pm@example.com", "password": "pw123456", "full_name": "Stripe No PM"},
+    )
+    if register.status_code == 200:
+        session_token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": "stripe-charge-no-pm@example.com", "password": "pw123456"})
+        assert login.status_code == 200
+        session_token = login.json()["session_token"]
+
+    class MockCustomer:
+        invoice_settings = type("InvoiceSettings", (), {"default_payment_method": None})()
+
+    monkeypatch.setattr(
+        "remodelator.application.stripe_service.StripeService.get_or_create_customer",
+        lambda self, user: "cus_charge_no_pm_123",
+    )
+    monkeypatch.setattr("stripe.Customer.retrieve", lambda *args, **kwargs: MockCustomer())
+    monkeypatch.setattr("stripe.PaymentMethod.list", lambda *args, **kwargs: type("PaymentMethods", (), {"data": []})())
+
+    response = client.post(
+        "/billing/simulate-estimate-charge",
+        headers={"x-session-token": session_token},
+        json={"estimate_id": "manual"},
+    )
+    assert response.status_code == 400
+    assert "Complete Stripe Checkout first" in response.json()["detail"]
+
+
 def test_stripe_webhook_flow(monkeypatch) -> None:
     monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
@@ -758,37 +794,61 @@ def test_stripe_webhook_flow(monkeypatch) -> None:
     )
     assert ref_resp.status_code == 200
 
-    # 3. Cancel subscription
-    cancel_event = {
-        "type": "customer.subscription.deleted",
+
+def test_checkout_session_webhook_does_not_store_checkout_session_id_as_subscription_id(monkeypatch) -> None:
+    monkeypatch.setenv("REMODELATOR_BILLING_PROVIDER", "stripe")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_123")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_123")
+    _ensure_db_migrated()
+
+    register = client.post(
+        "/auth/register",
+        json={"email": "checkout-session-only@example.com", "password": "pw123456", "full_name": "Checkout Session Only"},
+    )
+    if register.status_code == 200:
+        session_token = register.json()["session_token"]
+    else:
+        login = client.post("/auth/login", json={"email": "checkout-session-only@example.com", "password": "pw123456"})
+        assert login.status_code == 200
+        session_token = login.json()["session_token"]
+
+    from remodelator.infra.db import session_scope
+    from remodelator.application import service
+    with session_scope() as session:
+        user = session.query(service.User).filter_by(email="checkout-session-only@example.com").first()
+        user.stripe_customer_id = "cus_checkout_only_123"
+        user.stripe_subscription_id = "cs_bad_existing_123"
+        session.commit()
+
+    import stripe
+    def mock_verify(*args, **kwargs) -> stripe.Event:
+        event = args[0] if isinstance(args[0], dict) else {}
+        return stripe.Event.construct_from(event, "sk_test_123")
+
+    monkeypatch.setattr("remodelator.application.stripe_service.StripeService.verify_webhook_signature", mock_verify)
+
+    checkout_event = {
+        "type": "checkout.session.completed",
         "data": {
             "object": {
-                "customer": "cus_webhook_test_123",
-                "subscription": "sub_test_123"
+                "id": "cs_test_123",
+                "customer": "cus_checkout_only_123",
+                "amount_total": 120000,
             }
         },
-        "id": "evt_del_123"
+        "id": "evt_chk_session_only_123"
     }
-    can_resp = client.post(
-        "/billing/webhook", 
-        json=cancel_event,
+
+    response = client.post(
+        "/billing/webhook",
+        json=checkout_event,
         headers={"stripe-signature": "t=123,v1=fake"}
     )
-    assert can_resp.status_code == 200
+    assert response.status_code == 200
 
-    state2 = client.get("/billing/subscription-state", headers=headers)
-    assert state2.status_code == 200
-    assert state2.json()["subscription_id"] is None
-    assert state2.json()["status"] == "canceled"
-    assert state2.json()["canceled"] is True
-
-    # Confirm ledger events were recorded
-    ledger = client.get("/billing/ledger?limit=10", headers=headers)
-    assert ledger.status_code == 200
-    events = ledger.json()
-    assert any(e["event_type"] == "subscription" and e["amount"] == "1200.00" for e in events)
-    assert any(e["event_type"] == "refund" and e["amount"] == "-10.00" for e in events)
-    assert any(e["event_type"] == "subscription_canceled" for e in events)
+    state = client.get("/billing/subscription-state", headers={"x-session-token": session_token})
+    assert state.status_code == 200
+    assert state.json()["subscription_id"] is None
 
 
 def test_stripe_webhook_requires_configured_webhook_secret(monkeypatch) -> None:

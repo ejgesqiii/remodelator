@@ -93,6 +93,13 @@ def _stable_webhook_event_id(event: dict[str, Any], raw_payload: bytes) -> str:
     return f"evt_payload_{payload_hash}"
 
 
+def _coerce_subscription_id(value: object) -> str | None:
+    candidate = _coerce_string(value)
+    if candidate.startswith("sub_"):
+        return candidate
+    return None
+
+
 @router.post("/billing/simulate-subscription")
 def billing_subscription(payload: BillingSubscriptionRequest, user_id: str = Depends(require_user_id)) -> dict[str, str]:
     def action() -> dict[str, str]:
@@ -245,7 +252,8 @@ async def billing_webhook(request: Request) -> dict[str, str]:
         idempotency_key = f"stripe_evt:{event_id}"
         data_object = _extract_event_object(event)
         customer_id = _coerce_string(data_object.get("customer"))
-        subscription_id = _coerce_string(data_object.get("subscription")) or _coerce_string(data_object.get("id"))
+        subscription_id = _coerce_subscription_id(data_object.get("subscription"))
+        checkout_session_id = _coerce_string(data_object.get("id"))
 
         with session_scope() as session:
             user = None
@@ -261,6 +269,8 @@ async def billing_webhook(request: Request) -> dict[str, str]:
                     user.stripe_subscription_id = subscription_id
                 amount = Decimal(_coerce_int(data_object.get("amount_total"))) / 100
                 detail = f"stripe checkout_completed event_id={event_id}"
+                if checkout_session_id:
+                    detail = f"{detail} checkout_session_id={checkout_session_id}"
                 if subscription_id:
                     detail = f"{detail} subscription_id={subscription_id}"
                 service.record_billing_event(

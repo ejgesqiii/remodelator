@@ -77,6 +77,12 @@ For programmatic access or high-risk destructive actions (like `Demo Reset`), th
 - **UI Behavior:** The Admin page provides an explicit `x-admin-key` input. Destructive actions remain disabled until a key is entered.
 - **Production Mode:** If `REMODELATOR_ENV=production` is set on the backend, the `local-admin-key` is strictly rejected. You must explicitly configure `REMODELATOR_ADMIN_API_KEY` and deploy that key alongside the frontend.
 
+**Practical Admin Flow**
+1. Set `REMODELATOR_ADMIN_USER_EMAILS` on the backend.
+2. Register or log in with one of those email addresses.
+3. Open the Admin page in the web UI; read-only admin routes work with the admin session.
+4. Paste the configured `REMODELATOR_ADMIN_API_KEY` into the Admin page when you need destructive actions such as demo reset or audit prune.
+
 ---
 
 ## 4. Current State and Next Work

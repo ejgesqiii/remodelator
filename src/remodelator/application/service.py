@@ -2004,7 +2004,7 @@ def _extract_subscription_id(details: str) -> str | None:
     for token in details.replace(";", " ").split():
         if token.startswith("subscription_id="):
             value = token.split("=", 1)[1].strip()
-            if value:
+            if value and value.startswith("sub_"):
                 return value
     return None
 
@@ -2045,7 +2045,9 @@ def subscription_state(session: Session, user_id: str, subscription_id: str | No
             "currency": settings.billing_currency,
         }
 
-    resolved_subscription_id = subscription_id or _extract_subscription_id(last.details) or user.stripe_subscription_id
+    resolved_subscription_id = subscription_id or _extract_subscription_id(last.details)
+    if not resolved_subscription_id and user.stripe_subscription_id and user.stripe_subscription_id.startswith("sub_"):
+        resolved_subscription_id = user.stripe_subscription_id
     status_map = {
         "subscription_canceled": ("canceled", False, True, False),
         "invoice_payment_failed": ("past_due", False, False, True),
