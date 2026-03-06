@@ -68,7 +68,7 @@ The system provides dual-auth mechanisms for accessing the Admin Dashboard and p
 **Method 1: Email Whitelist (Recommended for UI)**
 If a user registers or logs in with an email address that matches the backend `REMODELATOR_ADMIN_USER_EMAILS` environment variable, they are automatically granted the `admin` role in their session.
 - There is no built-in default whitelist in code. You must set the list explicitly in the backend environment.
-- Current deployed production whitelist contains `joe@ppl.contact`.
+- Current deployed production whitelist contains `joe@ppl.contact` and `kkain@kainconstruction.com`.
 - *To test locally:* set `REMODELATOR_ADMIN_USER_EMAILS` before starting the API, then register/login with one of those addresses and navigate to the Admin panel.
 
 **Method 2: Admin API Key**
