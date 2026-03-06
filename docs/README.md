@@ -32,6 +32,7 @@ npm ci --prefix apps/web
 - [Deployment Hardening Checklist](DEPLOYMENT_HARDENING_CHECKLIST.md)
 - [Deployment Plan (High-Level)](../DEPLOYMENT_PLAN.md)
 - [API Deploy Assets](../deploy/api/README.md)
+- [Production Operations](PRODUCTION_OPERATIONS.md)
 
 ## Historical Execution Logs (Reference Only)
 
