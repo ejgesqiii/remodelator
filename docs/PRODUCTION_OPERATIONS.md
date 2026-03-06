@@ -60,7 +60,7 @@ curl -fsS https://remo-api.ppl.contact/health
 
 If Python dependencies changed:
 ```bash
-sudo -u remodelator -H bash -lc 'cd /opt/remodelator/app && .venv/bin/pip install -e .'
+sudo -u remodelator -H bash -lc 'cd /opt/remodelator/app && .venv/bin/pip install .'
 sudo systemctl restart remodelator-api
 ```
 
@@ -123,5 +123,6 @@ ls -lah /var/lib/remodelator
 - The API service runs with one worker intentionally because this deployment is single-node + SQLite.
 - A starter catalog seed was applied on first deploy.
 - A temporary GitHub HTTPS credential is stored for the `remodelator` user so `git pull` works on-server.
+- The server venv is intentionally local-only and ignored by Git.
 - Replace that with a repo-scoped deploy credential or deploy key later if you want tighter credential isolation.
 - Origin HSTS is configured correctly by the app, but Cloudflare is currently overriding the public `Strict-Transport-Security` header. If you want public HSTS enforced, set it in Cloudflare as well.
