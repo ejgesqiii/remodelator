@@ -66,6 +66,7 @@ apps/web/dist/
 apps/web/playwright-report/
 apps/web/test-results/
 apps/web/.vite/
+.firebase/
 
 # Runtime data outputs
 data/.ci_outputs/
